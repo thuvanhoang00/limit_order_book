@@ -33,7 +33,7 @@ public:
         // Attempt to match immediately
         if(order.side == Side::Bid)
         {
-            match_order(order, bids);
+            match_order(order, asks);
             // Add remaining quantity to book (if limit order)
             if (order.quantity > 0 && order.type == OrderType::Limit)
             {
@@ -42,7 +42,7 @@ public:
         }
         else if (order.side == Side::Ask)
         {
-            match_order(order, asks);
+            match_order(order, bids);
             // Add remaining quantity to book (if limit order)
             if (order.quantity > 0 && order.type == OrderType::Limit)
             {
@@ -77,14 +77,8 @@ private:
     std::map<double, std::vector<Order>> asks;
 
     template<typename MapType>
-    void match_order(Order& order, MapType& book)
+    void match_order(Order& order, MapType& opposite_side)
     {
-        auto& opposite_side = book;
-
-        // auto opposite_compare = (order.side == Side::Bid) ?
-        //     [](double a, double b){ return a < b; }: // For bids: match lowest asks first
-        //     [](double a, double b){ return a > b; }; // For asks: match highest bids first
-
         while(!opposite_side.empty() && order.quantity > 0)
         {
             auto& [best_price, orders_at_price] = *opposite_side.begin();
