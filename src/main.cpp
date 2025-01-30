@@ -33,21 +33,11 @@ public:
         // Attempt to match immediately
         if(order.side == Side::Bid)
         {
-            match_order(order, asks);
-            // Add remaining quantity to book (if limit order)
-            if (order.quantity > 0 && order.type == OrderType::Limit)
-            {
-                bids[order.price].push_back(order);
-            }
+            process_order(order, bids, asks);
         }
         else if (order.side == Side::Ask)
         {
-            match_order(order, bids);
-            // Add remaining quantity to book (if limit order)
-            if (order.quantity > 0 && order.type == OrderType::Limit)
-            {
-                asks[order.price].push_back(order);
-            }
+            process_order(order, asks, bids);
         }
     }
 
@@ -76,8 +66,19 @@ private:
     std::map<double, std::vector<Order>, std::greater<double>> bids;
     std::map<double, std::vector<Order>> asks;
 
-    template<typename MapType>
-    void match_order(Order& order, MapType& opposite_side)
+    template<typename Book, typename OppositeBook>
+    void process_order(Order& order, Book& books, OppositeBook& opposite_side)
+    {
+        match_order(order, opposite_side); // match order with the opposite side
+        // Add remaining quantity to book (if limit order)
+        if (order.quantity > 0 && order.type == OrderType::Limit)
+        {
+            books[order.price].push_back(order);
+        }
+    }
+
+    template<typename OppositeBook>
+    void match_order(Order& order, OppositeBook& opposite_side)
     {
         while(!opposite_side.empty() && order.quantity > 0)
         {
