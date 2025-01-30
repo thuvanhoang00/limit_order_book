@@ -12,5 +12,9 @@ int main()
     lob.add_order({"M1", Side::Ask, OrderType::Market, 0.00, 50, {}}); // Market order
 
     lob.print_book();
+
+    std::cout << "-----------------cancel--------------\n";
+    lob.cancel_order({"B2", Side::Bid, OrderType::Limit, 100.75, 150, {}});
+    lob.print_book();
     return 0;
 }

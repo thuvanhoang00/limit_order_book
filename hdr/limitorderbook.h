@@ -6,9 +6,24 @@
 #include <string>
 #include <iomanip>
 #include <chrono>
+#include <limits>
+#include <cmath>
+#include <algorithm>
+#include <type_traits>
 
 namespace thu
 {
+    template <typename T>
+    std::enable_if_t<not std::numeric_limits<T>::is_integer, bool>
+    equal_within_ulps(T x, T y, std::size_t n)
+    {
+        const T m = std::min(std::fabs(x), std::fabs(y));
+
+        const int exp = m < std::numeric_limits<T>::min() ? std::numeric_limits<T>::min_exponent - 1
+                                                          : std::ilogb(m);
+
+        return std::fabs(x - y) <= n * std::ldexp(std::numeric_limits<T>::epsilon(), exp);
+    }
 
 enum class OrderType {Limit, Market};
 enum class Side {Bid, Ask};
@@ -26,7 +41,8 @@ struct Order
 class LimitOrderBook
 {
 public:
-    void add_order(Order order);    
+    void add_order(Order order);
+    void cancel_order(Order order);    
     void print_book() const;
 private:
     // price-time priority: map sorts by price (best first)
@@ -41,6 +57,24 @@ private:
         if (order.quantity > 0 && order.type == OrderType::Limit)
         {
             books[order.price].push_back(order);
+        }
+    }
+
+    template<typename Book>
+    void do_cancel(Order& order, Book& book)
+    {
+        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::vector<Order>> p)
+                                           { return equal_within_ulps(p.first, order.price, 10); });
+        if(order_queue_it != book.end())
+        {
+            auto& queue = order_queue_it->second;
+            queue.erase(std::remove_if(queue.begin(), queue.end(), [order](const auto &_order)
+                                       { return order.id == _order.id; }));
+
+            if(queue.empty())
+            {
+                book.erase(order_queue_it);
+            }
         }
     }
 

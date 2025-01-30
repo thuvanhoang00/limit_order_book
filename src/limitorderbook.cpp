@@ -1,6 +1,9 @@
 #include "../hdr/limitorderbook.h"
+
 namespace thu
 {
+
+
 
 void LimitOrderBook::add_order(Order order)
 {
@@ -19,6 +22,20 @@ void LimitOrderBook::add_order(Order order)
     else if (order.side == Side::Ask)
     {
         process_order(order, asks, bids);
+    }
+}
+
+void LimitOrderBook::cancel_order(Order order)
+{
+    // if already matched
+    // cancel remaining or nothing
+    if(order.side == Side::Bid)
+    {
+        do_cancel(order, bids);
+    }
+    if(order.side == Side::Ask)
+    {
+        do_cancel(order, asks);
     }
 }
 
