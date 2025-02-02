@@ -30,8 +30,7 @@ enum class Side {Bid, Ask};
 
 struct Order
 {
-    Order(std::string _id, Side _side, OrderType _type, double _price, unsigned int _quantity, std::chrono::microseconds _timestamp):
-    id(_id), side(_side), type(_type), price(_price), quantity(_quantity), timestamp(_timestamp){}
+    Order(std::string _id, Side _side, OrderType _type, double _price, unsigned int _quantity, std::chrono::microseconds _timestamp) : id(_id), side(_side), type(_type), price(_price), quantity(_quantity), timestamp(_timestamp) {}
     std::string id;
     Side side;
     OrderType type;
