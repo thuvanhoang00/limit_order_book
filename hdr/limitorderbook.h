@@ -43,7 +43,8 @@ class LimitOrderBook
 {
 public:
     void add_order(Order order);
-    void cancel_order(Order order);    
+    void cancel_order(Order order);
+    void edit_order(Order _old, Order _new);
     void print_book() const;
 private:
     // price-time priority: map sorts by price (best first)
@@ -77,6 +78,44 @@ private:
                 book.erase(order_queue_it);
             }
         }
+    }
+
+    template<typename Book>
+    bool do_edit(const Order& _old, const Order& _new, Book& book)
+    {
+        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [_old](std::pair<double, std::vector<Order>> p)
+                                           { return equal_within_ulps(_old.price, p.first, 10); });
+        if(old_order_queue_it != book.end())
+        {
+            std::cout << "found old queue\n";
+            auto& queue = old_order_queue_it->second;
+            queue.erase(std::remove_if(queue.begin(), queue.end(), [_old](Order order)
+                                       { return _old.id == order.id; }));
+            if(queue.empty())
+            {
+                book.erase(old_order_queue_it);
+            }
+
+            // pushing new order into book
+            auto new_order_queue_it = std::find_if(book.begin(), book.end(), [_new](std::pair<double, std::vector<Order>> p)
+                                                   { return equal_within_ulps(_new.price, p.first, 10); });
+
+            if (new_order_queue_it != book.end())
+            {
+                std::cout << "already exist queue that match with new price\n";
+                new_order_queue_it->second.push_back(_new);
+            }
+            else
+            {
+                std::cout << "create new queue\n";
+                std::vector<Order> _new_queue;
+                _new_queue.push_back(_new);
+                book[_new.price] = _new_queue;
+            }
+            return true;
+        }
+
+        return false;
     }
 
     template<typename OppositeBook>

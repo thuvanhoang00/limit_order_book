@@ -39,6 +39,32 @@ void LimitOrderBook::cancel_order(Order order)
     }
 }
 
+void LimitOrderBook::edit_order(Order _old, Order _new)
+{
+    std::cout << "editing: " << _old.id << ", type: " << static_cast<int>(_old.side) << std::endl; 
+    if(_new.timestamp.count()==0)
+    {
+        _new.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        );
+    }
+
+    if(_new.side == Side::Bid)
+    {
+        if(do_edit(_old, _new, bids))
+        {
+            match_order(_new, asks);
+        }
+    }
+    if(_new.side == Side::Ask)
+    {
+        if(do_edit(_old, _new, asks))
+        {
+            match_order(_new, bids);
+        }
+    }
+}
+
 void LimitOrderBook::print_book() const
 {
     std::cout << "\n------ ORDER BOOK ------\n";
