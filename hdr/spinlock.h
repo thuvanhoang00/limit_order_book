@@ -7,7 +7,11 @@ namespace thu
 class SpinLock
 {
 public:
-    SpinLock() : flag_(0){}
+    SpinLock() : flag_(0) {}
+    ~SpinLock()
+    {
+        flag_.store(0, std::memory_order_release);
+    }
     void lock()
     {
         static const timespec ns = {0, 1};

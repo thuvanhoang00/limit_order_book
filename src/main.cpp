@@ -5,7 +5,7 @@ using namespace thu;
 int main()
 {
     LimitOrderBook lob;
-
+#if 0
     lob.add_order({"B1", Side::Bid, OrderType::Limit, 100.50, 200, {}});
     lob.add_order({"A1", Side::Ask, OrderType::Limit, 101.00, 100, {}});
     lob.add_order({"B2", Side::Bid, OrderType::Limit, 100.75, 150, {}});
@@ -26,8 +26,9 @@ int main()
        101 | 100
     --------------------------
     *****************************/
+#endif
 
-
+#define MULTITHREAD
 #ifdef MULTITHREAD
     // Order order1 *()"B1", Side::Bid, OrderType::Limit, 100.50, 200, {}};
     std::thread t1(&thu::LimitOrderBook::add_order, &lob, Order(std::string("B1"), Side::Bid, OrderType::Limit, 100.50, 200, {}));
@@ -65,9 +66,9 @@ ASKS:
     lob.cancel_order({"B2", Side::Bid, OrderType::Limit, 100.75, 150, {}});
     lob.print_book();
 #endif
-    std::cout << "-----------------edit--------------\n";
-    lob.edit_order({"A1", Side::Ask, OrderType::Limit, 101.00, 100, {}}, {"A1", Side::Ask, OrderType::Limit, 100.50, 100, {}});
-    lob.print_book();
+    // std::cout << "-----------------edit--------------\n";
+    // lob.edit_order({"A1", Side::Ask, OrderType::Limit, 101.00, 100, {}}, {"A1", Side::Ask, OrderType::Limit, 100.50, 100, {}});
+    // lob.print_book();
 
     return 0;
 }

@@ -10,6 +10,7 @@
 #include <cmath>
 #include <algorithm>
 #include <type_traits>
+#include "spinlock.h"
 
 namespace thu
 {
@@ -50,21 +51,26 @@ private:
     // price-time priority: map sorts by price (best first)
     std::map<double, std::vector<Order>, std::greater<double>> bids;
     std::map<double, std::vector<Order>> asks;
+    SpinLock m_spinlock;
+private:
 
     template<typename Book, typename OppositeBook>
     void do_add(Order& order, Book& books, OppositeBook& opposite_side)
     {
+        m_spinlock.lock();
         match_order(order, opposite_side); // match order with the opposite side
         // Add remaining quantity to book (if limit order)
         if (order.quantity > 0 && order.type == OrderType::Limit)
         {
             books[order.price].push_back(order);
         }
+        m_spinlock.unlock();
     }
 
     template<typename Book>
     void do_cancel(Order& order, Book& book)
     {
+        m_spinlock.lock();
         auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::vector<Order>> p)
                                            { return equal_within_ulps(p.first, order.price, 10); });
         if(order_queue_it != book.end())
@@ -78,11 +84,13 @@ private:
                 book.erase(order_queue_it);
             }
         }
+        m_spinlock.unlock();
     }
 
     template<typename Book, typename OppositeBook>
     void do_edit(const Order& _old, Order& _new, Book& book, OppositeBook& opposite_book)
     {
+        m_spinlock.lock();
         auto old_order_queue_it = std::find_if(book.begin(), book.end(), [_old](std::pair<double, std::vector<Order>> p)
                                            { return equal_within_ulps(_old.price, p.first, 10); });
         if(old_order_queue_it != book.end())
@@ -119,6 +127,7 @@ private:
             //     book[_new.price] = _new_queue;
             // }
         }
+        m_spinlock.unlock();
     }
 
     template<typename OppositeBook>
