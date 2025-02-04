@@ -52,7 +52,7 @@ private:
     std::map<double, std::vector<Order>> asks;
 
     template<typename Book, typename OppositeBook>
-    void process_order(Order& order, Book& books, OppositeBook& opposite_side)
+    void do_add(Order& order, Book& books, OppositeBook& opposite_side)
     {
         match_order(order, opposite_side); // match order with the opposite side
         // Add remaining quantity to book (if limit order)
@@ -80,8 +80,8 @@ private:
         }
     }
 
-    template<typename Book>
-    bool do_edit(const Order& _old, const Order& _new, Book& book)
+    template<typename Book, typename OppositeBook>
+    void do_edit(const Order& _old, Order& _new, Book& book, OppositeBook& opposite_book)
     {
         auto old_order_queue_it = std::find_if(book.begin(), book.end(), [_old](std::pair<double, std::vector<Order>> p)
                                            { return equal_within_ulps(_old.price, p.first, 10); });
@@ -96,26 +96,29 @@ private:
                 book.erase(old_order_queue_it);
             }
 
-            // pushing new order into book
-            auto new_order_queue_it = std::find_if(book.begin(), book.end(), [_new](std::pair<double, std::vector<Order>> p)
-                                                   { return equal_within_ulps(_new.price, p.first, 10); });
+            match_order(_new, opposite_book);
+            // remaining quantity after matching
+            if(_new.quantity>0 && _new.type == OrderType::Limit)
+            {
+                book[_new.price].push_back(_new);
+            }
+            // // pushing new order into book
+            // auto new_order_queue_it = std::find_if(book.begin(), book.end(), [_new](std::pair<double, std::vector<Order>> p)
+            //                                        { return equal_within_ulps(_new.price, p.first, 10); });
 
-            if (new_order_queue_it != book.end())
-            {
-                std::cout << "already exist queue that match with new price\n";
-                new_order_queue_it->second.push_back(_new);
-            }
-            else
-            {
-                std::cout << "create new queue\n";
-                std::vector<Order> _new_queue;
-                _new_queue.push_back(_new);
-                book[_new.price] = _new_queue;
-            }
-            return true;
+            // if (new_order_queue_it != book.end())
+            // {
+            //     std::cout << "already exist queue that match with new price\n";
+            //     new_order_queue_it->second.push_back(_new);
+            // }
+            // else
+            // {
+            //     std::cout << "create new queue\n";
+            //     std::vector<Order> _new_queue;
+            //     _new_queue.push_back(_new);
+            //     book[_new.price] = _new_queue;
+            // }
         }
-
-        return false;
     }
 
     template<typename OppositeBook>

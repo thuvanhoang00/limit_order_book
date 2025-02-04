@@ -17,11 +17,11 @@ void LimitOrderBook::add_order(Order order)
     // Attempt to match immediately
     if (order.side == Side::Bid)
     {
-        process_order(order, bids, asks);
+        do_add(order, bids, asks);
     }
     else if (order.side == Side::Ask)
     {
-        process_order(order, asks, bids);
+        do_add(order, asks, bids);
     }
 }
 
@@ -51,17 +51,13 @@ void LimitOrderBook::edit_order(Order _old, Order _new)
 
     if(_new.side == Side::Bid)
     {
-        if(do_edit(_old, _new, bids))
-        {
-            match_order(_new, asks);
-        }
+        // after editing done then match_order
+        do_edit(_old, _new, bids, asks);
     }
     if(_new.side == Side::Ask)
     {
-        if(do_edit(_old, _new, asks))
-        {
-            match_order(_new, bids);
-        }
+        // after editing done then match_order
+        do_edit(_old, _new, asks, bids);
     }
 }
 
