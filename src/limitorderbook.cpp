@@ -7,6 +7,7 @@ namespace thu
 
 void LimitOrderBook::add_order(Order order)
 {
+    std::cout << "add: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
     // Set timestamp if not provided
     if (order.timestamp.count() == 0)
     {
@@ -27,6 +28,7 @@ void LimitOrderBook::add_order(Order order)
 
 void LimitOrderBook::cancel_order(Order order)
 {
+    std::cout << "cancel: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
     // if already matched
     // cancel remaining or nothing
     if(order.side == Side::Bid)

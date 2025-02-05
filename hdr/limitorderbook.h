@@ -3,6 +3,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <list>
 #include <string>
 #include <iomanip>
 #include <chrono>
@@ -49,8 +50,8 @@ public:
     void print_book() const;
 private:
     // price-time priority: map sorts by price (best first)
-    std::map<double, std::vector<Order>, std::greater<double>> bids;
-    std::map<double, std::vector<Order>> asks;
+    std::map<double, std::list<Order>, std::greater<double>> bids;
+    std::map<double, std::list<Order>> asks;
     SpinLock m_spinlock;
 private:
 
@@ -70,8 +71,9 @@ private:
     template<typename Book>
     void do_cancel(Order& order, Book& book)
     {
+        if(book.empty()) return;
         m_spinlock.lock();
-        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::vector<Order>> p)
+        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::list<Order>> p)
                                            { return equal_within_ulps(p.first, order.price, 10); });
         if(order_queue_it != book.end())
         {
@@ -90,8 +92,9 @@ private:
     template<typename Book, typename OppositeBook>
     void do_edit(const Order& _old, Order& _new, Book& book, OppositeBook& opposite_book)
     {
+        if(book.empty()) return;
         m_spinlock.lock();
-        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [_old](std::pair<double, std::vector<Order>> p)
+        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [_old](std::pair<double, std::list<Order>> p)
                                            { return equal_within_ulps(_old.price, p.first, 10); });
         if(old_order_queue_it != book.end())
         {
@@ -110,22 +113,6 @@ private:
             {
                 book[_new.price].push_back(_new);
             }
-            // // pushing new order into book
-            // auto new_order_queue_it = std::find_if(book.begin(), book.end(), [_new](std::pair<double, std::vector<Order>> p)
-            //                                        { return equal_within_ulps(_new.price, p.first, 10); });
-
-            // if (new_order_queue_it != book.end())
-            // {
-            //     std::cout << "already exist queue that match with new price\n";
-            //     new_order_queue_it->second.push_back(_new);
-            // }
-            // else
-            // {
-            //     std::cout << "create new queue\n";
-            //     std::vector<Order> _new_queue;
-            //     _new_queue.push_back(_new);
-            //     book[_new.price] = _new_queue;
-            // }
         }
         m_spinlock.unlock();
     }
