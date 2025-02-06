@@ -50,7 +50,7 @@ public:
     void print_book() const;
 private:
     // price-time priority: map sorts by price (best first)
-    std::map<double, std::list<Order>, std::greater<double>> bids;
+    std::map<double, std::list<Order>, std::greater<double>> bids; // queue is better than list but queue dont have erase
     std::map<double, std::list<Order>> asks;
     SpinLock m_spinlock;
 private:
