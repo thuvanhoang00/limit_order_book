@@ -2,12 +2,9 @@
 
 namespace thu
 {
-
-
-
 void LimitOrderBook::add_order(Order order)
 {
-    std::cout << "add: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
+    // std::cout << "add: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
     // Set timestamp if not provided
     if (order.timestamp.count() == 0)
     {
@@ -18,48 +15,49 @@ void LimitOrderBook::add_order(Order order)
     // Attempt to match immediately
     if (order.side == Side::Bid)
     {
-        do_add(order, bids, asks);
+        do_add(order, m_bids, m_asks);
     }
     else if (order.side == Side::Ask)
     {
-        do_add(order, asks, bids);
+        do_add(order, m_asks, m_bids);
     }
 }
 
 void LimitOrderBook::cancel_order(Order order)
 {
-    std::cout << "cancel: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
+    // std::cout << "cancel: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
+
     // if already matched
     // cancel remaining or nothing
     if(order.side == Side::Bid)
     {
-        do_cancel(order, bids);
+        do_cancel(order, m_bids);
     }
     if(order.side == Side::Ask)
     {
-        do_cancel(order, asks);
+        do_cancel(order, m_asks);
     }
 }
 
-void LimitOrderBook::edit_order(Order _old, Order _new)
+void LimitOrderBook::edit_order(Order before, Order after)
 {
-    std::cout << "editing: " << _old.id << ", type: " << static_cast<int>(_old.side) << std::endl; 
-    if(_new.timestamp.count()==0)
+    // std::cout << "editing: " << _old.id << ", type: " << static_cast<int>(_old.side) << std::endl; 
+    if(after.timestamp.count()==0)
     {
-        _new.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
+        after.timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch()
         );
     }
 
-    if(_new.side == Side::Bid)
+    if(after.side == Side::Bid)
     {
         // after editing done then match_order
-        do_edit(_old, _new, bids, asks);
+        do_edit(before, after, m_bids, m_asks);
     }
-    if(_new.side == Side::Ask)
+    if(after.side == Side::Ask)
     {
         // after editing done then match_order
-        do_edit(_old, _new, asks, bids);
+        do_edit(before, after, m_asks, m_bids);
     }
 }
 
@@ -67,7 +65,7 @@ void LimitOrderBook::print_book() const
 {
     std::cout << "\n------ ORDER BOOK ------\n";
     std::cout << "BIDS:\n";
-    for (const auto &[price, orders] : bids)
+    for (const auto &[price, orders] : m_bids)
     {
         std::cout << std::setw(6) << price << " | ";
         for (const auto &o : orders)
@@ -76,7 +74,7 @@ void LimitOrderBook::print_book() const
     }
 
     std::cout << "\nASKS:\n";
-    for (const auto &[price, orders] : asks)
+    for (const auto &[price, orders] : m_asks)
     {
         std::cout << std::setw(6) << price << " | ";
         for (const auto &o : orders)
