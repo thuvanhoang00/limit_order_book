@@ -74,5 +74,7 @@ int main()
     t2.join();
     t3.join();
 
+    lob.print_book();
+
     return 0;
 }

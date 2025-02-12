@@ -81,8 +81,7 @@ private:
     template<typename Book, typename OppositeBook>
     void do_add(Order order, Book& books, OppositeBook& opposite_side)
     {
-        // m_spinlock.lock();
-        std::lock_guard<std::mutex> g(m_mutex);
+        m_spinlock.lock();
         std::cout << __FUNCTION__ << std::endl;
         match_order(order, opposite_side); // match order with the opposite side
         // Add remaining quantity to book (if limit order)
@@ -90,45 +89,52 @@ private:
         {
             books[order.price].push_back(order);
         }
-        // m_spinlock.unlock();
+        m_spinlock.unlock();
     }
 
     template<typename Book>
     void do_cancel(Order order, Book& book)
     {
-        // m_spinlock.lock();
-        std::lock_guard<std::mutex> g(m_mutex);
+        m_spinlock.lock();
         std::cout << __FUNCTION__ << std::endl;
         auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::list<Order>> p)
                                            { return equal_within_ulps(p.first, order.price, 10); });
         if(order_queue_it != book.end())
         {
             auto& queue = order_queue_it->second;
-            queue.erase(std::remove_if(queue.begin(), queue.end(), [order](const auto &_order)
-                                       { return order.id == _order.id; }));
+            auto remove_it = std::find_if(queue.begin(), queue.end(), [order](const auto &_order)
+                                       { return order.id == _order.id; });
+            if(remove_it != queue.end())
+            {
+                queue.erase(remove_it);
+            }
 
             if(queue.empty())
             {
                 book.erase(order_queue_it);
             }
         }
-        // m_spinlock.unlock();
+        m_spinlock.unlock();
     }
 
     template<typename Book, typename OppositeBook>
     void do_edit(const Order& before, Order after, Book& book, OppositeBook& opposite_book)
     {
-        // m_spinlock.lock();
-        std::lock_guard<std::mutex> g(m_mutex);
-        std::cout << __FUNCTION__ << std::endl;
+        m_spinlock.lock();
+        std::cout << __FUNCTION__ << "old: " << static_cast<int>(before.side) << ", price: " << before.price << std::endl;
         auto old_order_queue_it = std::find_if(book.begin(), book.end(), [before](std::pair<double, std::list<Order>> p)
                                            { return equal_within_ulps(before.price, p.first, 10); });
         if(old_order_queue_it != book.end())
         {
             std::cout << "found old queue\n";
-            auto& queue = old_order_queue_it->second;
-            queue.erase(std::remove_if(queue.begin(), queue.end(), [before](const Order& order)
-                                       { return before.id == order.id; }));
+            auto &queue = old_order_queue_it->second;
+            auto remove_it = std::find_if(queue.begin(), queue.end(), [before](const Order &order)
+                                          { return before.id == order.id; });
+            if (remove_it != queue.end())
+            {
+                queue.erase(remove_it);
+            }
+
             if(queue.empty())
             {
                 book.erase(old_order_queue_it);
@@ -141,7 +147,7 @@ private:
                 book[after.price].push_back(after);
             }
         }
-        // m_spinlock.unlock();
+        m_spinlock.unlock();
     }
 
     template<typename OppositeBook>
