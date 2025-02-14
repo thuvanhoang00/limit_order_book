@@ -5,7 +5,7 @@ namespace thu
 void LimitOrderBook::add_order(Order order)
 {
     // std::cout << "add: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
-    LOG(__FUNCTION__, ": ORDER: id ", order.id , " TYPE " , static_cast<int>(order.type));
+    LOG("ORDER: id ", order.id , " TYPE " , static_cast<int>(order.type));
 
     // Set timestamp if not provided
     if (order.timestamp.count() == 0)
@@ -28,7 +28,7 @@ void LimitOrderBook::add_order(Order order)
 void LimitOrderBook::cancel_order(Order order)
 {
     // std::cout << "cancel: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
-    LOG(__FUNCTION__, ": ORDER: id ", order.id , " TYPE " , static_cast<int>(order.type));
+    LOG("ORDER: id ", order.id , " TYPE " , static_cast<int>(order.type));
 
     // if already matched
     // cancel remaining or nothing
@@ -45,7 +45,7 @@ void LimitOrderBook::cancel_order(Order order)
 void LimitOrderBook::edit_order(Order before, Order after)
 {
     // std::cout << "editing: " << _old.id << ", type: " << static_cast<int>(_old.side) << std::endl; 
-    LOG(__FUNCTION__, ": ORDER: id ", before.id , " TYPE " , static_cast<int>(before.type));
+    LOG("ORDER: id ", before.id , " TYPE " , static_cast<int>(before.type));
 
     if(after.timestamp.count()==0)
     {

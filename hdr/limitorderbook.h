@@ -82,7 +82,7 @@ private:
     void do_add(Order order, Book& books, OppositeBook& opposite_side)
     {
         m_spinlock.lock();
-        std::cout << __FUNCTION__ << std::endl;
+        // LOG();
         match_order(order, opposite_side); // match order with the opposite side
         // Add remaining quantity to book (if limit order)
         if (order.quantity > 0 && order.type == OrderType::Limit)
@@ -96,7 +96,7 @@ private:
     void do_cancel(Order order, Book& book)
     {
         m_spinlock.lock();
-        std::cout << __FUNCTION__ << std::endl;
+        // LOG();
         auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::list<Order>> p)
                                            { return equal_within_ulps(p.first, order.price, 10); });
         if(order_queue_it != book.end())
@@ -121,12 +121,12 @@ private:
     void do_edit(const Order& before, Order after, Book& book, OppositeBook& opposite_book)
     {
         m_spinlock.lock();
-        std::cout << __FUNCTION__ << "old: " << static_cast<int>(before.side) << ", price: " << before.price << std::endl;
+        // std::cout << "old: " << static_cast<int>(before.side) << ", price: " << before.price << std::endl;
         auto old_order_queue_it = std::find_if(book.begin(), book.end(), [before](std::pair<double, std::list<Order>> p)
                                            { return equal_within_ulps(before.price, p.first, 10); });
         if(old_order_queue_it != book.end())
         {
-            std::cout << "found old queue\n";
+            // std::cout << "found old queue\n";
             auto &queue = old_order_queue_it->second;
             auto remove_it = std::find_if(queue.begin(), queue.end(), [before](const Order &order)
                                           { return before.id == order.id; });
@@ -153,7 +153,7 @@ private:
     template<typename OppositeBook>
     void match_order(Order& order, OppositeBook& opposite_side)
     {
-        std::cout << "Calling matching\n";
+        // std::cout << "Calling matching\n";
         while(!opposite_side.empty() && order.quantity > 0)
         {
             auto& [best_price, orders_at_price] = *opposite_side.begin();
