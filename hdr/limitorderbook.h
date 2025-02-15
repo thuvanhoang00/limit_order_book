@@ -18,7 +18,7 @@ namespace thu
 {
 template <typename T>
 std::enable_if_t<not std::numeric_limits<T>::is_integer, bool>
-equal_within_ulps(T x, T y, std::size_t n)
+equal_within_ulps(T x, T y, std::size_t n=10)
 {
     const T m = std::min(std::fabs(x), std::fabs(y));
     const int exp = m < std::numeric_limits<T>::min() ? std::numeric_limits<T>::min_exponent - 1
@@ -38,14 +38,77 @@ enum class Side
     Ask
 };
 
+struct SecurityId
+{
+    std::string getSecurityId() const {
+        return id;
+    }
+    bool operator==(const SecurityId& other)
+    {
+        return this->id == other.id;
+    }
+private:
+    std::string id;
+};
+
+
+struct Price
+{
+    bool operator<(Price other)
+    {
+        return this->price < other.price;
+    }
+    bool operator>(Price other)
+    {
+        return this->price > other.price;
+    }
+    bool operator==(const Price& other)
+    {
+        return equal_within_ulps(this->price, other.price, 10);
+    }
+private:
+    double price;
+};
+
+struct Quantity
+{
+    // unsigned int getQuantity() const{
+    //     return quantity;
+    // }
+
+    template<typename T>
+    bool operator==(T other)
+    {
+        return this->quantity == static_cast<unsigned int>(other);
+    }
+
+    bool operator>(unsigned int amount)
+    {
+        return this->quantity > amount;
+    }
+
+    Quantity& operator-=(unsigned int amount)
+    {
+        this->quantity -= amount;
+        return *this;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Quantity& q)
+    {
+        return os << q.quantity;
+    }
+private:
+    unsigned int quantity;
+};
+
 struct Order
 {
     using microsec = std::chrono::microseconds;
-    Order(std::string id_
+    Order(SecurityId id_
         , Side side_
         , OrderType type_
-        , double price_
-        , unsigned int quantity_
+        , Price price_
+        , Quantity quantity_
         , microsec timestamp_) 
         : id(id_)
         , side(side_)
@@ -54,12 +117,12 @@ struct Order
         , quantity(quantity_)
         , timestamp(timestamp_) 
         {}
-
-    std::string id;
+    
+    SecurityId id;
     Side side;
     OrderType type;
-    double price;
-    unsigned int quantity;
+    Price price;
+    Quantity quantity;
     microsec timestamp; // for time priority
 };
 
@@ -71,9 +134,15 @@ public:
     void edit_order(Order before, Order after);
     void print_book() const;
 private:
+    struct PriceComparator
+    {
+        bool operator()(Price aLhs, Price aRhs) const noexcept{
+            return aLhs > aRhs;
+        }
+    };
     // price-time priority: map sorts by price (best first)
-    std::map<double, std::list<Order>, std::greater<double>> m_bids; // queue is better than list but queue dont have erase
-    std::map<double, std::list<Order>> m_asks;
+    std::map<Price, std::list<Order>, PriceComparator> m_bids; // queue is better than list but queue dont have erase
+    std::map<Price, std::list<Order>> m_asks;
     SpinLock m_spinlock;
     std::mutex m_mutex;
 private:
@@ -97,7 +166,7 @@ private:
     {
         m_spinlock.lock();
         // LOG();
-        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<double, std::list<Order>> p)
+        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<Price, std::list<Order>> p)
                                            { return equal_within_ulps(p.first, order.price, 10); });
         if(order_queue_it != book.end())
         {
@@ -122,8 +191,8 @@ private:
     {
         m_spinlock.lock();
         // std::cout << "old: " << static_cast<int>(before.side) << ", price: " << before.price << std::endl;
-        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [before](std::pair<double, std::list<Order>> p)
-                                           { return equal_within_ulps(before.price, p.first, 10); });
+        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [before](std::pair<Price, std::list<Order>> p)
+                                           { return before.price == p.first; });
         if(old_order_queue_it != book.end())
         {
             // std::cout << "found old queue\n";
