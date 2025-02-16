@@ -3,20 +3,31 @@
 #include <iostream>
 #include <chrono>
 #include <string>
+#include <atomic>
 #include "templatedefine.h"
+
 namespace thu
 {
 
 enum class OrderType
 {
     Limit,
-    Market
+    Market,
+    Iceberg
 };
 
 enum class Side
 {
     Bid,
     Ask
+};
+
+enum class OrderStatus
+{
+    New,
+    PartialFill,
+    Filled,
+    Canceled,
 };
 
 struct SecurityId
@@ -118,6 +129,35 @@ private:
     unsigned int quantity;
 };
     
+struct IcebergQuantity
+{
+    IcebergQuantity(unsigned int _quantity) : quantity(_quantity) {}
+
+    friend std::ostream &operator<<(std::ostream &os, const IcebergQuantity &q)
+    {
+        return os << q.quantity;
+    }
+
+    unsigned int get() const
+    {
+        return quantity;
+    }
+    void set(unsigned int quantity)
+    {
+        this->quantity = quantity;
+    }
+
+private:
+    unsigned int quantity;
+};
+
+struct IcebergVisibleSize
+{
+    IcebergVisibleSize(unsigned int _size) : visible_size(_size) {}
+private:
+    unsigned int visible_size;
+};
+
 struct Order
 {
     using microsec = std::chrono::microseconds;
@@ -140,7 +180,16 @@ struct Order
     OrderType type;
     Price price;
     Quantity quantity;
+    IcebergVisibleSize visible_size{0};
     microsec timestamp; // for time priority
+    // std::atomic<OrderStatus> status{OrderStatus::New};
+
+    // Iceberg tracking
+    IcebergQuantity iceberg_quantity{0};
+    IcebergQuantity hidden_quantity() const
+    {
+        return IcebergQuantity(iceberg_quantity.get() - quantity.get());
+    }
 };
 
 } // namespace thu
