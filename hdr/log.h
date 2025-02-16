@@ -33,12 +33,6 @@ public:
         }
     }
 #endif
-    // void log()
-    // {
-    //     if(!ofs.is_open()) ofs.open("logfile.txt");
-
-    //     ofs << "\n";
-    // }
 
     template<typename T, typename... Args>
     void log(T&& t, Args&&... args)
