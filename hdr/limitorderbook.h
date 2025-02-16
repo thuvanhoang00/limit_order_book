@@ -40,13 +40,26 @@ enum class Side
 
 struct SecurityId
 {
+    SecurityId(std::string _id) : id(_id) {}
+    
     std::string getSecurityId() const {
         return id;
     }
-    bool operator==(const SecurityId& other)
+    bool operator==(const SecurityId& other) const
     {
         return this->id == other.id;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, SecurityId secId)
+    {
+        return os << secId.id;
+    }
+
+    std::string get() const
+    {
+        return id;
+    }
+
 private:
     std::string id;
 };
@@ -54,17 +67,29 @@ private:
 
 struct Price
 {
-    bool operator<(Price other)
+    Price(double _price) : price(_price) {}
+
+    bool operator<(Price other) const
     {
         return this->price < other.price;
     }
-    bool operator>(Price other)
+    bool operator>(Price other) const
     {
         return this->price > other.price;
     }
-    bool operator==(const Price& other)
+    bool operator==(const Price& other) const
     {
         return equal_within_ulps(this->price, other.price, 10);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, Price p)
+    {
+        return os << p.price;
+    }
+
+    double get() const
+    {
+        return price;
     }
 private:
     double price;
@@ -75,27 +100,36 @@ struct Quantity
     // unsigned int getQuantity() const{
     //     return quantity;
     // }
+    Quantity(unsigned int _quantity) : quantity(_quantity) {}
 
-    template<typename T>
-    bool operator==(T other)
+    bool operator==(Quantity other) const
     {
-        return this->quantity == static_cast<unsigned int>(other);
+        return this->quantity == other.quantity;
     }
 
-    bool operator>(unsigned int amount)
-    {
-        return this->quantity > amount;
-    }
+    // bool operator>(unsigned int amount) const
+    // {
+    //     return this->quantity > amount;
+    // }
 
-    Quantity& operator-=(unsigned int amount)
-    {
-        this->quantity -= amount;
-        return *this;
-    }
+    // Quantity& operator-=(unsigned int amount)
+    // {
+    //     this->quantity -= amount;
+    //     return *this;
+    // }
 
     friend std::ostream& operator<<(std::ostream& os, const Quantity& q)
     {
         return os << q.quantity;
+    }
+
+    unsigned int get() const
+    {
+        return quantity;
+    }
+    void set(unsigned int quantity)
+    {
+        this->quantity = quantity;
     }
 private:
     unsigned int quantity;
@@ -154,7 +188,7 @@ private:
         // LOG();
         match_order(order, opposite_side); // match order with the opposite side
         // Add remaining quantity to book (if limit order)
-        if (order.quantity > 0 && order.type == OrderType::Limit)
+        if (order.quantity.get() > 0 && order.type == OrderType::Limit)
         {
             books[order.price].push_back(order);
         }
@@ -167,7 +201,7 @@ private:
         m_spinlock.lock();
         // LOG();
         auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<Price, std::list<Order>> p)
-                                           { return equal_within_ulps(p.first, order.price, 10); });
+                                           { return equal_within_ulps(p.first.get(), order.price.get(), 10); });
         if(order_queue_it != book.end())
         {
             auto& queue = order_queue_it->second;
@@ -211,7 +245,7 @@ private:
 
             match_order(after, opposite_book);
             // remaining quantity after matching
-            if(after.quantity>0 && after.type == OrderType::Limit)
+            if(after.quantity.get() > 0 && after.type == OrderType::Limit)
             {
                 book[after.price].push_back(after);
             }
@@ -223,7 +257,7 @@ private:
     void match_order(Order& order, OppositeBook& opposite_side)
     {
         // std::cout << "Calling matching\n";
-        while(!opposite_side.empty() && order.quantity > 0)
+        while(!opposite_side.empty() && order.quantity.get() > 0)
         {
             auto& [best_price, orders_at_price] = *opposite_side.begin();
             
@@ -239,13 +273,13 @@ private:
 
             // Process orders at best price
             auto it = orders_at_price.begin();
-            while(it != orders_at_price.end() && order.quantity > 0)
+            while(it != orders_at_price.end() && order.quantity.get() > 0)
             {
-                unsigned int fill_qty = std::min(order.quantity, it->quantity);
+                unsigned int fill_qty = std::min(order.quantity.get(), it->quantity.get());
 
                 // Execute trade
-                order.quantity -= fill_qty;
-                it->quantity -= fill_qty;
+                order.quantity.set(order.quantity.get()-fill_qty);
+                it->quantity.set(it->quantity.get()-fill_qty);
 
                 // Generate execution report
                 std::cout << "TRADE: "
@@ -254,7 +288,7 @@ private:
                           << " (Remaining: " << order.quantity << ")\n";
             
                 // Remove filled orders
-                if(it->quantity == 0)
+                if(it->quantity.get() == 0)
                 {
                     it = orders_at_price.erase(it);
                 }
