@@ -18,11 +18,29 @@ void addOrder_thread(LimitOrderBook &lob)
     {
         if (getRand() == 0)
         {
-            lob.add_order({std::to_string(i), Side::Bid, OrderType::Limit, 100.50, 200, {}});
+            Order o = OrderBuilder()
+                          .setSecurityId(std::to_string(i))
+                          .setSide(Side::Bid)
+                          .setOrderType(OrderType::Limit)
+                          .setPrice(100.50)
+                          .setQuantity(200)
+                          .setTimestamp({})
+                          .build();
+
+            lob.add_order(o);
         }
         else
         {
-            lob.add_order({std::to_string(i), Side::Ask, OrderType::Limit, 100.50, 200, {}});
+            Order o = OrderBuilder()
+                          .setSecurityId(std::to_string(i))
+                          .setSide(Side::Ask)
+                          .setOrderType(OrderType::Limit)
+                          .setPrice(100.50)
+                          .setQuantity(200)
+                          .setTimestamp({})
+                          .build();
+                          
+            lob.add_order(o);
         }
     }
 }
@@ -34,14 +52,44 @@ void editOrder_thread(LimitOrderBook &lob)
     {
         if (getRand() == 0)
         {
-            Order _o = {std::to_string(i), Side::Bid, OrderType::Limit, 100.50, 200, {}};
-            Order _n = {std::to_string(i), Side::Bid, OrderType::Limit, 100.50, 150, {}};
+            Order _o = OrderBuilder()
+                           .setSecurityId(std::to_string(i))
+                           .setSide(Side::Bid)
+                           .setOrderType(OrderType::Limit)
+                           .setPrice(100.50)
+                           .setQuantity(200)
+                           .setTimestamp({})
+                           .build();
+
+            Order _n = OrderBuilder()
+                           .setSecurityId(std::to_string(i))
+                           .setSide(Side::Bid)
+                           .setOrderType(OrderType::Limit)
+                           .setPrice(100.50)
+                           .setQuantity(150)
+                           .setTimestamp({})
+                           .build();
             lob.edit_order(_o, _n);
         }
         else
         {
-            Order _o = {std::to_string(i), Side::Ask, OrderType::Limit, 100.50, 200, {}};
-            Order _n = {std::to_string(i), Side::Ask, OrderType::Limit, 100.50, 150, {}};
+            Order _o = OrderBuilder()
+                           .setSecurityId(std::to_string(i))
+                           .setSide(Side::Ask)
+                           .setOrderType(OrderType::Limit)
+                           .setPrice(100.50)
+                           .setQuantity(200)
+                           .setTimestamp({})
+                           .build();
+
+            Order _n = OrderBuilder()
+                           .setSecurityId(std::to_string(i))
+                           .setSide(Side::Ask)
+                           .setOrderType(OrderType::Limit)
+                           .setPrice(100.50)
+                           .setQuantity(150)
+                           .setTimestamp({})
+                           .build();
             lob.edit_order(_o, _n);
         }
     }
@@ -54,11 +102,29 @@ void cancelOrder_thread(LimitOrderBook &lob)
     {
         if (getRand() == 0)
         {
-            lob.cancel_order({std::to_string(i), Side::Bid, OrderType::Limit, 100.50, 200, {}});
+            Order o = OrderBuilder()
+                          .setSecurityId(std::to_string(i))
+                          .setSide(Side::Bid)
+                          .setOrderType(OrderType::Limit)
+                          .setPrice(100.50)
+                          .setQuantity(200)
+                          .setTimestamp({})
+                          .build();
+
+            lob.cancel_order(o);
         }
         else
         {
-            lob.cancel_order({std::to_string(i), Side::Ask, OrderType::Limit, 100.50, 200, {}});
+            Order o = OrderBuilder()
+                          .setSecurityId(std::to_string(i))
+                          .setSide(Side::Ask)
+                          .setOrderType(OrderType::Limit)
+                          .setPrice(100.50)
+                          .setQuantity(200)
+                          .setTimestamp({})
+                          .build();
+
+            lob.cancel_order(o);
         }
     }
 }

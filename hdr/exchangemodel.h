@@ -9,6 +9,8 @@
 namespace thu
 {
 
+using microsec = std::chrono::microseconds;
+
 enum class OrderType
 {
     Limit,
@@ -32,7 +34,7 @@ enum class OrderStatus
 
 struct SecurityId
 {
-    SecurityId(std::string _id) : id(_id) {}
+    SecurityId(std::string _id = "") : id(_id) {}
 
     std::string getSecurityId() const
     {
@@ -59,7 +61,7 @@ private:
 
 struct Price
 {
-    Price(double _price) : price(_price) {}
+    Price(double _price = 0.00) : price(_price) {}
 
     bool operator<(Price other) const
     {
@@ -93,7 +95,7 @@ struct Quantity
     // unsigned int getQuantity() const{
     //     return quantity;
     // }
-    Quantity(unsigned int _quantity) : quantity(_quantity) {}
+    Quantity(unsigned int _quantity = 0) : quantity(_quantity) {}
 
     bool operator==(Quantity other) const
     {
@@ -131,7 +133,7 @@ private:
     
 struct IcebergQuantity
 {
-    IcebergQuantity(unsigned int _quantity) : quantity(_quantity) {}
+    IcebergQuantity(unsigned int _quantity = 0) : quantity(_quantity) {}
 
     friend std::ostream &operator<<(std::ostream &os, const IcebergQuantity &q)
     {
@@ -153,27 +155,14 @@ private:
 
 struct IcebergVisibleSize
 {
-    IcebergVisibleSize(unsigned int _size) : visible_size(_size) {}
+    IcebergVisibleSize(unsigned int _size = 0) : visible_size(_size) {}
 private:
     unsigned int visible_size;
 };
 
 struct Order
 {
-    using microsec = std::chrono::microseconds;
-    Order(SecurityId id_
-        , Side side_
-        , OrderType type_
-        , Price price_
-        , Quantity quantity_
-        , microsec timestamp_) 
-        : id(id_)
-        , side(side_)
-        , type(type_)
-        , price(price_)
-        , quantity(quantity_)
-        , timestamp(timestamp_) 
-        {}
+
     
     SecurityId id;
     Side side;
@@ -190,7 +179,59 @@ struct Order
     {
         return IcebergQuantity(iceberg_quantity.get() - quantity.get());
     }
+
+private:
+    Order(SecurityId id_
+        , Side side_
+        , OrderType type_
+        , Price price_
+        , Quantity quantity_
+        , IcebergVisibleSize visiblesize_
+        , microsec timestamp_
+        , IcebergQuantity icebergquantity_)
+        : id(id_)
+        , side(side_)
+        , type(type_)
+        , price(price_)
+        , quantity(quantity_)
+        , visible_size(visiblesize_)
+        , timestamp(timestamp_)
+        , iceberg_quantity(icebergquantity_)
+    {
+    }
+
+    friend class OrderBuilder;
 };
+
+class OrderBuilder
+{
+public:
+    OrderBuilder& setSecurityId(const SecurityId& id_){id = id_; return *this;}
+    OrderBuilder& setSide(const Side& side_){side = side_; return *this;}
+    OrderBuilder& setOrderType(const OrderType& type_){type = type_; return *this;}
+    OrderBuilder& setPrice(const Price& price_){price = price_; return *this;}
+    OrderBuilder& setQuantity(const Quantity& quantity_){quantity = quantity_; return *this;}
+    OrderBuilder& setIcebergVisibleSize(const IcebergVisibleSize& visiblesize_){visible_size = visiblesize_; return *this;}
+    OrderBuilder& setTimestamp(const microsec& timestamp_){timestamp = timestamp_; return *this;}
+    OrderBuilder& setIcebergQuantity(const IcebergQuantity& icebergquantity_){iceberg_quantity = icebergquantity_; return *this;}
+
+    Order build() const
+    {
+        return Order(id, side, type, price, quantity, visible_size, timestamp, iceberg_quantity);
+    }
+
+private:
+    SecurityId id;
+    Side side;
+    OrderType type;
+    Price price;
+    Quantity quantity{0};
+    IcebergVisibleSize visible_size{0};
+    microsec timestamp; // for time priority
+    // Iceberg tracking
+    IcebergQuantity iceberg_quantity{0};
+};
+
 
 } // namespace thu
 #endif
