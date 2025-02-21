@@ -16,9 +16,9 @@ namespace thu
 class LimitOrderBook
 {
 public:
-    void add_order(Order order);
-    void cancel_order(Order order);
-    void edit_order(Order before, Order after);
+    void add_order(NormalOrder order);
+    void cancel_order(NormalOrder order);
+    void edit_order(NormalOrder before, NormalOrder after);
     void print_book() const;
 private:
     struct PriceComparator
@@ -28,14 +28,14 @@ private:
         }
     };
     // price-time priority: map sorts by price (best first)
-    std::map<Price, std::list<Order>, PriceComparator> m_bids; // queue is better than list but queue dont have erase
-    std::map<Price, std::list<Order>> m_asks;
+    std::map<Price, std::list<NormalOrder>, PriceComparator> m_bids; // queue is better than list but queue dont have erase
+    std::map<Price, std::list<NormalOrder>> m_asks;
     SpinLock m_spinlock;
     std::mutex m_mutex;
 private:
 
     template<typename Book, typename OppositeBook>
-    void do_add(Order order, Book& books, OppositeBook& opposite_side)
+    void do_add(NormalOrder order, Book& books, OppositeBook& opposite_side)
     {
         m_spinlock.lock();
 
@@ -50,11 +50,11 @@ private:
     }
 
     template<typename Book>
-    void do_cancel(Order order, Book& book)
+    void do_cancel(NormalOrder order, Book& book)
     {
         m_spinlock.lock();
 
-        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<Price, std::list<Order>> p)
+        auto order_queue_it = std::find_if(book.begin(), book.end(), [order](std::pair<Price, std::list<NormalOrder>> p)
                                            { return equal_within_ulps(p.first.get(), order.price.get(), 10); });
         if(order_queue_it != book.end())
         {
@@ -76,16 +76,16 @@ private:
     }
 
     template<typename Book, typename OppositeBook>
-    void do_edit(const Order& before, Order after, Book& book, OppositeBook& opposite_book)
+    void do_edit(const NormalOrder& before, NormalOrder after, Book& book, OppositeBook& opposite_book)
     {
         m_spinlock.lock();
 
-        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [before](std::pair<Price, std::list<Order>> p)
+        auto old_order_queue_it = std::find_if(book.begin(), book.end(), [before](std::pair<Price, std::list<NormalOrder>> p)
                                            { return before.price == p.first; });
         if(old_order_queue_it != book.end())
         {
             auto &queue = old_order_queue_it->second;
-            auto remove_it = std::find_if(queue.begin(), queue.end(), [before](const Order &order)
+            auto remove_it = std::find_if(queue.begin(), queue.end(), [before](const NormalOrder &order)
                                           { return before.id == order.id; });
             if (remove_it != queue.end())
             {
@@ -109,7 +109,7 @@ private:
     }
 
     template<typename OppositeBook>
-    void match_order(Order& order, OppositeBook& opposite_side)
+    void match_order(NormalOrder& order, OppositeBook& opposite_side)
     {
         // maybe deadlock here if call spin.lock()
         while(!opposite_side.empty() && order.quantity.get() > 0)

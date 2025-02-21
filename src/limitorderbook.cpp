@@ -2,7 +2,7 @@
 #include "../hdr/log.h"
 namespace thu
 {
-void LimitOrderBook::add_order(Order order)
+void LimitOrderBook::add_order(NormalOrder order)
 {
     // std::cout << "add: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
     LOG("ORDER: id ", order.id , " TYPE " , static_cast<int>(order.type));
@@ -25,7 +25,7 @@ void LimitOrderBook::add_order(Order order)
     }
 }
 
-void LimitOrderBook::cancel_order(Order order)
+void LimitOrderBook::cancel_order(NormalOrder order)
 {
     // std::cout << "cancel: " << order.id << ", type: " << static_cast<int>(order.side) << std::endl; 
     LOG("ORDER: id ", order.id , " TYPE " , static_cast<int>(order.type));
@@ -42,7 +42,7 @@ void LimitOrderBook::cancel_order(Order order)
     }
 }
 
-void LimitOrderBook::edit_order(Order before, Order after)
+void LimitOrderBook::edit_order(NormalOrder before, NormalOrder after)
 {
     // std::cout << "editing: " << _old.id << ", type: " << static_cast<int>(_old.side) << std::endl; 
     LOG("ORDER: id ", before.id , " TYPE " , static_cast<int>(before.type));

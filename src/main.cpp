@@ -18,7 +18,7 @@ void addOrder_thread(LimitOrderBook &lob)
     {
         if (getRand() == 0)
         {
-            Order o = OrderBuilder()
+            auto o = NormalOrderBuilder()
                           .setSecurityId(std::to_string(i))
                           .setSide(Side::Bid)
                           .setOrderType(OrderType::Limit)
@@ -31,7 +31,7 @@ void addOrder_thread(LimitOrderBook &lob)
         }
         else
         {
-            Order o = OrderBuilder()
+            auto o = NormalOrderBuilder()
                           .setSecurityId(std::to_string(i))
                           .setSide(Side::Ask)
                           .setOrderType(OrderType::Limit)
@@ -52,7 +52,7 @@ void editOrder_thread(LimitOrderBook &lob)
     {
         if (getRand() == 0)
         {
-            Order _o = OrderBuilder()
+            auto _o = NormalOrderBuilder()
                            .setSecurityId(std::to_string(i))
                            .setSide(Side::Bid)
                            .setOrderType(OrderType::Limit)
@@ -61,7 +61,7 @@ void editOrder_thread(LimitOrderBook &lob)
                            .setTimestamp({})
                            .build();
 
-            Order _n = OrderBuilder()
+            auto _n = NormalOrderBuilder()
                            .setSecurityId(std::to_string(i))
                            .setSide(Side::Bid)
                            .setOrderType(OrderType::Limit)
@@ -73,7 +73,7 @@ void editOrder_thread(LimitOrderBook &lob)
         }
         else
         {
-            Order _o = OrderBuilder()
+            auto _o = NormalOrderBuilder()
                            .setSecurityId(std::to_string(i))
                            .setSide(Side::Ask)
                            .setOrderType(OrderType::Limit)
@@ -82,7 +82,7 @@ void editOrder_thread(LimitOrderBook &lob)
                            .setTimestamp({})
                            .build();
 
-            Order _n = OrderBuilder()
+            auto _n = NormalOrderBuilder()
                            .setSecurityId(std::to_string(i))
                            .setSide(Side::Ask)
                            .setOrderType(OrderType::Limit)
@@ -102,7 +102,7 @@ void cancelOrder_thread(LimitOrderBook &lob)
     {
         if (getRand() == 0)
         {
-            Order o = OrderBuilder()
+            auto o = NormalOrderBuilder()
                           .setSecurityId(std::to_string(i))
                           .setSide(Side::Bid)
                           .setOrderType(OrderType::Limit)
@@ -115,7 +115,7 @@ void cancelOrder_thread(LimitOrderBook &lob)
         }
         else
         {
-            Order o = OrderBuilder()
+            auto o = NormalOrderBuilder()
                           .setSecurityId(std::to_string(i))
                           .setSide(Side::Ask)
                           .setOrderType(OrderType::Limit)
