@@ -1,6 +1,7 @@
 #ifndef LIMITORDERBOOK_H
 #define LIMITORDERBOOK_H
 #include <map>
+#include <set>
 #include <vector>
 #include <list>
 #include <iomanip>
@@ -9,17 +10,40 @@
 #include "spinlock.h"
 #include "exchangemodel.h"
 #include "templatedefine.h"
-
+#include "tradingstrategy.h"
 namespace thu
 {
 
-class LimitOrderBook
+class IOrderBook
+{
+public:    
+    virtual ~IOrderBook() = default;
+    virtual void add_order(NormalOrder order) = 0;
+    virtual void cancel_order(NormalOrder order) = 0;
+    virtual void edit_order(NormalOrder before, NormalOrder after) = 0;
+    virtual void subscribe(ITradingStrategyListener* listener) = 0;
+};
+
+class LimitOrderBook : public IOrderBook
 {
 public:
-    void add_order(NormalOrder order);
-    void cancel_order(NormalOrder order);
-    void edit_order(NormalOrder before, NormalOrder after);
+    void add_order(NormalOrder order) override;
+    void cancel_order(NormalOrder order) override;
+    void edit_order(NormalOrder before, NormalOrder after) override;
     void print_book() const;
+
+    //
+    void subscribe(ITradingStrategyListener* listener) override
+    {
+        listeners.insert(listener);
+    }
+    void notify()
+    {
+        for(auto e : listeners)
+        {
+            e->getNotice();
+        }
+    }
 private:
     struct PriceComparator
     {
@@ -32,6 +56,9 @@ private:
     std::map<Price, std::list<NormalOrder>> m_asks;
     SpinLock m_spinlock;
     std::mutex m_mutex;
+
+    // 
+    std::set<ITradingStrategyListener*> listeners;
 private:
 
     template<typename Book, typename OppositeBook>
@@ -45,6 +72,9 @@ private:
         {
             books[order.price].push_back(order);
         }
+        
+        // Notify to listeners
+        notify();
 
         m_spinlock.unlock();
     }
@@ -71,6 +101,9 @@ private:
                 book.erase(order_queue_it);
             }
         }
+
+        // Notify to listeners
+        notify();
 
         m_spinlock.unlock();
     }
@@ -104,6 +137,9 @@ private:
                 book[after.price].push_back(after);
             }
         }
+
+        // Notify to listeners
+        notify();
 
         m_spinlock.unlock();
     }

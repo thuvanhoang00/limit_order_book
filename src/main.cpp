@@ -1,4 +1,5 @@
 #include "../hdr/limitorderbook.h"
+#include "../hdr/tradingstrategy.h"
 #include <thread>
 #include <random>
 using namespace thu;
@@ -132,6 +133,7 @@ void cancelOrder_thread(LimitOrderBook &lob)
 int main()
 {
     LimitOrderBook lob;
+    ConcreteTradingStrategyListener lis1(&lob);
 
     std::thread t1(addOrder_thread, std::ref(lob));
     std::thread t2(editOrder_thread, std::ref(lob));
