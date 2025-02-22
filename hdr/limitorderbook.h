@@ -10,9 +10,10 @@
 #include "spinlock.h"
 #include "exchangemodel.h"
 #include "templatedefine.h"
-#include "tradingstrategy.h"
 namespace thu
 {
+
+class ITradingStrategyListener;
 
 class IOrderBook
 {
@@ -33,17 +34,9 @@ public:
     void print_book() const;
 
     //
-    void subscribe(ITradingStrategyListener* listener) override
-    {
-        listeners.insert(listener);
-    }
-    void notify()
-    {
-        for(auto e : listeners)
-        {
-            e->getNotice();
-        }
-    }
+    void subscribe(ITradingStrategyListener* listener) override;
+    void notify();
+    
 private:
     struct PriceComparator
     {

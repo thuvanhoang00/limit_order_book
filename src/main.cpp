@@ -1,5 +1,5 @@
-#include "../hdr/limitorderbook.h"
 #include "../hdr/tradingstrategy.h"
+#include "../hdr/limitorderbook.h"
 #include <thread>
 #include <random>
 using namespace thu;

@@ -1,5 +1,6 @@
 #include "../hdr/limitorderbook.h"
 #include "../hdr/log.h"
+#include "../hdr/tradingstrategy.h"
 namespace thu
 {
 void LimitOrderBook::add_order(NormalOrder order)
@@ -88,4 +89,20 @@ void LimitOrderBook::print_book() const
     }
     std::cout << "--------------------------\n\n";
 }
+
+
+void LimitOrderBook::subscribe(ITradingStrategyListener* listener)
+{
+    listeners.insert(listener);
+}
+
+void LimitOrderBook::notify()
+{
+    for (auto e : listeners)
+    {
+        e->getNotice();
+    }
+}
+
+
 }

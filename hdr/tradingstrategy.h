@@ -1,11 +1,9 @@
 #ifndef TRADINGSTRATEGY_H
 #define TRADINGSTRATEGY_H
-#include <iostream>
-#include "limitorderbook.h"
 namespace thu
 {
 class IOrderBook;
-
+    
 class ITradingStrategyListener
 {
 public:
@@ -16,15 +14,8 @@ public:
 class ConcreteTradingStrategyListener : public ITradingStrategyListener
 {
 public:
-    ConcreteTradingStrategyListener(IOrderBook* orderbook)
-    {
-        orderbook->subscribe(this);
-    }
-    void getNotice() override
-    {
-        std::cout << "got notice \n";
-    }
-
+    ConcreteTradingStrategyListener(IOrderBook* orderbook);
+    void getNotice() override;
 };
 
 }
