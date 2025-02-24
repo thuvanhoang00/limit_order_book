@@ -13,19 +13,19 @@
 namespace thu
 {
 
-class ITradingStrategyListener;
+class IFTradingStrategyListener;
 
-class IOrderBook
+class IFOrderBook
 {
 public:    
-    virtual ~IOrderBook() = default;
+    virtual ~IFOrderBook() = default;
     virtual void add_order(NormalOrder order) = 0;
     virtual void cancel_order(NormalOrder order) = 0;
     virtual void edit_order(NormalOrder before, NormalOrder after) = 0;
-    virtual void subscribe(ITradingStrategyListener* listener) = 0;
+    virtual void subscribe(IFTradingStrategyListener* listener) = 0;
 };
 
-class LimitOrderBook : public IOrderBook
+class LimitOrderBook : public IFOrderBook
 {
 public:
     void add_order(NormalOrder order) override;
@@ -34,7 +34,7 @@ public:
     void print_book() const;
 
     //
-    void subscribe(ITradingStrategyListener* listener) override;
+    void subscribe(IFTradingStrategyListener* listener) override;
     void notify();
     
 private:
@@ -51,7 +51,7 @@ private:
     std::mutex m_mutex;
 
     // 
-    std::set<ITradingStrategyListener*> listeners;
+    std::set<IFTradingStrategyListener*> listeners;
 private:
 
     template<typename Book, typename OppositeBook>

@@ -3,10 +3,10 @@
 namespace thu
 {
 
-class EventQueue
+class IFEventQueue
 {
 public:
-    virtual ~EventQueue() = default;
+    virtual ~IFEventQueue() = default;
     virtual void feed() = 0;
     virtual void request() = 0;
     virtual void response() = 0;

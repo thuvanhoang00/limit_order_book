@@ -3,10 +3,10 @@
 namespace thu
 {
 
-class FeedProducer
+class IFFeedProducer
 {
 public:
-    virtual ~FeedProducer() = default;
+    virtual ~IFFeedProducer() = default;
     virtual void feed() = 0;
 };
 

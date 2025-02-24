@@ -3,10 +3,10 @@
 namespace thu
 {
 
-class FeedAPI
+class IFFeedAPI
 {
 public:
-    virtual ~FeedAPI() = default;
+    virtual ~IFFeedAPI() = default;
     virtual void feed() = 0;
 };
 

@@ -2,19 +2,19 @@
 #define TRADINGSTRATEGY_H
 namespace thu
 {
-class IOrderBook;
+class IFOrderBook;
     
-class ITradingStrategyListener
+class IFTradingStrategyListener
 {
 public:
-    virtual ~ITradingStrategyListener() = default;
+    virtual ~IFTradingStrategyListener() = default;
     virtual void getNotice() = 0;
 };
 
-class ConcreteTradingStrategyListener : public ITradingStrategyListener
+class ConcreteTradingStrategyListener : public IFTradingStrategyListener
 {
 public:
-    ConcreteTradingStrategyListener(IOrderBook* orderbook);
+    ConcreteTradingStrategyListener(IFOrderBook* orderbook);
     void getNotice() override;
 };
 

@@ -5,7 +5,7 @@
 namespace thu
 {
 
-ConcreteTradingStrategyListener::ConcreteTradingStrategyListener(IOrderBook* orderbook)
+ConcreteTradingStrategyListener::ConcreteTradingStrategyListener(IFOrderBook* orderbook)
 {
     orderbook->subscribe(this);
 }

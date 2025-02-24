@@ -91,7 +91,7 @@ void LimitOrderBook::print_book() const
 }
 
 
-void LimitOrderBook::subscribe(ITradingStrategyListener* listener)
+void LimitOrderBook::subscribe(IFTradingStrategyListener* listener)
 {
     listeners.insert(listener);
 }

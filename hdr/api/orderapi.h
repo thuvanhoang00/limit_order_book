@@ -3,10 +3,10 @@
 namespace thu
 {
 
-class OrderAPI
+class IFOrderAPI
 {
 public:
-    virtual ~OrderAPI() = default;
+    virtual ~IFOrderAPI() = default;
     virtual void request() = 0;
     virtual void response() = 0;
 };
