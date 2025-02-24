@@ -10,5 +10,8 @@ add_executable(${PROJECT_NAME}
     "../src/main.cpp" 
     "../src/limitorderbook.cpp"
     "../src/tradingstrategy.cpp"
-
+    "../src/eventqueue.cpp"
+    "../src/feedproducer.cpp"
+    "../src/api/feedapi.cpp"
+    "../src/api/orderapi.cpp"
 )
