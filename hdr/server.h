@@ -21,6 +21,7 @@ public:
 
     bool create(){
         sock_fd = ::socket(AF_INET, SOCK_STREAM, 0);
+        return true;
     }
 
     int get_sock_fd() const{
