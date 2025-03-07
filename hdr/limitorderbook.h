@@ -33,7 +33,7 @@ public:
     void edit_order(NormalOrder before, NormalOrder after) override;
     void print_book() const;
 
-    //
+    // observer function
     void subscribe(IFTradingStrategyListener* listener) override;
     void notify();
     
