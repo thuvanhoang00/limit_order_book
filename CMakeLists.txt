@@ -16,3 +16,8 @@ add_executable(${PROJECT_NAME}
     # "../src/api/orderapi.cpp"
     "../src/server.cpp"
 )
+
+add_executable(Client
+    "../src/main_client.cpp"
+    "../src/client.cpp"
+)
