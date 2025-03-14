@@ -80,9 +80,58 @@ void test_seq_cst()
     assert(z.load() != 0);
 }
 
+void test_consume_release()
+{
+    std::atomic<std::string *> ptr{};
+    int data;
+    std::string *p{};
+    std::jthread producer([&](){
+        p = new std::string("Hello");
+        data = 42;
+        ptr.store(p, std::memory_order_release); 
+    });
+
+    std::jthread consumer([&](){
+        std::string* p2{};
+        while(!(p2 = ptr.load(std::memory_order_consume)));
+
+        assert(*p == "Hello"); // always true
+        assert(*p2 == "Hello"); // always true: *p2 carries dependency from ptr
+        if(data != 42) std::cout << "data != 42\n";
+        assert(data == 42); // may and may not be true: data does not carry dependency from ptr
+        
+        delete p2;
+    });
+}
+
+void test_acquire_release()
+{
+    std::atomic<std::string*> ptr{};
+    int data;
+    std::string* p{};
+    std::jthread producer([&](){
+        p = new std::string("hello");
+        data = 42;
+        ptr.store(p, std::memory_order_release);
+    });
+
+    std::jthread consumer([&](){
+        std::string* p2{};
+        while(!(p2 = ptr.load(std::memory_order_acquire)));
+
+        assert(*p2 == "hello"); // always true
+        assert(data == 42); // always true
+        assert(*p2 == "hello"); // always truee
+
+        delete p2;
+    });
+}
+
 int main()
 {
-    test_atomic_relaxed();
-    test_seq_cst();
+    // test_atomic_relaxed();
+    // test_seq_cst();
+    test_consume_release();
+    test_acquire_release();
     return 0;
 }
