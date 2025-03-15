@@ -2,6 +2,10 @@
 #include "../hdr/log.h"
 #include <iostream>
 #include <string>
+
+#define ASK "ASK"
+#define BID "BID"
+
 namespace thu
 {
 const char* SERVER_IP = "127.0.0.1"; // localhost
@@ -33,11 +37,20 @@ void Client::run()
     std::string input;
     char buffer[1024] = {0};
     while(true){
-        std::cout << "Enter message(type 'exit' to quit): " ;
+        std::cout << "Enter type \n1. Ask\n2. Bid\n(type 'exit' to quit): " ;
         std::getline(std::cin, input);
         if(input == "exit") break;
 
-        ::send(sock.get_sock_fd(), input.c_str(), input.size(), 0);
+        std::string message;
+        if(input == "1")
+            message = NormalOrder::createAsk();
+        else if(input == "2")
+            message = NormalOrder::createBid();
+        else 
+            continue;
+
+        // Send messasge to server
+        ::send(sock.get_sock_fd(), message.c_str(), message.size(), 0);
         int bytesRead = ::read(sock.get_sock_fd(), buffer, sizeof(buffer));
         if(bytesRead > 0){
             std::cout << "Echo from server: " << std::string(buffer, bytesRead) << std::endl;
@@ -51,6 +64,37 @@ void Client::run()
 int Client::connect(const Socket& sock, const sockaddr_in& server_addr)
 {
     return ::connect(sock.get_sock_fd(), (struct sockaddr*)&server_addr, sizeof(server_addr));
+}
+
+
+std::string NormalOrder::createAsk()
+{
+    std::string side = ASK;
+    std::string price = "100";
+    std::string quantity = "50";
+    std::string res;
+    res += side;
+    res += ",";
+    res += price;
+    res += ",";
+    res += quantity;
+
+    return res;    
+}
+
+std::string NormalOrder::createBid()
+{
+    std::string side = BID;
+    std::string price = "100";
+    std::string quantity = "50";
+    std::string res;
+    res += side;
+    res += ",";
+    res += price;
+    res += ",";
+    res += quantity;
+
+    return res;    
 }
 
 }

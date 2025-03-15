@@ -1,6 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 #include "socket.h"
+#include <string>
 #define PORT 54000
 namespace thu
 {
@@ -14,5 +15,13 @@ public:
 private:
     
 };
+
+class NormalOrder
+{
+public:
+    static std::string createAsk();
+    static std::string createBid();
+};
+
 }
 #endif

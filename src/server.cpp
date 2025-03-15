@@ -1,7 +1,12 @@
 #include "../hdr/server.h"
 #include "../hdr/log.h"
+#include <sstream>
+#include <vector>
+#include <iostream>
+
 namespace thu
 {
+static int id = 0;
 
 Server& Server::getInstance()
 {
@@ -42,11 +47,52 @@ void Server::start()
     while(bytesRead = ::read(client_fd, buffer, sizeof(buffer)) > 0){
         std::cout << "Received: " << buffer << std::endl;
 
+        // Forward message to LOB
+        OrderMessageParser objOrderMsg(buffer);
+        if(objOrderMsg.getType() == "ASK"){
+            double price = std::stold(objOrderMsg.getPrice());
+            int quantity = std::stoi(objOrderMsg.getQuantity());            
+            id++;
+
+            auto order = NormalOrderBuilder()
+                             .setSecurityId(std::to_string(id))
+                             .setSide(Side::Ask)
+                             .setOrderType(OrderType::Limit)
+                             .setPrice(price)
+                             .setQuantity(quantity)
+                             .setTimestamp({})
+                             .build();
+
+            m_lob.add_order(order);
+        }
+        else if(objOrderMsg.getType() == "BID"){
+            double price = std::stold(objOrderMsg.getPrice());
+            int quantity = std::stoi(objOrderMsg.getQuantity());            
+            id++;
+
+            auto order = NormalOrderBuilder()
+                             .setSecurityId(std::to_string(id))
+                             .setSide(Side::Bid)
+                             .setOrderType(OrderType::Limit)
+                             .setPrice(price)
+                             .setQuantity(quantity)
+                             .setTimestamp({})
+                             .build();
+
+            m_lob.add_order(order);
+        }
+        else{
+
+        }
+
         // Echo back 
         ::send(client_fd, buffer, strlen(buffer), 0);
+
         // clear the buffer for next read
         memset(buffer, 0, sizeof(buffer));
     }
+    // print the BOOK
+    m_lob.print_book();
 
     close(client_fd);
 }
@@ -70,5 +116,25 @@ int Server::accept(const Socket& sock)
 	socklen_t client_len = sizeof(client_addr);
     return ::accept(sock.get_sock_fd(), (struct sockaddr*)&client_addr, &client_len);
 }
+
+OrderMessageParser::OrderMessageParser(const char* msg)
+{
+    std::istringstream message(msg);
+    std::vector<std::string> tokens;
+    std::string token;
+    while(std::getline(message, token, ',')){
+        tokens.push_back(token);
+    }
+    if (tokens.size() == 3)
+    {
+        m_type = tokens[0];
+        m_price = tokens[1];
+        m_quantity = tokens[2];
+    }
+    else{
+        std::cout << "Size is not 3\n";
+    }
+}
+
 
 }
