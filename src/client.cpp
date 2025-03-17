@@ -1,7 +1,9 @@
-#include "../hdr/client.h"
-#include "../hdr/log.h"
 #include <iostream>
 #include <string>
+#include <random>
+#include "../hdr/client.h"
+#include "../hdr/log.h"
+#include "../hdr/nlohmann/json.hpp"
 
 #define ASK "ASK"
 #define BID "BID"
@@ -69,32 +71,34 @@ int Client::connect(const Socket& sock, const sockaddr_in& server_addr)
 
 std::string NormalOrder::createAsk()
 {
-    std::string side = ASK;
-    std::string price = "100";
-    std::string quantity = "50";
-    std::string res;
-    res += side;
-    res += ",";
-    res += price;
-    res += ",";
-    res += quantity;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> int_distribute(30, 100);
+    std::uniform_real_distribution<> double_distribute(50.00, 300.00);
 
-    return res;    
+    nlohmann::json res = {
+        {"side", ASK},
+        {"price", double_distribute(gen)},
+        {"quantity", int_distribute(gen)}
+    };
+
+    return nlohmann::to_string(res);    
 }
 
 std::string NormalOrder::createBid()
 {
-    std::string side = BID;
-    std::string price = "100";
-    std::string quantity = "50";
-    std::string res;
-    res += side;
-    res += ",";
-    res += price;
-    res += ",";
-    res += quantity;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> int_distribute(30, 100);
+    std::uniform_real_distribution<> double_distribute(50.00, 300.00);
 
-    return res;    
+    nlohmann::json res = {
+        {"side", BID},
+        {"price", double_distribute(gen)},
+        {"quantity", int_distribute(gen)}
+    };
+
+    return nlohmann::to_string(res);    
 }
 
 }

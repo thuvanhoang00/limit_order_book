@@ -29,11 +29,11 @@ class OrderMessageParser
 {
 public:
     OrderMessageParser(const char *msg);
-    std::string getType() const {return m_type;}
+    std::string getSide() const {return m_side;}
     std::string getPrice() const {return m_price;}
     std::string getQuantity() const {return m_quantity;}
 private:
-    std::string m_type;
+    std::string m_side;
     std::string m_price;
     std::string m_quantity;
 };

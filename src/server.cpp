@@ -1,8 +1,10 @@
-#include "../hdr/server.h"
-#include "../hdr/log.h"
 #include <sstream>
 #include <vector>
 #include <iostream>
+#include <string>
+#include "../hdr/server.h"
+#include "../hdr/log.h"
+#include "../hdr/nlohmann/json.hpp"
 
 namespace thu
 {
@@ -49,7 +51,7 @@ void Server::start()
 
         // Forward message to LOB
         OrderMessageParser objOrderMsg(buffer);
-        if(objOrderMsg.getType() == "ASK"){
+        if(objOrderMsg.getSide() == "ASK"){
             double price = std::stold(objOrderMsg.getPrice());
             int quantity = std::stoi(objOrderMsg.getQuantity());            
             id++;
@@ -65,7 +67,7 @@ void Server::start()
 
             m_lob.add_order(order);
         }
-        else if(objOrderMsg.getType() == "BID"){
+        else if(objOrderMsg.getSide() == "BID"){
             double price = std::stold(objOrderMsg.getPrice());
             int quantity = std::stoi(objOrderMsg.getQuantity());            
             id++;
@@ -119,20 +121,18 @@ int Server::accept(const Socket& sock)
 
 OrderMessageParser::OrderMessageParser(const char* msg)
 {
-    std::istringstream message(msg);
-    std::vector<std::string> tokens;
-    std::string token;
-    while(std::getline(message, token, ',')){
-        tokens.push_back(token);
+    try{
+        nlohmann::json jOrder = nlohmann::json::parse(std::string(msg));
+        m_side = jOrder["side"];
+        double price = jOrder["price"];
+        int quantity = jOrder["quantity"];
+        m_price = std::to_string(price);
+        m_quantity = std::to_string(quantity);
     }
-    if (tokens.size() == 3)
-    {
-        m_type = tokens[0];
-        m_price = tokens[1];
-        m_quantity = tokens[2];
-    }
-    else{
-        std::cout << "Size is not 3\n";
+    catch(const nlohmann::json::parse_error& e){
+        LOG("message: ", e.what(), '\n', 
+            "exception id: ", e.id, '\n',
+            "byte position of error: ", e.byte, '\n');
     }
 }
 
