@@ -3,6 +3,7 @@
 #include <string>
 #include "socket.h"
 #include "limitorderbook.h"
+#include "messagequeue.h"
 
 #define PORT 54000
 
@@ -23,6 +24,7 @@ private:
     int accept(const Socket& sock);
 private:
     LimitOrderBook m_lob;
+    MessageQueue<std::string> m_MsgQueue;
 };
 
 class OrderMessageParser

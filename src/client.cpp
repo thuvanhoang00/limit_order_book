@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <random>
+#include <chrono>
+#include <thread>
 #include "../hdr/client.h"
 #include "../hdr/log.h"
 #include "../hdr/nlohmann/json.hpp"
@@ -39,6 +41,7 @@ void Client::run()
     std::string input;
     char buffer[1024] = {0};
     while(true){
+#ifdef USER_INPUT
         std::cout << "Enter type \n1. Ask\n2. Bid\n(type 'exit' to quit): " ;
         std::getline(std::cin, input);
         if(input == "exit") break;
@@ -50,7 +53,10 @@ void Client::run()
             message = NormalOrder::createBid();
         else 
             continue;
-
+#else if RANDOM
+        std::string message;
+        message = rand()%2==0 ? NormalOrder::createAsk() : NormalOrder::createBid();
+#endif
         // Send messasge to server
         ::send(sock.get_sock_fd(), message.c_str(), message.size(), 0);
         int bytesRead = ::read(sock.get_sock_fd(), buffer, sizeof(buffer));
@@ -60,6 +66,8 @@ void Client::run()
 
         // clear buffer
         ::memset(buffer, 0, sizeof(buffer));
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 

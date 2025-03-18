@@ -47,7 +47,11 @@ void Server::start()
     char buffer[1024];
     int bytesRead;
     while(bytesRead = ::read(client_fd, buffer, sizeof(buffer)) > 0){
-        std::cout << "Received: " << buffer << std::endl;
+        // std::cout << "Received: " << buffer << std::endl;
+
+        // push message to queue
+        m_MsgQueue.push(std::string(buffer));
+        std::cout << "Received total msg: " << m_MsgQueue.size() << std::endl;
 
         // Forward message to LOB
         OrderMessageParser objOrderMsg(buffer);
@@ -87,14 +91,18 @@ void Server::start()
 
         }
 
+        // pop the message from queue
+        m_MsgQueue.pop();
+
         // Echo back 
         ::send(client_fd, buffer, strlen(buffer), 0);
 
         // clear the buffer for next read
         memset(buffer, 0, sizeof(buffer));
+
+        // print the BOOK
+        m_lob.print_book();
     }
-    // print the BOOK
-    m_lob.print_book();
 
     close(client_fd);
 }
