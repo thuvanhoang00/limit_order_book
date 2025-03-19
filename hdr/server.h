@@ -22,6 +22,7 @@ private:
     int bind(const Socket& sock, sockaddr_in& addr);
     int listen(const Socket& sock);
     int accept(const Socket& sock);
+    void handle_client(int client_fd);
 private:
     LimitOrderBook m_lob;
     MessageQueue<std::string> m_MsgQueue;
