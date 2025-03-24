@@ -12,10 +12,10 @@ class MessageQueue
 {
 public:
     MessageQueue() : pimpl(std::make_unique<Impl>()) {}
-    size_t size(){return pimpl->size();}
-    T pop(){return pimpl->pop();}
+    bool size(size_t& s){return pimpl->size(s);}
+    bool pop(T& e){return pimpl->pop(e);}
     void push(const T& e){pimpl->push(e);}
-    bool empty(){return pimpl->empty();}
+    bool empty(bool& res){return pimpl->empty(res);}
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl;
@@ -27,26 +27,38 @@ class MessageQueue<T>::Impl
 public:
     Impl() : m_flag(0) {}
 
-    size_t size(){
+    bool size(size_t& s){
         int expected = m_flag.load();
         // spin
         while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire));
-        size_t res = m_queue.size();
+        s = m_queue.size();
         m_flag.store(0, std::memory_order_release);
-        return res;
+        return true;
     }
 
-    T pop(){
-        int expected = m_flag.load();
-        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acq_rel));
+    // T pop(){
+    //     int expected = m_flag.load();
+    //     while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acq_rel));
+    //     if(m_queue.empty()) {
+    //         LOG("Queue is empty\n");
+    //         throw std::runtime_error("Empty queue\n");
+    //     }
+    //     T res = m_queue.front();
+    //     m_queue.pop();
+    //     m_flag.store(0, std::memory_order_release);
+    //     return res;
+    // }
+    bool pop(T& e)
+    {
+        int old = m_flag.load()
+        while(!m_flag.compare_exchange_weak(old, 1, std::memory_order_acq_rel));
         if(m_queue.empty()) {
             LOG("Queue is empty\n");
-            throw std::runtime_error("Empty queue\n");
+            return false;
         }
-        T res = m_queue.front();
-        m_queue.pop();
+        e = m_queue.front();
         m_flag.store(0, std::memory_order_release);
-        return res;
+        return true;
     }
 
     void push(const T& e){
@@ -56,10 +68,10 @@ public:
         m_flag.store(0, std::memory_order_release);
     }
 
-    bool empty(){
+    bool empty(bool& res){
         int expected = m_flag.load();  
         while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_release));
-        bool res = m_queue.empty();
+        res = m_queue.empty();
         m_flag.store(0, std::memory_order_release);
         return res;
     }
