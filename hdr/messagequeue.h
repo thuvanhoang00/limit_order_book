@@ -50,8 +50,8 @@ public:
     // }
     bool pop(T& e)
     {
-        int old = m_flag.load()
-        while(!m_flag.compare_exchange_weak(old, 1, std::memory_order_acq_rel));
+        int expected = 0;
+        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire) || (expected==1));
         if(m_queue.empty()) {
             LOG("Queue is empty\n");
             return false;
@@ -62,15 +62,15 @@ public:
     }
 
     void push(const T& e){
-        int expected = m_flag.load();
-        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire));
+        int expected = 0;
+        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire) || (expected==1));
         m_queue.push(e);
         m_flag.store(0, std::memory_order_release);
     }
 
     bool empty(bool& res){
-        int expected = m_flag.load();  
-        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_release));
+        int expected = 0;
+        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire) || (expected==1));
         res = m_queue.empty();
         m_flag.store(0, std::memory_order_release);
         return res;

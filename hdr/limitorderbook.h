@@ -31,7 +31,7 @@ public:
     void add_order(NormalOrder order) override;
     void cancel_order(NormalOrder order) override;
     void edit_order(NormalOrder before, NormalOrder after) override;
-    void print_book() const;
+    void print_book();
 
     // observer function
     void subscribe(IFTradingStrategyListener* listener) override;

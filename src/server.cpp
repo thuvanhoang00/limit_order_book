@@ -130,7 +130,8 @@ void Server::handle_client(int client_fd)
         }
 
         // pop the message from queue
-        m_MsgQueue.pop();
+        std::string str;
+        m_MsgQueue.pop(str);
 
         // Echo back
         ::send(client_fd, buffer, strlen(buffer), 0);

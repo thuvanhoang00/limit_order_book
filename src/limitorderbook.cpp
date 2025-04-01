@@ -67,8 +67,10 @@ void LimitOrderBook::edit_order(NormalOrder before, NormalOrder after)
     }
 }
 
-void LimitOrderBook::print_book() const
+void LimitOrderBook::print_book() 
 {
+    std::lock_guard guard(m_mutex);
+
     std::cout << "\n------ ORDER BOOK ------\n";
     std::cout << "BIDS:\n";
     for (const auto &[price, orders] : m_bids)
@@ -88,6 +90,7 @@ void LimitOrderBook::print_book() const
         std::cout << "\n";
     }
     std::cout << "--------------------------\n\n";
+
 }
 
 
