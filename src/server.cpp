@@ -88,50 +88,49 @@ void Server::handle_client(int client_fd)
     {
         // std::cout << "Received: " << buffer << std::endl;
 
-        // push message to queue
-        m_MsgQueue.push(std::string(buffer));
-        // std::cout << "Received total msg: " << m_MsgQueue.size() << std::endl;
+        int expected = 0;
+        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire) || (expected==1));
 
         // Forward message to LOB
-        OrderMessageParser objOrderMsg(buffer);
-        if (objOrderMsg.getSide() == "ASK")
-        {
-            double price = std::stold(objOrderMsg.getPrice());
-            int quantity = std::stoi(objOrderMsg.getQuantity());
-            id++;
+        // OrderMessageParser objOrderMsg(buffer);
+        // if (objOrderMsg.getSide() == "ASK")
+        // {
+        //     double price = std::stold(objOrderMsg.getPrice());
+        //     int quantity = std::stoi(objOrderMsg.getQuantity());
+        //     id++;
 
-            auto order = NormalOrderBuilder()
-                             .setSecurityId(std::to_string(id))
-                             .setSide(Side::Ask)
-                             .setOrderType(OrderType::Limit)
-                             .setPrice(price)
-                             .setQuantity(quantity)
-                             .setTimestamp({})
-                             .build();
+        //     auto order = NormalOrderBuilder()
+        //                      .setSecurityId(std::to_string(id))
+        //                      .setSide(Side::Ask)
+        //                      .setOrderType(OrderType::Limit)
+        //                      .setPrice(price)
+        //                      .setQuantity(quantity)
+        //                      .setTimestamp({})
+        //                      .build();
 
-            m_lob.add_order(order);
-        }
-        else if (objOrderMsg.getSide() == "BID")
-        {
-            double price = std::stold(objOrderMsg.getPrice());
-            int quantity = std::stoi(objOrderMsg.getQuantity());
-            id++;
+        //     m_lob.add_order(order);
+        // }
+        // else if (objOrderMsg.getSide() == "BID")
+        // {
+        //     double price = std::stold(objOrderMsg.getPrice());
+        //     int quantity = std::stoi(objOrderMsg.getQuantity());
+        //     id++;
 
-            auto order = NormalOrderBuilder()
-                             .setSecurityId(std::to_string(id))
-                             .setSide(Side::Bid)
-                             .setOrderType(OrderType::Limit)
-                             .setPrice(price)
-                             .setQuantity(quantity)
-                             .setTimestamp({})
-                             .build();
+        //     auto order = NormalOrderBuilder()
+        //                      .setSecurityId(std::to_string(id))
+        //                      .setSide(Side::Bid)
+        //                      .setOrderType(OrderType::Limit)
+        //                      .setPrice(price)
+        //                      .setQuantity(quantity)
+        //                      .setTimestamp({})
+        //                      .build();
 
-            m_lob.add_order(order);
-        }
+        //     m_lob.add_order(order);
+        // }
 
-        // pop the message from queue
-        std::string str;
-        m_MsgQueue.pop(str);
+        // // pop the message from queue
+        // std::string str;
+        // m_MsgQueue.pop(str);
 
         // Echo back
         ::send(client_fd, buffer, strlen(buffer), 0);
@@ -140,7 +139,20 @@ void Server::handle_client(int client_fd)
         memset(buffer, 0, sizeof(buffer));
 
         // print the BOOK
-        m_lob.print_book();
+        // m_lob.print_book();
+
+        // push message to queue
+        m_MsgQueue.push(std::string(buffer));
+        count++;
+        if(count % 2 == 0){
+            std::string str;
+            m_MsgQueue.pop(str);
+        }
+        
+        std::cout << "Received total msg: " << count << std::endl;
+
+        m_flag.store(0, std::memory_order_release);
+
     }
 }
 

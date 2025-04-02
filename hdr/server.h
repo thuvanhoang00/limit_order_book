@@ -26,6 +26,9 @@ private:
 private:
     LimitOrderBook m_lob;
     MessageQueue<std::string> m_MsgQueue;
+
+    std::atomic<int> m_flag;
+    int count=0;
 };
 
 class OrderMessageParser

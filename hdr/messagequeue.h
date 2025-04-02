@@ -12,10 +12,18 @@ class MessageQueue
 {
 public:
     MessageQueue() : pimpl(std::make_unique<Impl>()) {}
-    bool size(size_t& s){return pimpl->size(s);}
-    bool pop(T& e){return pimpl->pop(e);}
-    void push(const T& e){pimpl->push(e);}
-    bool empty(bool& res){return pimpl->empty(res);}
+    bool size(size_t& s){
+        return pimpl->size(s);
+    }
+    bool pop(T& e){
+        return pimpl->pop(e);
+    }
+    void push(const T& e){
+        pimpl->push(e);
+    }
+    bool empty(bool& res){
+        return pimpl->empty(res);
+    }
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl;
@@ -28,9 +36,9 @@ public:
     Impl() : m_flag(0) {}
 
     bool size(size_t& s){
-        int expected = m_flag.load();
+        int expected = 0;
         // spin
-        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire));
+        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire) || (expected==1));
         s = m_queue.size();
         m_flag.store(0, std::memory_order_release);
         return true;
