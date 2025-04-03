@@ -89,7 +89,10 @@ void Server::handle_client(int client_fd)
         // std::cout << "Received: " << buffer << std::endl;
 
         int expected = 0;
-        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire) || (expected==1));
+        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire)){
+            expected = 0;
+            std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+        }
 
         // Forward message to LOB
         // OrderMessageParser objOrderMsg(buffer);
