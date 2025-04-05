@@ -24,10 +24,11 @@ private:
     int accept(const Socket& sock);
     void handle_client(int client_fd);
     void sendToLimitOrderBook(const OrderMessageParser& objOrderMessage);
-    
+
 private:
     MessageQueue<std::string> m_MsgQueue;
     LimitOrderBook m_lob;
+    std::mutex m_mtx;
 };
 
 class OrderMessageParser

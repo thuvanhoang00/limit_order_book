@@ -130,6 +130,8 @@ OrderMessageParser::OrderMessageParser(const std::string& msg)
 
 void Server::sendToLimitOrderBook(const OrderMessageParser& objOrderMessageParser)
 {
+    std::lock_guard<std::mutex> guard(m_mtx);
+
     if (objOrderMessageParser.getSide() == "ASK")
     {
         double price = std::stold(objOrderMessageParser.getPrice());
@@ -165,7 +167,9 @@ void Server::sendToLimitOrderBook(const OrderMessageParser& objOrderMessageParse
         m_lob.add_order(order);
     }
 
+    // SW barrier
+    asm volatile("" : : : "memory");
     // print the BOOK
-    m_lob.print_book();
+    m_lob.print_book2();
 }
 }

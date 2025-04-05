@@ -67,7 +67,7 @@ void Client::run()
         // clear buffer
         ::memset(buffer, 0, sizeof(buffer));
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -81,8 +81,8 @@ std::string NormalOrder::createAsk()
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> int_distribute(30, 100);
-    std::uniform_real_distribution<> double_distribute(50.00, 300.00);
+    std::uniform_int_distribution<> int_distribute(70, 100);
+    std::uniform_real_distribution<> double_distribute(100, 150);
 
     nlohmann::json res = {
         {"side", ASK},
@@ -97,8 +97,8 @@ std::string NormalOrder::createBid()
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> int_distribute(30, 100);
-    std::uniform_real_distribution<> double_distribute(50.00, 300.00);
+    std::uniform_int_distribution<> int_distribute(70, 100);
+    std::uniform_real_distribution<> double_distribute(100, 150);
 
     nlohmann::json res = {
         {"side", BID},

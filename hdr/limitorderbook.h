@@ -31,7 +31,12 @@ public:
     void add_order(NormalOrder order) override;
     void cancel_order(NormalOrder order) override;
     void edit_order(NormalOrder before, NormalOrder after) override;
+
+    // Visualize
     void print_book();
+    void print_book2();
+    // int get_max_quantity();
+    // void print_price_level(double price, int qty, bool is_bid);
 
     // observer function
     void subscribe(IFTradingStrategyListener* listener) override;
@@ -166,11 +171,12 @@ private:
                 it->quantity.set(it->quantity.get()-fill_qty);
 
                 // Generate execution report
+#ifdef PRINT_MATCH_ORDER
                 std::cout << "TRADE: "
                           << ((order.side == Side::Bid) ? "BOUGHT " : "SOLD ")
                           << fill_qty << " @ $" << best_price
                           << " (Remaining: " << order.quantity << ")\n";
-            
+#endif
                 // Remove filled orders
                 if(it->quantity.get() == 0)
                 {
