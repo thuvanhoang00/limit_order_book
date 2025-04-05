@@ -72,6 +72,7 @@ public:
             return false;
         }
         e = m_queue.front();
+        m_queue.pop();
         m_flag.store(0, std::memory_order_release);
         return true;
     }

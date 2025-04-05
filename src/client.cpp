@@ -40,7 +40,7 @@ void Client::run()
     // Read user input, send to server, and display the echoed response
     std::string input;
     char buffer[1024] = {0};
-    while(true){
+    while(true){        
 #ifdef USER_INPUT
         std::cout << "Enter type \n1. Ask\n2. Bid\n(type 'exit' to quit): " ;
         std::getline(std::cin, input);
@@ -67,7 +67,7 @@ void Client::run()
         // clear buffer
         ::memset(buffer, 0, sizeof(buffer));
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
 }
 

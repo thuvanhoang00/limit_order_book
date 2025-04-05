@@ -9,7 +9,7 @@
 
 namespace thu
 {
-
+class OrderMessageParser;
 class Server
 {
 public:
@@ -23,18 +23,17 @@ private:
     int listen(const Socket& sock);
     int accept(const Socket& sock);
     void handle_client(int client_fd);
+    void sendToLimitOrderBook(const OrderMessageParser& objOrderMessage);
+    
 private:
-    LimitOrderBook m_lob;
     MessageQueue<std::string> m_MsgQueue;
-
-    std::atomic<int> m_flag;
-    int count=0;
+    LimitOrderBook m_lob;
 };
 
 class OrderMessageParser
 {
 public:
-    OrderMessageParser(const char *msg);
+    OrderMessageParser(const std::string& msg);
     std::string getSide() const {return m_side;}
     std::string getPrice() const {return m_price;}
     std::string getQuantity() const {return m_quantity;}

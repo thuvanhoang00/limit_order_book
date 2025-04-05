@@ -87,82 +87,34 @@ void Server::handle_client(int client_fd)
     while (bytesRead = ::read(client_fd, buffer, sizeof(buffer)) > 0)
     {
         // std::cout << "Received: " << buffer << std::endl;
-
-        int expected = 0;
-        while(!m_flag.compare_exchange_weak(expected, 1, std::memory_order_acquire)){
-            expected = 0;
-            std::this_thread::sleep_for(std::chrono::nanoseconds(10));
-        }
-
-        // Forward message to LOB
-        // OrderMessageParser objOrderMsg(buffer);
-        // if (objOrderMsg.getSide() == "ASK")
-        // {
-        //     double price = std::stold(objOrderMsg.getPrice());
-        //     int quantity = std::stoi(objOrderMsg.getQuantity());
-        //     id++;
-
-        //     auto order = NormalOrderBuilder()
-        //                      .setSecurityId(std::to_string(id))
-        //                      .setSide(Side::Ask)
-        //                      .setOrderType(OrderType::Limit)
-        //                      .setPrice(price)
-        //                      .setQuantity(quantity)
-        //                      .setTimestamp({})
-        //                      .build();
-
-        //     m_lob.add_order(order);
-        // }
-        // else if (objOrderMsg.getSide() == "BID")
-        // {
-        //     double price = std::stold(objOrderMsg.getPrice());
-        //     int quantity = std::stoi(objOrderMsg.getQuantity());
-        //     id++;
-
-        //     auto order = NormalOrderBuilder()
-        //                      .setSecurityId(std::to_string(id))
-        //                      .setSide(Side::Bid)
-        //                      .setOrderType(OrderType::Limit)
-        //                      .setPrice(price)
-        //                      .setQuantity(quantity)
-        //                      .setTimestamp({})
-        //                      .build();
-
-        //     m_lob.add_order(order);
-        // }
-
-        // // pop the message from queue
-        // std::string str;
-        // m_MsgQueue.pop(str);
-
-        // Echo back
-        ::send(client_fd, buffer, strlen(buffer), 0);
-
-        // clear the buffer for next read
-        memset(buffer, 0, sizeof(buffer));
-
-        // print the BOOK
-        // m_lob.print_book();
-
         // push message to queue
         m_MsgQueue.push(std::string(buffer));
-        count++;
-        if(count % 2 == 0){
-            std::string str;
-            m_MsgQueue.pop(str);
-        }
-        
-        std::cout << "Received total msg: " << count << std::endl;
 
-        m_flag.store(0, std::memory_order_release);
+        // SW memory barrier
+        asm volatile("" : : : "memory");
+        // pop the message from queue
+        std::string str;
+        m_MsgQueue.pop(str);
 
+        // SW memory barrier
+        asm volatile("" : : : "memory");
+        // Forward message to LOB
+        OrderMessageParser objOrderMsg(str);
+        sendToLimitOrderBook(objOrderMsg);
+
+        // SW memory barrier
+        asm volatile("" : : : "memory");
+        // Echo back
+        ::send(client_fd, buffer, strlen(buffer), 0);
+        // clear the buffer for next read
+        memset(buffer, 0, sizeof(buffer));
     }
 }
 
-OrderMessageParser::OrderMessageParser(const char* msg)
+OrderMessageParser::OrderMessageParser(const std::string& msg)
 {
     try{
-        nlohmann::json jOrder = nlohmann::json::parse(std::string(msg));
+        nlohmann::json jOrder = nlohmann::json::parse(msg);
         m_side = jOrder["side"];
         double price = jOrder["price"];
         int quantity = jOrder["quantity"];
@@ -176,5 +128,44 @@ OrderMessageParser::OrderMessageParser(const char* msg)
     }
 }
 
+void Server::sendToLimitOrderBook(const OrderMessageParser& objOrderMessageParser)
+{
+    if (objOrderMessageParser.getSide() == "ASK")
+    {
+        double price = std::stold(objOrderMessageParser.getPrice());
+        int quantity = std::stoi(objOrderMessageParser.getQuantity());
+        id++;
 
+        auto order = NormalOrderBuilder()
+                         .setSecurityId(std::to_string(id))
+                         .setSide(Side::Ask)
+                         .setOrderType(OrderType::Limit)
+                         .setPrice(price)
+                         .setQuantity(quantity)
+                         .setTimestamp({})
+                         .build();
+
+        m_lob.add_order(order);
+    }
+    else if (objOrderMessageParser.getSide() == "BID")
+    {
+        double price = std::stold(objOrderMessageParser.getPrice());
+        int quantity = std::stoi(objOrderMessageParser.getQuantity());
+        id++;
+
+        auto order = NormalOrderBuilder()
+                         .setSecurityId(std::to_string(id))
+                         .setSide(Side::Bid)
+                         .setOrderType(OrderType::Limit)
+                         .setPrice(price)
+                         .setQuantity(quantity)
+                         .setTimestamp({})
+                         .build();
+
+        m_lob.add_order(order);
+    }
+
+    // print the BOOK
+    m_lob.print_book();
+}
 }
