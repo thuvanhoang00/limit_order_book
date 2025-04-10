@@ -69,6 +69,7 @@ public:
         }
         if(m_queue.empty()) {
             LOG("Queue is empty\n");
+            m_flag.store(0, std::memory_order_release);
             return false;
         }
         e = m_queue.front();
