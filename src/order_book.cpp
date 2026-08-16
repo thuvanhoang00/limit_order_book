@@ -29,14 +29,20 @@ ApplyResult OrderBook::apply(const ExecuteOrder& /*event*/) noexcept {
 }
 
 std::optional<Price> OrderBook::best_bid() const noexcept {
-    return std::nullopt;
+    if(bid_level_.empty())
+        return std::nullopt;
+    return bid_level_.cbegin()->first;
 }
 
 std::optional<Price> OrderBook::best_ask() const noexcept {
-    return std::nullopt;
+    if(ask_level_.empty())
+        return std::nullopt;
+    return ask_level_.cbegin()->first;
 }
 
-std::optional<Quantity> OrderBook::remaining_quantity(const OrderId /*order_id*/) const noexcept {
+std::optional<Quantity> OrderBook::remaining_quantity(const OrderId order_id) const noexcept {
+    if(order_info_.contains(order_id))
+        return order_info_.at(order_id);
     return std::nullopt;
 }
 

@@ -111,7 +111,14 @@ The generator emits valid add/cancel/execute sequences and keeps active-order st
 After implementing the core:
 
 ```bash
-./build/release/replay_order_book data/events.csv
+./tools/run.sh
+```
+
+By default, the script builds the `release` preset and replays
+`data/sample_events.csv`. Pass a preset and CSV path to override them:
+
+```bash
+./tools/run.sh debug data/events.csv
 ```
 
 Output includes:
