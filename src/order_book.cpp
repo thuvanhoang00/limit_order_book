@@ -31,13 +31,13 @@ ApplyResult OrderBook::apply(const ExecuteOrder& /*event*/) noexcept {
 std::optional<Price> OrderBook::best_bid() const noexcept {
     if(bid_level_.empty())
         return std::nullopt;
-    return bid_level_.cbegin()->first;
+    return bid_level_.cend()->first;
 }
 
 std::optional<Price> OrderBook::best_ask() const noexcept {
     if(ask_level_.empty())
         return std::nullopt;
-    return ask_level_.cbegin()->first;
+    return ask_level_.cend()->first;
 }
 
 std::optional<Quantity> OrderBook::remaining_quantity(const OrderId order_id) const noexcept {
