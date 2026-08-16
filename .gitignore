@@ -6,3 +6,4 @@ compile_commands.json
 *.perf
 perf.data*
 /cache/
+/.cache/
