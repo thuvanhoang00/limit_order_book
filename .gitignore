@@ -2,6 +2,7 @@
 /results/*
 !/results/.gitkeep
 /data/*.csv
+!/data/sample_events.csv
 compile_commands.json
 *.perf
 perf.data*
