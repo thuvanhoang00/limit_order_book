@@ -41,7 +41,7 @@ void BM_AddOrders(benchmark::State& state) {
         state.ResumeTiming();
 
         for (const auto& event : events) {
-            const ApplyResult result = book.apply(event);
+            ApplyResult result = book.apply(event);
             if (result == ApplyResult::NotImplemented) {
                 state.SkipWithError("Implement OrderBook core before benchmarking");
                 return;

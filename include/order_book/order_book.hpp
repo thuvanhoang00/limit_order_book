@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <map>
+#include <unordered_map>
 
 #include "order_book/events.hpp"
 #include "order_book/types.hpp"
@@ -41,6 +43,12 @@ private:
     // - stable per-level order storage preserving FIFO
     //
     // Do not optimize before the correctness contract passes.
+
+    using PriceLevel = std::size_t;
+    std::map<Price, PriceLevel> bid_level_;
+    std::map<Price, PriceLevel> ask_level_;
+
+    std::unordered_map<OrderId, Quantity> order_info_;
 };
 
 }  // namespace order_book
