@@ -29,21 +29,45 @@ ApplyResult OrderBook::apply(const ExecuteOrder& /*event*/) noexcept {
 }
 
 std::optional<Price> OrderBook::best_bid() const noexcept {
-    if(bid_level_.empty())
+    if(bids_.empty())
         return std::nullopt;
-    return bid_level_.crbegin()->first;
+    return bids_.cbegin()->first;
 }
 
 std::optional<Price> OrderBook::best_ask() const noexcept {
-    if(ask_level_.empty())
+    if(asks_.empty())
         return std::nullopt;
-    return ask_level_.cbegin()->first;
+    return asks_.cbegin()->first;
 }
 
 std::optional<Quantity> OrderBook::remaining_quantity(const OrderId order_id) const noexcept {
-    if(order_info_.contains(order_id))
-        return order_info_.at(order_id);
+    /* No need to check Side here
+    if(orders_by_id_.contains(order_id)){
+        auto loc = orders_by_id_.at(order_id);
+        if(loc.side == Side::Ask){
+            if(asks_.contains(loc.price)){
+                const auto& pricelv = asks_.at(loc.price);
+                for(auto it = pricelv.orders.begin(); it != pricelv.orders.end(); ++it){
+                    if(it == loc.iterator) return it->remaining_quantity;
+                }
+            }
+        }
+        else if(loc.side ==Side::Bid){
+            if(bids_.contains(loc.price)){
+                const auto& pricelv = bids_.at(loc.price);
+                for(auto it = pricelv.orders.begin(); it != pricelv.orders.end(); ++it){
+                    if(it == loc.iterator) return it->remaining_quantity;
+                }
+            }
+        }
+    }
     return std::nullopt;
+    */
+
+    const auto index_id = orders_by_id_.find(order_id);
+    if(index_id == orders_by_id_.end()) return std::nullopt;
+
+    return index_id->second.iterator->remaining_quantity;
 }
 
 std::size_t OrderBook::order_count() const noexcept {

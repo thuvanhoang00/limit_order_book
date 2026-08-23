@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstdint>
 #include <string_view>
 
@@ -7,6 +6,7 @@ namespace order_book {
 
 using Sequence = std::uint64_t;
 using OrderId = std::uint64_t;
+using InstrumentId= std::uint64_t;
 using Price = std::uint32_t;
 using Quantity = std::uint32_t;
 
@@ -14,6 +14,7 @@ enum class Side : std::uint8_t {
     Bid,
     Ask,
 };
+
 
 [[nodiscard]] constexpr std::string_view to_string(const Side side) noexcept {
     return side == Side::Bid ? "bid" : "ask";
