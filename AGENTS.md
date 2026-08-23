@@ -17,5 +17,7 @@
   `GH_CONFIG_DIR=/home/thu/.config/gh-reviewer gh auth status` and verify that the active account is exactly `f33voz2-debug`.
 - If the reviewer profile is missing, unauthenticated, or resolves to any account other than `f33voz2-debug`, do not submit anything to GitHub. Tell the user that the reviewer login must be completed first.
 - Never use the default GitHub CLI profile to submit PR-review activity for this repository.
-- Reviewing locally is read-only. Only post comments, approvals, or change requests to GitHub when the user explicitly asks to submit them.
+- A user request to review a GitHub PR authorizes both the read-only analysis and submission of the resulting review to GitHub. Do not wait for a separate `submit` instruction.
+- Submit `REQUEST_CHANGES` when there are blocking findings, `APPROVE` when there are no findings, and `COMMENT` when all findings are non-blocking or an approval is inappropriate.
+- Keep the review local and do not submit only when the user explicitly asks for a draft, local-only review, or no GitHub post.
 - Never print, commit, or store GitHub tokens or credentials in this repository.
