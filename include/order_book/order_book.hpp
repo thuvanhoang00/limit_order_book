@@ -1,10 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <list>
+#include <map>
 #include <optional>
 #include <string>
-#include <map>
-#include <list>
 #include <unordered_map>
 
 #include "order_book/events.hpp"
@@ -13,7 +13,7 @@
 namespace order_book {
 
 class OrderBook final {
-public:
+   public:
     OrderBook() = default;
     OrderBook(const OrderBook&) = delete;
     OrderBook& operator=(const OrderBook&) = delete;
@@ -39,7 +39,7 @@ public:
     // Use it in tests and debug builds to validate internal consistency.
     [[nodiscard]] bool validate_invariants(std::string* reason = nullptr) const;
 
-private:
+   private:
     // TODO(core): choose and implement the storage layout.
     //
     // Suggested V1 baseline:
@@ -53,24 +53,24 @@ private:
     // std::map<Price, PriceLevel> ask_level_;
 
     // std::unordered_map<OrderId, Quantity> order_info_;
-    struct OrderEntry{
+    struct OrderEntry {
         OrderId order_id{};
         Quantity remaining_quantity{};
     };
     using OrderQueue = std::list<OrderEntry>;
     using OrderIterator = OrderQueue::iterator;
 
-    struct PriceLevel{
+    struct PriceLevel {
         OrderQueue orders;
         std::uint64_t aggregate_quantity{};
     };
 
-    struct OrderLocation{
+    struct OrderLocation {
         Side side;
         Price price;
         OrderIterator iterator;
     };
-    
+
     using BidLevels = std::map<Price, PriceLevel, std::greater<Price>>;
     using AskLevels = std::map<Price, PriceLevel, std::less<Price>>;
 
@@ -78,7 +78,6 @@ private:
     AskLevels asks_;
 
     std::unordered_map<OrderId, OrderLocation> orders_by_id_;
-    
 };
 
 }  // namespace order_book
