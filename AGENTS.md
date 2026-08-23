@@ -19,5 +19,8 @@
 - Never use the default GitHub CLI profile to submit PR-review activity for this repository.
 - A user request to review a GitHub PR authorizes both the read-only analysis and submission of the resulting review to GitHub. Do not wait for a separate `submit` instruction.
 - Submit `REQUEST_CHANGES` when there are blocking findings, `APPROVE` when there are no findings, and `COMMENT` when all findings are non-blocking or an approval is inappropriate.
+- Post each finding as an inline review comment when its relevant line is part of the PR diff. Use the overall review body only for the summary, verification evidence, or findings that cannot be attached to a changed line.
+- Do not duplicate the full text of an inline finding in the overall review body; summarize it there and let the inline comment carry the file-specific detail.
+- Before submitting, verify that every inline comment targets the latest PR head commit and a valid changed line on the right side of the diff.
 - Keep the review local and do not submit only when the user explicitly asks for a draft, local-only review, or no GitHub post.
 - Never print, commit, or store GitHub tokens or credentials in this repository.
