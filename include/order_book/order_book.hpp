@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <list>
+#include <map>
 #include <optional>
 #include <string>
-#include <map>
 #include <unordered_map>
 
 #include "order_book/events.hpp"
@@ -12,8 +13,12 @@
 namespace order_book {
 
 class OrderBook final {
-public:
+   public:
     OrderBook() = default;
+    OrderBook(const OrderBook&) = delete;
+    OrderBook& operator=(const OrderBook&) = delete;
+    OrderBook(OrderBook&&) noexcept = default;
+    OrderBook& operator=(OrderBook&&) noexcept = default;
 
     [[nodiscard]] ApplyResult apply(const MarketEvent& event) noexcept;
     [[nodiscard]] ApplyResult apply(const AddOrder& event) noexcept;
@@ -34,7 +39,7 @@ public:
     // Use it in tests and debug builds to validate internal consistency.
     [[nodiscard]] bool validate_invariants(std::string* reason = nullptr) const;
 
-private:
+   private:
     // TODO(core): choose and implement the storage layout.
     //
     // Suggested V1 baseline:
@@ -44,11 +49,35 @@ private:
     //
     // Do not optimize before the correctness contract passes.
 
-    using PriceLevel = std::size_t;
-    std::map<Price, PriceLevel> bid_level_;
-    std::map<Price, PriceLevel> ask_level_;
+    // std::map<Price, PriceLevel> bid_level_;
+    // std::map<Price, PriceLevel> ask_level_;
 
-    std::unordered_map<OrderId, Quantity> order_info_;
+    // std::unordered_map<OrderId, Quantity> order_info_;
+    struct OrderEntry {
+        OrderId order_id{};
+        Quantity remaining_quantity{};
+    };
+    using OrderQueue = std::list<OrderEntry>;
+    using OrderIterator = OrderQueue::iterator;
+
+    struct PriceLevel {
+        OrderQueue orders;
+        std::uint64_t aggregate_quantity{};
+    };
+
+    struct OrderLocation {
+        Side side;
+        Price price;
+        OrderIterator iterator;
+    };
+
+    using BidLevels = std::map<Price, PriceLevel, std::greater<Price>>;
+    using AskLevels = std::map<Price, PriceLevel, std::less<Price>>;
+
+    BidLevels bids_;
+    AskLevels asks_;
+
+    std::unordered_map<OrderId, OrderLocation> orders_by_id_;
 };
 
 }  // namespace order_book
