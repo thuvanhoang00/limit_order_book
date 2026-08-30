@@ -47,5 +47,12 @@ TEST(EventIo, WritesRoundTrippableCsv) {
     EXPECT_EQ(*parsed.event, input);
 }
 
+TEST(EventIo, ParsesWindowsLineEnding) {
+    const auto result = parse_event_line("5,E,,1002,0,7\r\n");
+
+    ASSERT_TRUE(result.event.has_value()) << result.error;
+    EXPECT_EQ(*result.event, MarketEvent(ExecuteOrder{5U, 1002U, 7U}));
+}
+
 }  // namespace
 }  // namespace order_book

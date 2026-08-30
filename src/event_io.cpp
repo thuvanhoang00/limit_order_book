@@ -47,7 +47,11 @@ template <typename Integer>
 
 }  // namespace
 
-ParseResult parse_event_line(const std::string_view line) {
+ParseResult parse_event_line(std::string_view line) {
+    while (!line.empty() && (line.back() == '\n' || line.back() == '\r')) {
+        line.remove_suffix(1U);
+    }
+
     if (line.empty() || line.starts_with('#') || line.starts_with("sequence,")) {
         return {};
     }

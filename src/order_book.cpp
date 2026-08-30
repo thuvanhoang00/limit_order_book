@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <variant>
+#include <iterator>
 
 namespace order_book {
 
@@ -10,9 +11,51 @@ ApplyResult OrderBook::apply(const MarketEvent& event) noexcept {
                       event);
 }
 
-ApplyResult OrderBook::apply(const AddOrder& /*event*/) noexcept {
-    // TODO(core): validate the event, insert the order, update best bid/ask.
-    return ApplyResult::NotImplemented;
+ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
+    if(event.quantity == 0) return ApplyResult::InvalidQuantity;
+    if(event.price ==0) return ApplyResult::InvalidPrice;
+    if(orders_by_id_.contains(event.order_id)) return ApplyResult::DuplicateOrder;
+
+    if(event.side == Side::Bid){
+        if(bids_.contains(event.price)){
+            auto& price_lv = bids_.at(event.price);
+            price_lv.aggregate_quantity += event.quantity;
+            price_lv.orders.emplace_back(event.order_id, event.quantity);
+
+            auto it = std::prev(price_lv.orders.end(), 1);
+            orders_by_id_[event.order_id] = {event.side, event.price, it};
+        }
+        else{
+            auto [level_id, inserted] = bids_.try_emplace(event.price);
+            auto& level = level_id->second;
+            level.aggregate_quantity += event.quantity;
+            level.orders.emplace_back(event.order_id, event.quantity);
+            auto it = std::prev(level.orders.end(),1);
+            orders_by_id_[event.order_id] = {event.side, event.price, it};
+        }
+    }
+    else if(event.side == Side::Ask){
+        if(asks_.contains(event.price)){
+            auto& price_lv = asks_.at(event.price);
+            price_lv.aggregate_quantity += event.quantity;
+            price_lv.orders.emplace_back(event.order_id, event.quantity);
+
+            auto it = std::prev(price_lv.orders.end(),1);
+            orders_by_id_[event.order_id] = {event.side, event.price, it};
+        }
+        else{
+            auto [level_id, inserted] = asks_.try_emplace(event.price);
+            auto& level = level_id->second;
+            level.aggregate_quantity += event.quantity;
+            level.orders.emplace_back(event.order_id, event.quantity);
+            auto it = std::prev(level.orders.end(),1);
+            orders_by_id_[event.order_id] = {event.side, event.price, it};
+        }
+    }
+    else{
+        return ApplyResult::UnknownOrder;
+    }
+    return ApplyResult::Ok;
 }
 
 ApplyResult OrderBook::apply(const CancelOrder& /*event*/) noexcept {
@@ -36,29 +79,6 @@ std::optional<Price> OrderBook::best_ask() const noexcept {
 }
 
 std::optional<Quantity> OrderBook::remaining_quantity(const OrderId order_id) const noexcept {
-    /* No need to check Side here
-    if(orders_by_id_.contains(order_id)){
-        auto loc = orders_by_id_.at(order_id);
-        if(loc.side == Side::Ask){
-            if(asks_.contains(loc.price)){
-                const auto& pricelv = asks_.at(loc.price);
-                for(auto it = pricelv.orders.begin(); it != pricelv.orders.end(); ++it){
-                    if(it == loc.iterator) return it->remaining_quantity;
-                }
-            }
-        }
-        else if(loc.side ==Side::Bid){
-            if(bids_.contains(loc.price)){
-                const auto& pricelv = bids_.at(loc.price);
-                for(auto it = pricelv.orders.begin(); it != pricelv.orders.end(); ++it){
-                    if(it == loc.iterator) return it->remaining_quantity;
-                }
-            }
-        }
-    }
-    return std::nullopt;
-    */
-
     const auto index_id = orders_by_id_.find(order_id);
     if (index_id == orders_by_id_.end()) return std::nullopt;
 

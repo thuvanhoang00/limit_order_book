@@ -77,6 +77,12 @@ if(ORDER_BOOK_BUILD_TESTS)
 
         include(GoogleTest)
         gtest_discover_tests(order_book_tests)
+
+        add_custom_target(check
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            DEPENDS order_book_tests
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            USES_TERMINAL)
     else()
         message(WARNING "GoogleTest was not found; tests are disabled")
     endif()
