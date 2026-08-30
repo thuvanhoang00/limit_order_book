@@ -86,22 +86,16 @@ ParseResult parse_event_line(std::string_view line) {
             return {.event = std::nullopt, .error = "invalid quantity"};
         }
 
-        return {
-            .event = AddOrder{
-                .sequence = sequence,
-                .order_id = order_id,
-                .side = *side,
-                .price = price,
-                .quantity = quantity},
-            .error = {}};
+        return {.event = AddOrder{.sequence = sequence,
+                                  .order_id = order_id,
+                                  .side = *side,
+                                  .price = price,
+                                  .quantity = quantity},
+                .error = {}};
     }
 
     if (type == "C") {
-        return {
-            .event = CancelOrder{
-                .sequence = sequence,
-                .order_id = order_id},
-            .error = {}};
+        return {.event = CancelOrder{.sequence = sequence, .order_id = order_id}, .error = {}};
     }
 
     if (type == "E") {
@@ -110,10 +104,7 @@ ParseResult parse_event_line(std::string_view line) {
         }
 
         return {
-            .event = ExecuteOrder{
-                .sequence = sequence,
-                .order_id = order_id,
-                .quantity = quantity},
+            .event = ExecuteOrder{.sequence = sequence, .order_id = order_id, .quantity = quantity},
             .error = {}};
     }
 
@@ -132,15 +123,12 @@ void write_event_csv(std::ostream& output, const MarketEvent& event) {
             if constexpr (std::is_same_v<Event, AddOrder>) {
                 output << concrete_event.sequence << ",A,"
                        << (concrete_event.side == Side::Bid ? 'B' : 'A') << ','
-                       << concrete_event.order_id << ','
-                       << concrete_event.price << ','
+                       << concrete_event.order_id << ',' << concrete_event.price << ','
                        << concrete_event.quantity << '\n';
             } else if constexpr (std::is_same_v<Event, CancelOrder>) {
-                output << concrete_event.sequence << ",C,,"
-                       << concrete_event.order_id << ",0,0\n";
+                output << concrete_event.sequence << ",C,," << concrete_event.order_id << ",0,0\n";
             } else {
-                output << concrete_event.sequence << ",E,,"
-                       << concrete_event.order_id << ",0,"
+                output << concrete_event.sequence << ",E,," << concrete_event.order_id << ",0,"
                        << concrete_event.quantity << '\n';
             }
         },

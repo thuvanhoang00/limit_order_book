@@ -10,11 +10,7 @@ namespace {
 TEST(OrderBookScaffold, AddOrderIsImplemented) {
     OrderBook book;
     const auto result = book.apply(AddOrder{
-        .sequence = 1U,
-        .order_id = 1001U,
-        .side = Side::Bid,
-        .price = 10'000U,
-        .quantity = 25U});
+        .sequence = 1U, .order_id = 1001U, .side = Side::Bid, .price = 10'000U, .quantity = 25U});
 
     EXPECT_EQ(result, ApplyResult::Ok);
     EXPECT_EQ(book.best_bid(), 10'000U);
@@ -135,8 +131,7 @@ TEST(OrderBookContract, DISABLED_OverExecutionIsRejectedWithoutMutation) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    EXPECT_EQ(book.apply(ExecuteOrder{2U, 101U, 21U}),
-              ApplyResult::QuantityExceedsRemaining);
+    EXPECT_EQ(book.apply(ExecuteOrder{2U, 101U, 21U}), ApplyResult::QuantityExceedsRemaining);
     EXPECT_EQ(book.remaining_quantity(101U), 20U);
 }
 

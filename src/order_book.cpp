@@ -1,8 +1,8 @@
 #include "order_book/order_book.hpp"
 
+#include <iterator>
 #include <type_traits>
 #include <variant>
-#include <iterator>
 
 namespace order_book {
 
@@ -12,47 +12,43 @@ ApplyResult OrderBook::apply(const MarketEvent& event) noexcept {
 }
 
 ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
-    if(event.quantity == 0) return ApplyResult::InvalidQuantity;
-    if(event.price ==0) return ApplyResult::InvalidPrice;
-    if(orders_by_id_.contains(event.order_id)) return ApplyResult::DuplicateOrder;
+    if (event.quantity == 0) return ApplyResult::InvalidQuantity;
+    if (event.price == 0) return ApplyResult::InvalidPrice;
+    if (orders_by_id_.contains(event.order_id)) return ApplyResult::DuplicateOrder;
 
-    if(event.side == Side::Bid){
-        if(bids_.contains(event.price)){
+    if (event.side == Side::Bid) {
+        if (bids_.contains(event.price)) {
             auto& price_lv = bids_.at(event.price);
             price_lv.aggregate_quantity += event.quantity;
             price_lv.orders.emplace_back(event.order_id, event.quantity);
 
             auto it = std::prev(price_lv.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
-        }
-        else{
+        } else {
             auto [level_id, inserted] = bids_.try_emplace(event.price);
             auto& level = level_id->second;
             level.aggregate_quantity += event.quantity;
             level.orders.emplace_back(event.order_id, event.quantity);
-            auto it = std::prev(level.orders.end(),1);
+            auto it = std::prev(level.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         }
-    }
-    else if(event.side == Side::Ask){
-        if(asks_.contains(event.price)){
+    } else if (event.side == Side::Ask) {
+        if (asks_.contains(event.price)) {
             auto& price_lv = asks_.at(event.price);
             price_lv.aggregate_quantity += event.quantity;
             price_lv.orders.emplace_back(event.order_id, event.quantity);
 
-            auto it = std::prev(price_lv.orders.end(),1);
+            auto it = std::prev(price_lv.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
-        }
-        else{
+        } else {
             auto [level_id, inserted] = asks_.try_emplace(event.price);
             auto& level = level_id->second;
             level.aggregate_quantity += event.quantity;
             level.orders.emplace_back(event.order_id, event.quantity);
-            auto it = std::prev(level.orders.end(),1);
+            auto it = std::prev(level.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         }
-    }
-    else{
+    } else {
         return ApplyResult::UnknownOrder;
     }
     return ApplyResult::Ok;
