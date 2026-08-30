@@ -52,8 +52,11 @@ cmake --build --preset release --parallel
 ## Test workflow
 
 ```bash
-./tools/run_tests.sh debug
+./tools/run_tests.sh
 ```
+
+Running `./tools/run_tests.sh` without arguments checks both the `debug` and
+`asan` presets. Pass one or more preset names to run only those presets.
 
 Initially, only the scaffold and CSV I/O tests run. Core contract tests are prefixed with `DISABLED_`.
 

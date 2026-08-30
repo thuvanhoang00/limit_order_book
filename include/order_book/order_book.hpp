@@ -40,19 +40,6 @@ class OrderBook final {
     [[nodiscard]] bool validate_invariants(std::string* reason = nullptr) const;
 
    private:
-    // TODO(core): choose and implement the storage layout.
-    //
-    // Suggested V1 baseline:
-    // - std::map<Price, PriceLevel> for bid/ask levels
-    // - std::unordered_map<OrderId, OrderLocation> for O(1)-average lookup
-    // - stable per-level order storage preserving FIFO
-    //
-    // Do not optimize before the correctness contract passes.
-
-    // std::map<Price, PriceLevel> bid_level_;
-    // std::map<Price, PriceLevel> ask_level_;
-
-    // std::unordered_map<OrderId, Quantity> order_info_;
     struct OrderEntry {
         OrderId order_id{};
         Quantity remaining_quantity{};
