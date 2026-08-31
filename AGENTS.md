@@ -11,6 +11,8 @@
 
 ## Rules
 
+- Do not modify source code unless the user explicitly asks for code changes. By default,
+  limit work to inspection, analysis, and reporting.
 - Pull-request merges are always the repository owner's responsibility. Never run
   `gh pr merge` or call a GitHub API that merges a pull request; stop after submitting
   the review and report its outcome to the user.
