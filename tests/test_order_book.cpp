@@ -17,7 +17,7 @@ TEST(OrderBookScaffold, AddOrderIsImplemented) {
     EXPECT_TRUE(book.validate_invariants());
 }
 
-TEST(OrderBookContract, DISABLED_AddFirstBid) {
+TEST(OrderBookContract, AddFirstBid) {
     OrderBook book;
 
     EXPECT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -27,7 +27,7 @@ TEST(OrderBookContract, DISABLED_AddFirstBid) {
     EXPECT_EQ(book.remaining_quantity(101U), 20U);
 }
 
-TEST(OrderBookContract, DISABLED_BetterBidBecomesBestBid) {
+TEST(OrderBookContract, BetterBidBecomesBestBid) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -37,7 +37,7 @@ TEST(OrderBookContract, DISABLED_BetterBidBecomesBestBid) {
     EXPECT_EQ(book.bid_level_count(), 2U);
 }
 
-TEST(OrderBookContract, DISABLED_LowerAskBecomesBestAsk) {
+TEST(OrderBookContract, LowerAskBecomesBestAsk) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
@@ -47,7 +47,7 @@ TEST(OrderBookContract, DISABLED_LowerAskBecomesBestAsk) {
     EXPECT_EQ(book.ask_level_count(), 2U);
 }
 
-TEST(OrderBookContract, DISABLED_OrdersAtSamePriceShareLevel) {
+TEST(OrderBookContract, OrdersAtSamePriceShareLevel) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -60,7 +60,7 @@ TEST(OrderBookContract, DISABLED_OrdersAtSamePriceShareLevel) {
     EXPECT_EQ(book.remaining_quantity(102U), 15U);
 }
 
-TEST(OrderBookContract, DISABLED_DuplicateOrderIsRejected) {
+TEST(OrderBookContract, DuplicateOrderIsRejected) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -89,7 +89,7 @@ TEST(OrderBookContract, MarketEventDispatchesAddOrder) {
     EXPECT_EQ(book.best_ask(), 10'100U);
 }
 
-TEST(OrderBookContract, DISABLED_CancelRemovesOrderAndEmptyLevel) {
+TEST(OrderBookContract, CancelRemovesOrderAndEmptyLevel) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -101,12 +101,12 @@ TEST(OrderBookContract, DISABLED_CancelRemovesOrderAndEmptyLevel) {
     EXPECT_EQ(book.bid_level_count(), 0U);
 }
 
-TEST(OrderBookContract, DISABLED_UnknownCancelIsRejected) {
+TEST(OrderBookContract, UnknownCancelIsRejected) {
     OrderBook book;
     EXPECT_EQ(book.apply(CancelOrder{1U, 999U}), ApplyResult::UnknownOrder);
 }
 
-TEST(OrderBookContract, DISABLED_PartialExecutionReducesQuantity) {
+TEST(OrderBookContract, PartialExecutionReducesQuantity) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -116,7 +116,7 @@ TEST(OrderBookContract, DISABLED_PartialExecutionReducesQuantity) {
     EXPECT_EQ(book.order_count(), 1U);
 }
 
-TEST(OrderBookContract, DISABLED_FullExecutionRemovesOrder) {
+TEST(OrderBookContract, FullExecutionRemovesOrder) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -127,7 +127,7 @@ TEST(OrderBookContract, DISABLED_FullExecutionRemovesOrder) {
     EXPECT_EQ(book.order_count(), 0U);
 }
 
-TEST(OrderBookContract, DISABLED_OverExecutionIsRejectedWithoutMutation) {
+TEST(OrderBookContract, OverExecutionIsRejectedWithoutMutation) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -135,13 +135,13 @@ TEST(OrderBookContract, DISABLED_OverExecutionIsRejectedWithoutMutation) {
     EXPECT_EQ(book.remaining_quantity(101U), 20U);
 }
 
-TEST(OrderBookContract, DISABLED_UnknownExecutionIsRejected) {
+TEST(OrderBookContract, UnknownExecutionIsRejected) {
     OrderBook book;
 
     EXPECT_EQ(book.apply(ExecuteOrder{1U, 999U, 1U}), ApplyResult::UnknownOrder);
 }
 
-TEST(OrderBookContract, DISABLED_InvalidExecutionQuantityIsRejected) {
+TEST(OrderBookContract, InvalidExecutionQuantityIsRejected) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -149,7 +149,7 @@ TEST(OrderBookContract, DISABLED_InvalidExecutionQuantityIsRejected) {
     EXPECT_EQ(book.remaining_quantity(101U), 20U);
 }
 
-TEST(OrderBookContract, DISABLED_ResetClearsTheBook) {
+TEST(OrderBookContract, ResetClearsTheBook) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
@@ -162,7 +162,7 @@ TEST(OrderBookContract, DISABLED_ResetClearsTheBook) {
     EXPECT_FALSE(book.best_ask().has_value());
 }
 
-TEST(OrderBookContract, DISABLED_InvariantsHoldAcrossMixedOperations) {
+TEST(OrderBookContract, InvariantsHoldAcrossMixedOperations) {
     OrderBook book;
 
     ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
