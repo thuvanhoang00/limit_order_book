@@ -13,21 +13,22 @@ ApplyResult OrderBook::apply(const MarketEvent& event) noexcept {
                       event);
 }
 
+// This function marked as noexcept but some action can throw bad alloc
 ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
     if (event.quantity == 0) return ApplyResult::InvalidQuantity;
     if (event.price == 0) return ApplyResult::InvalidPrice;
     if (orders_by_id_.contains(event.order_id)) return ApplyResult::DuplicateOrder;
 
     if (event.side == Side::Bid) {
-        if (bids_.contains(event.price)) {
-            auto& price_lv = bids_.at(event.price);
-            price_lv.aggregate_quantity += event.quantity;
-            price_lv.orders.emplace_back(event.order_id, event.quantity);
+        const auto& price_lv_it = bids_.find(event.price);
+        if (price_lv_it != bids_.end()) {
+            price_lv_it->second.aggregate_quantity += event.quantity;
+            price_lv_it->second.orders.emplace_back(event.order_id, event.quantity); // can be thrown-becareful
 
-            auto it = std::prev(price_lv.orders.end(), 1);
+            auto it = std::prev(price_lv_it->second.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         } else {
-            auto [level_id, inserted] = bids_.try_emplace(event.price);
+            auto [level_id, inserted] = bids_.try_emplace(event.price);// can be thrown-becareful
             auto& level = level_id->second;
             level.aggregate_quantity += event.quantity;
             level.orders.emplace_back(event.order_id, event.quantity);
@@ -35,18 +36,18 @@ ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         }
     } else if (event.side == Side::Ask) {
-        if (asks_.contains(event.price)) {
-            auto& price_lv = asks_.at(event.price);
-            price_lv.aggregate_quantity += event.quantity;
-            price_lv.orders.emplace_back(event.order_id, event.quantity);
+        const auto& price_lv_it = asks_.find(event.price);
+        if (price_lv_it != asks_.end()) {
+            price_lv_it->second.aggregate_quantity += event.quantity;
+            price_lv_it->second.orders.emplace_back(event.order_id, event.quantity);// can be thrown-becareful
 
-            auto it = std::prev(price_lv.orders.end(), 1);
+            auto it = std::prev(price_lv_it->second.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         } else {
-            auto [level_id, inserted] = asks_.try_emplace(event.price);
+            auto [level_id, inserted] = asks_.try_emplace(event.price);// can be thrown-becareful
             auto& level = level_id->second;
             level.aggregate_quantity += event.quantity;
-            level.orders.emplace_back(event.order_id, event.quantity);
+            level.orders.emplace_back(event.order_id, event.quantity);// can be thrown-becareful
             auto it = std::prev(level.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         }
@@ -105,37 +106,37 @@ ApplyResult OrderBook::apply(const ExecuteOrder& event) noexcept {
     auto& quantity = iter->remaining_quantity;
     const auto& side = order_loc_it->second.side;
     const auto& price = order_loc_it->second.price;
+
     if(quantity < event.quantity) return ApplyResult::QuantityExceedsRemaining;
-    quantity -= event.quantity;
-    const auto bid_it = bids_.find(price);
-    const auto ask_it = asks_.find(price);
-    if(side == Side::Bid)
+
+    if(side == Side::Bid){
+        const auto bid_it = bids_.find(price);
+        if(bid_it == bids_.end()) return ApplyResult::UnknownOrder;
         bid_it->second.aggregate_quantity -= event.quantity;
-    else if(side == Side::Ask)
+        quantity -= event.quantity;
+        if(quantity == 0){
+            bid_it->second.orders.erase(iter);
+            if(bid_it->second.orders.empty()){
+                bids_.erase(bid_it);
+            } 
+            orders_by_id_.erase(order_loc_it); 
+        }
+    }
+    else if(side == Side::Ask){
+        const auto ask_it = asks_.find(price);
+        if(ask_it == asks_.end()) return ApplyResult::UnknownOrder;
         ask_it->second.aggregate_quantity -= event.quantity;
-    if(quantity == 0){
-        if(side == Side::Bid){
-            if(bid_it != bids_.end()){
-                bid_it->second.orders.erase(iter);
-                if(bid_it->second.orders.empty()){
-                    bids_.erase(bid_it);
-                } 
-            }
-            else return ApplyResult::UnknownOrder;
+        quantity -= event.quantity;
+        if(quantity == 0){
+            ask_it->second.orders.erase(iter);
+            if(ask_it->second.orders.empty()){
+                asks_.erase(ask_it);
+            } 
+            orders_by_id_.erase(order_loc_it); 
         }
-        else if(side == Side::Ask){
-            if(ask_it != asks_.end()){
-                ask_it->second.orders.erase(iter);
-                if(ask_it->second.orders.empty()){
-                    asks_.erase(ask_it);
-                } 
-            }
-            else return ApplyResult::UnknownOrder;
-        }
-        else{
-            return ApplyResult::NotImplemented;
-        }
-        orders_by_id_.erase(order_loc_it); 
+    }
+    else{
+        return ApplyResult::NotImplemented;
     }
 
     return ApplyResult::Ok;
