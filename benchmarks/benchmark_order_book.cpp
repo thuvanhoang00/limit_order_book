@@ -9,8 +9,8 @@
 namespace order_book {
 namespace {
 
-[[nodiscard]] std::vector<MarketEvent> make_add_only_events(const std::size_t count) {
-    std::vector<MarketEvent> events;
+[[nodiscard]] std::vector<EventPayload> make_add_only_events(const std::size_t count) {
+    std::vector<EventPayload> events;
     events.reserve(count);
 
     for (std::size_t index = 0U; index < count; ++index) {
@@ -20,7 +20,6 @@ namespace {
         const Price price = side == Side::Bid ? 10'000U - price_offset : 10'001U + price_offset;
 
         events.emplace_back(AddOrder{
-            .sequence = static_cast<Sequence>(index + 1U),
             .order_id = id,
             .side = side,
             .price = price,

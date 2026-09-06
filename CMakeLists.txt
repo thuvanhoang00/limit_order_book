@@ -67,6 +67,7 @@ if(ORDER_BOOK_BUILD_TESTS)
     if(TARGET GTest::gtest_main)
         add_executable(order_book_tests
             tests/test_order_book.cpp
+            tests/test_order_registry.cpp
             tests/test_event_io.cpp)
         target_link_libraries(order_book_tests
             PRIVATE

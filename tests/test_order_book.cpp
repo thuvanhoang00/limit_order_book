@@ -17,7 +17,7 @@ namespace {
 TEST(OrderBookScaffold, AddOrderIsImplemented) {
     OrderBook book;
     const auto result = book.apply(AddOrder{
-        .sequence = 1U, .order_id = 1001U, .side = Side::Bid, .price = 10'000U, .quantity = 25U});
+        .order_id = 1001U, .side = Side::Bid, .price = 10'000U, .quantity = 25U});
 
     EXPECT_EQ(result, ApplyResult::Ok);
     EXPECT_EQ(book.best_bid(), 10'000U);
@@ -27,7 +27,7 @@ TEST(OrderBookScaffold, AddOrderIsImplemented) {
 TEST(OrderBookContract, AddFirstBid) {
     OrderBook book;
 
-    EXPECT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    EXPECT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
     EXPECT_EQ(book.best_bid(), 10'000U);
     EXPECT_EQ(book.order_count(), 1U);
     EXPECT_EQ(book.bid_level_count(), 1U);
@@ -37,8 +37,8 @@ TEST(OrderBookContract, AddFirstBid) {
 TEST(OrderBookContract, BetterBidBecomesBestBid) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 102U, Side::Bid, 10'001U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{102U, Side::Bid, 10'001U, 10U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.best_bid(), 10'001U);
     EXPECT_EQ(book.bid_level_count(), 2U);
@@ -47,8 +47,8 @@ TEST(OrderBookContract, BetterBidBecomesBestBid) {
 TEST(OrderBookContract, LowerAskBecomesBestAsk) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 202U, Side::Ask, 10'099U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{202U, Side::Ask, 10'099U, 10U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.best_ask(), 10'099U);
     EXPECT_EQ(book.ask_level_count(), 2U);
@@ -57,8 +57,8 @@ TEST(OrderBookContract, LowerAskBecomesBestAsk) {
 TEST(OrderBookContract, OrdersAtSamePriceShareLevel) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 102U, Side::Bid, 10'000U, 15U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{102U, Side::Bid, 10'000U, 15U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.best_bid(), 10'000U);
     EXPECT_EQ(book.bid_level_count(), 1U);
@@ -70,16 +70,16 @@ TEST(OrderBookContract, OrdersAtSamePriceShareLevel) {
 TEST(OrderBookContract, DuplicateOrderIsRejected) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    EXPECT_EQ(book.apply(AddOrder{2U, 101U, Side::Ask, 10'100U, 30U}), ApplyResult::DuplicateOrder);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    EXPECT_EQ(book.apply(AddOrder{101U, Side::Ask, 10'100U, 30U}), ApplyResult::DuplicateOrder);
     EXPECT_EQ(book.order_count(), 1U);
 }
 
 TEST(OrderBookContract, InvalidAddInputsAreRejectedWithoutMutation) {
     OrderBook book;
 
-    EXPECT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 0U, 20U}), ApplyResult::InvalidPrice);
-    EXPECT_EQ(book.apply(AddOrder{2U, 102U, Side::Ask, 10'100U, 0U}), ApplyResult::InvalidQuantity);
+    EXPECT_EQ(book.apply(AddOrder{101U, Side::Bid, 0U, 20U}), ApplyResult::InvalidPrice);
+    EXPECT_EQ(book.apply(AddOrder{102U, Side::Ask, 10'100U, 0U}), ApplyResult::InvalidQuantity);
 
     EXPECT_EQ(book.order_count(), 0U);
     EXPECT_EQ(book.bid_level_count(), 0U);
@@ -88,9 +88,9 @@ TEST(OrderBookContract, InvalidAddInputsAreRejectedWithoutMutation) {
     EXPECT_FALSE(book.best_ask().has_value());
 }
 
-TEST(OrderBookContract, MarketEventDispatchesAddOrder) {
+TEST(OrderBookContract, EventPayloadDispatchesAddOrder) {
     OrderBook book;
-    const MarketEvent event = AddOrder{1U, 201U, Side::Ask, 10'100U, 25U};
+    const EventPayload event = AddOrder{201U, Side::Ask, 10'100U, 25U};
 
     ASSERT_EQ(book.apply(event), ApplyResult::Ok);
     EXPECT_EQ(book.best_ask(), 10'100U);
@@ -99,8 +99,8 @@ TEST(OrderBookContract, MarketEventDispatchesAddOrder) {
 TEST(OrderBookContract, CancelRemovesOrderAndEmptyLevel) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(CancelOrder{2U, 101U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{101U}), ApplyResult::Ok);
 
     EXPECT_FALSE(book.best_bid().has_value());
     EXPECT_FALSE(book.remaining_quantity(101U).has_value());
@@ -110,14 +110,14 @@ TEST(OrderBookContract, CancelRemovesOrderAndEmptyLevel) {
 
 TEST(OrderBookContract, UnknownCancelIsRejected) {
     OrderBook book;
-    EXPECT_EQ(book.apply(CancelOrder{1U, 999U}), ApplyResult::UnknownOrder);
+    EXPECT_EQ(book.apply(CancelOrder{999U}), ApplyResult::UnknownOrder);
 }
 
 TEST(OrderBookContract, PartialExecutionReducesQuantity) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{2U, 101U, 7U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{101U, 7U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.remaining_quantity(101U), 13U);
     EXPECT_EQ(book.order_count(), 1U);
@@ -126,8 +126,8 @@ TEST(OrderBookContract, PartialExecutionReducesQuantity) {
 TEST(OrderBookContract, FullExecutionRemovesOrder) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{2U, 101U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{101U, 20U}), ApplyResult::Ok);
 
     EXPECT_FALSE(book.remaining_quantity(101U).has_value());
     EXPECT_FALSE(book.best_bid().has_value());
@@ -137,30 +137,30 @@ TEST(OrderBookContract, FullExecutionRemovesOrder) {
 TEST(OrderBookContract, OverExecutionIsRejectedWithoutMutation) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    EXPECT_EQ(book.apply(ExecuteOrder{2U, 101U, 21U}), ApplyResult::QuantityExceedsRemaining);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    EXPECT_EQ(book.apply(ExecuteOrder{101U, 21U}), ApplyResult::QuantityExceedsRemaining);
     EXPECT_EQ(book.remaining_quantity(101U), 20U);
 }
 
 TEST(OrderBookContract, UnknownExecutionIsRejected) {
     OrderBook book;
 
-    EXPECT_EQ(book.apply(ExecuteOrder{1U, 999U, 1U}), ApplyResult::UnknownOrder);
+    EXPECT_EQ(book.apply(ExecuteOrder{999U, 1U}), ApplyResult::UnknownOrder);
 }
 
 TEST(OrderBookContract, InvalidExecutionQuantityIsRejected) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    EXPECT_EQ(book.apply(ExecuteOrder{2U, 101U, 0U}), ApplyResult::InvalidQuantity);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    EXPECT_EQ(book.apply(ExecuteOrder{101U, 0U}), ApplyResult::InvalidQuantity);
     EXPECT_EQ(book.remaining_quantity(101U), 20U);
 }
 
 TEST(OrderBookContract, ResetClearsTheBook) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
 
     book.reset();
 
@@ -172,11 +172,11 @@ TEST(OrderBookContract, ResetClearsTheBook) {
 TEST(OrderBookContract, InvariantsHoldAcrossMixedOperations) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 102U, Side::Bid, 10'000U, 15U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{3U, 201U, Side::Ask, 10'100U, 30U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{4U, 101U, 5U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(CancelOrder{5U, 102U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{102U, Side::Bid, 10'000U, 15U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{201U, Side::Ask, 10'100U, 30U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{101U, 5U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{102U}), ApplyResult::Ok);
 
     std::string reason;
     EXPECT_TRUE(book.validate_invariants(&reason)) << reason;
@@ -185,10 +185,10 @@ TEST(OrderBookContract, InvariantsHoldAcrossMixedOperations) {
 TEST(OrderBookContract, AskOrdersSupportPartialExecutionCancellationAndFullExecution) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 202U, Side::Ask, 10'100U, 15U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{3U, 201U, 7U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(CancelOrder{4U, 201U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{201U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{202U, Side::Ask, 10'100U, 15U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{201U, 7U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{201U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.best_ask(), 10'100U);
     EXPECT_EQ(book.ask_level_count(), 1U);
@@ -197,7 +197,7 @@ TEST(OrderBookContract, AskOrdersSupportPartialExecutionCancellationAndFullExecu
     EXPECT_EQ(book.remaining_quantity(202U), 15U);
     EXPECT_TRUE(book.validate_invariants());
 
-    ASSERT_EQ(book.apply(ExecuteOrder{5U, 202U, 15U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{202U, 15U}), ApplyResult::Ok);
     EXPECT_FALSE(book.best_ask().has_value());
     EXPECT_EQ(book.ask_level_count(), 0U);
     EXPECT_EQ(book.order_count(), 0U);
@@ -207,13 +207,13 @@ TEST(OrderBookContract, AskOrdersSupportPartialExecutionCancellationAndFullExecu
 TEST(OrderBookContract, RemovingBestLevelsRevealsTheNextBestPrices) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 10U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 102U, Side::Bid, 10'001U, 10U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{3U, 201U, Side::Ask, 10'101U, 10U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{4U, 202U, Side::Ask, 10'100U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{102U, Side::Bid, 10'001U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{201U, Side::Ask, 10'101U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{202U, Side::Ask, 10'100U, 10U}), ApplyResult::Ok);
 
-    ASSERT_EQ(book.apply(CancelOrder{5U, 102U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{6U, 202U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{102U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{202U, 10U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.best_bid(), 10'000U);
     EXPECT_EQ(book.best_ask(), 10'101U);
@@ -225,12 +225,12 @@ TEST(OrderBookContract, RemovingBestLevelsRevealsTheNextBestPrices) {
 TEST(OrderBookContract, RemovingOneOrderKeepsOtherOrdersAtTheSamePrice) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 10U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 102U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{3U, 103U, Side::Bid, 10'000U, 30U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{102U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{103U, Side::Bid, 10'000U, 30U}), ApplyResult::Ok);
 
-    ASSERT_EQ(book.apply(CancelOrder{4U, 102U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{5U, 101U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{102U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{101U, 10U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.best_bid(), 10'000U);
     EXPECT_EQ(book.bid_level_count(), 1U);
@@ -242,11 +242,11 @@ TEST(OrderBookContract, RemovingOneOrderKeepsOtherOrdersAtTheSamePrice) {
 TEST(OrderBookContract, RemovedOrderIdsCanBeReused) {
     OrderBook book;
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 10U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(CancelOrder{2U, 101U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{3U, 101U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(ExecuteOrder{4U, 101U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{5U, 101U, Side::Bid, 9'999U, 30U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 10U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{101U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Ask, 10'100U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{101U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 9'999U, 30U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.order_count(), 1U);
     EXPECT_EQ(book.remaining_quantity(101U), 30U);
@@ -259,12 +259,12 @@ TEST(OrderBookContract, AggregateQuantityHandlesMultipleMaximumSizedOrders) {
     OrderBook book;
     constexpr Quantity max_quantity = std::numeric_limits<Quantity>::max();
 
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, max_quantity}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 102U, Side::Bid, 10'000U, max_quantity}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, max_quantity}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{102U, Side::Bid, 10'000U, max_quantity}), ApplyResult::Ok);
     EXPECT_TRUE(book.validate_invariants());
 
-    ASSERT_EQ(book.apply(ExecuteOrder{3U, 101U, max_quantity}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(CancelOrder{4U, 102U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(ExecuteOrder{101U, max_quantity}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(CancelOrder{102U}), ApplyResult::Ok);
 
     EXPECT_EQ(book.order_count(), 0U);
     EXPECT_FALSE(book.best_bid().has_value());
@@ -273,9 +273,9 @@ TEST(OrderBookContract, AggregateQuantityHandlesMultipleMaximumSizedOrders) {
 
 TEST(OrderBookContract, MovingABookPreservesOrderIndexIterators) {
     OrderBook source;
-    ASSERT_EQ(source.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(source.apply(AddOrder{2U, 201U, Side::Ask, 10'100U, 30U}), ApplyResult::Ok);
-    ASSERT_EQ(source.apply(ExecuteOrder{3U, 101U, 5U}), ApplyResult::Ok);
+    ASSERT_EQ(source.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(source.apply(AddOrder{201U, Side::Ask, 10'100U, 30U}), ApplyResult::Ok);
+    ASSERT_EQ(source.apply(ExecuteOrder{101U, 5U}), ApplyResult::Ok);
 
     OrderBook moved{std::move(source)};
     EXPECT_EQ(moved.remaining_quantity(101U), 15U);
@@ -283,23 +283,23 @@ TEST(OrderBookContract, MovingABookPreservesOrderIndexIterators) {
     EXPECT_TRUE(moved.validate_invariants());
 
     OrderBook destination;
-    ASSERT_EQ(destination.apply(AddOrder{4U, 999U, Side::Bid, 9'000U, 1U}), ApplyResult::Ok);
+    ASSERT_EQ(destination.apply(AddOrder{999U, Side::Bid, 9'000U, 1U}), ApplyResult::Ok);
     destination = std::move(moved);
 
-    ASSERT_EQ(destination.apply(CancelOrder{5U, 101U}), ApplyResult::Ok);
-    ASSERT_EQ(destination.apply(ExecuteOrder{6U, 201U, 30U}), ApplyResult::Ok);
+    ASSERT_EQ(destination.apply(CancelOrder{101U}), ApplyResult::Ok);
+    ASSERT_EQ(destination.apply(ExecuteOrder{201U, 30U}), ApplyResult::Ok);
     EXPECT_EQ(destination.order_count(), 0U);
     EXPECT_TRUE(destination.validate_invariants());
 }
 
 TEST(OrderBookContract, ResetBookCanBeReused) {
     OrderBook book;
-    ASSERT_EQ(book.apply(AddOrder{1U, 101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
-    ASSERT_EQ(book.apply(AddOrder{2U, 201U, Side::Ask, 10'100U, 30U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{101U, Side::Bid, 10'000U, 20U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{201U, Side::Ask, 10'100U, 30U}), ApplyResult::Ok);
 
     book.reset();
 
-    ASSERT_EQ(book.apply(AddOrder{3U, 301U, Side::Ask, 10'200U, 40U}), ApplyResult::Ok);
+    ASSERT_EQ(book.apply(AddOrder{301U, Side::Ask, 10'200U, 40U}), ApplyResult::Ok);
     EXPECT_EQ(book.order_count(), 1U);
     EXPECT_FALSE(book.best_bid().has_value());
     EXPECT_EQ(book.best_ask(), 10'200U);
@@ -323,10 +323,9 @@ TEST(OrderBookContract, DeterministicMixedWorkloadMatchesReferenceModel) {
     ModelBidLevels bids;
     ModelAskLevels asks;
     std::mt19937_64 random{0xC0FFEEU};
-    Sequence sequence = 1U;
     OrderId next_order_id = 1U;
 
-    const auto apply_event = [&book](const MarketEvent& event) { return book.apply(event); };
+    const auto apply_event = [&book](const EventPayload& event) { return book.apply(event); };
 
     const auto remove_model_order = [&](const ModelOrders::iterator order_it) {
         auto remove_level_order = [](auto& levels, const Price price) {
@@ -367,7 +366,7 @@ TEST(OrderBookContract, DeterministicMixedWorkloadMatchesReferenceModel) {
         EXPECT_TRUE(book.validate_invariants(&reason)) << reason;
     };
 
-    for (std::size_t step = 0U; step < 2'000U; ++step, ++sequence) {
+    for (std::size_t step = 0U; step < 2'000U; ++step) {
         SCOPED_TRACE(step);
         const auto operation = static_cast<unsigned>(random() % 100U);
 
@@ -377,7 +376,7 @@ TEST(OrderBookContract, DeterministicMixedWorkloadMatchesReferenceModel) {
             const Price price = static_cast<Price>(9'900U + random() % 201U);
             const Quantity quantity = static_cast<Quantity>(1U + random() % 500U);
 
-            ASSERT_EQ(apply_event(AddOrder{sequence, order_id, side, price, quantity}),
+            ASSERT_EQ(apply_event(AddOrder{order_id, side, price, quantity}),
                       ApplyResult::Ok);
             orders.emplace(order_id, ModelOrder{side, price, quantity});
             if (side == Side::Bid) {
@@ -392,38 +391,38 @@ TEST(OrderBookContract, DeterministicMixedWorkloadMatchesReferenceModel) {
             if (operation < 68U) {
                 const unsigned execution_kind = static_cast<unsigned>(random() % 4U);
                 if (execution_kind == 0U) {
-                    ASSERT_EQ(apply_event(ExecuteOrder{sequence, selected->first, 0U}),
+                    ASSERT_EQ(apply_event(ExecuteOrder{selected->first, 0U}),
                               ApplyResult::InvalidQuantity);
                 } else if (execution_kind == 1U) {
-                    ASSERT_EQ(apply_event(ExecuteOrder{sequence, selected->first,
+                    ASSERT_EQ(apply_event(ExecuteOrder{selected->first,
                                                        selected->second.remaining + 1U}),
                               ApplyResult::QuantityExceedsRemaining);
                 } else if (execution_kind == 2U || selected->second.remaining == 1U) {
-                    ASSERT_EQ(apply_event(ExecuteOrder{sequence, selected->first,
+                    ASSERT_EQ(apply_event(ExecuteOrder{selected->first,
                                                        selected->second.remaining}),
                               ApplyResult::Ok);
                     remove_model_order(selected);
                 } else {
                     const Quantity executed =
                         static_cast<Quantity>(1U + random() % (selected->second.remaining - 1U));
-                    ASSERT_EQ(apply_event(ExecuteOrder{sequence, selected->first, executed}),
+                    ASSERT_EQ(apply_event(ExecuteOrder{selected->first, executed}),
                               ApplyResult::Ok);
                     selected->second.remaining -= executed;
                 }
             } else if (operation < 82U) {
-                ASSERT_EQ(apply_event(CancelOrder{sequence, selected->first}), ApplyResult::Ok);
+                ASSERT_EQ(apply_event(CancelOrder{selected->first}), ApplyResult::Ok);
                 remove_model_order(selected);
             } else if (operation < 91U) {
-                ASSERT_EQ(apply_event(AddOrder{sequence, selected->first, selected->second.side,
+                ASSERT_EQ(apply_event(AddOrder{selected->first, selected->second.side,
                                                selected->second.price, selected->second.remaining}),
                           ApplyResult::DuplicateOrder);
             } else {
                 const OrderId unknown_order_id = next_order_id + step + 1'000U;
                 if (operation % 2U == 0U) {
-                    ASSERT_EQ(apply_event(CancelOrder{sequence, unknown_order_id}),
+                    ASSERT_EQ(apply_event(CancelOrder{unknown_order_id}),
                               ApplyResult::UnknownOrder);
                 } else {
-                    ASSERT_EQ(apply_event(ExecuteOrder{sequence, unknown_order_id, 1U}),
+                    ASSERT_EQ(apply_event(ExecuteOrder{unknown_order_id, 1U}),
                               ApplyResult::UnknownOrder);
                 }
             }
