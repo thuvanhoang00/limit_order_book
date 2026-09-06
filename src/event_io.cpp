@@ -36,10 +36,10 @@ template <typename Integer>
 }
 
 [[nodiscard]] std::optional<Side> parse_side(const std::string_view text) {
-    if (text == "B" || text == "bid") {
+    if (text == "BID" || text == "B" || text == "bid") {
         return Side::Bid;
     }
-    if (text == "A" || text == "ask") {
+    if (text == "ASK" || text == "A" || text == "ask") {
         return Side::Ask;
     }
     return std::nullopt;
@@ -57,11 +57,12 @@ ParseResult parse_event_line(std::string_view line) {
     }
 
     const auto fields = split_csv(line);
-    if (fields.size() != 6U) {
-        return {.event = std::nullopt, .error = "expected 6 CSV fields"};
+    if (fields.size() != 7U) {
+        return {.event = std::nullopt, .error = "expected 7 CSV fields"};
     }
 
     Sequence sequence{};
+    InstrumentId instrument_id{};
     OrderId order_id{};
     Price price{};
     Quantity quantity{};
@@ -69,70 +70,89 @@ ParseResult parse_event_line(std::string_view line) {
     if (!parse_integer(fields[0], sequence)) {
         return {.event = std::nullopt, .error = "invalid sequence"};
     }
+    if (!parse_integer(fields[1], instrument_id)) {
+        return {.event = std::nullopt, .error = "invalid instrument_id"};
+    }
     if (!parse_integer(fields[3], order_id)) {
         return {.event = std::nullopt, .error = "invalid order_id"};
     }
 
-    const std::string_view type = fields[1];
-    if (type == "A") {
-        const auto side = parse_side(fields[2]);
+    const std::string_view type = fields[2];
+    if (type == "ADD") {
+        const auto side = parse_side(fields[4]);
         if (!side.has_value()) {
             return {.event = std::nullopt, .error = "invalid side"};
         }
-        if (!parse_integer(fields[4], price)) {
+        if (!parse_integer(fields[5], price)) {
             return {.event = std::nullopt, .error = "invalid price"};
         }
-        if (!parse_integer(fields[5], quantity)) {
+        if (!parse_integer(fields[6], quantity)) {
             return {.event = std::nullopt, .error = "invalid quantity"};
         }
 
-        return {.event = AddOrder{.sequence = sequence,
-                                  .order_id = order_id,
-                                  .side = *side,
-                                  .price = price,
-                                  .quantity = quantity},
+        return {.event = MarketEvent{.sequence = sequence,
+                                     .instrument_id = instrument_id,
+                                     .payload =
+                                         AddOrder{
+                                             .order_id = order_id,
+                                             .side = *side,
+                                             .price = price,
+                                             .quantity = quantity,
+                                         }},
                 .error = {}};
     }
 
-    if (type == "C") {
-        return {.event = CancelOrder{.sequence = sequence, .order_id = order_id}, .error = {}};
+    if (type == "CANCEL") {
+        if (!fields[4].empty() || !fields[5].empty() || !fields[6].empty()) {
+            return {.event = std::nullopt,
+                    .error = "cancel fields side, price, and quantity must be empty"};
+        }
+        return {.event = MarketEvent{.sequence = sequence,
+                                     .instrument_id = instrument_id,
+                                     .payload = CancelOrder{.order_id = order_id}},
+                .error = {}};
     }
 
-    if (type == "E") {
-        if (!parse_integer(fields[5], quantity)) {
+    if (type == "EXECUTE") {
+        if (!fields[4].empty() || !fields[5].empty()) {
+            return {.event = std::nullopt, .error = "execute fields side and price must be empty"};
+        }
+        if (!parse_integer(fields[6], quantity)) {
             return {.event = std::nullopt, .error = "invalid quantity"};
         }
 
-        return {
-            .event = ExecuteOrder{.sequence = sequence, .order_id = order_id, .quantity = quantity},
-            .error = {}};
+        return {.event = MarketEvent{.sequence = sequence,
+                                     .instrument_id = instrument_id,
+                                     .payload =
+                                         ExecuteOrder{.order_id = order_id, .quantity = quantity}},
+                .error = {}};
     }
 
     return {.event = std::nullopt, .error = "unknown event type"};
 }
 
 void write_csv_header(std::ostream& output) {
-    output << "sequence,type,side,order_id,price,quantity\n";
+    output << "sequence,instrument_id,event_type,order_id,side,price,quantity\n";
 }
 
 void write_event_csv(std::ostream& output, const MarketEvent& event) {
+    output << event.sequence << ',' << event.instrument_id << ',';
     std::visit(
         [&output](const auto& concrete_event) {
             using Event = std::decay_t<decltype(concrete_event)>;
 
             if constexpr (std::is_same_v<Event, AddOrder>) {
-                output << concrete_event.sequence << ",A,"
-                       << (concrete_event.side == Side::Bid ? 'B' : 'A') << ','
-                       << concrete_event.order_id << ',' << concrete_event.price << ','
-                       << concrete_event.quantity << '\n';
+                output << "ADD," << concrete_event.order_id << ','
+                       << (concrete_event.side == Side::Bid ? "BID" : "ASK") << ','
+                       << concrete_event.price << ',' << concrete_event.quantity << '\n';
             } else if constexpr (std::is_same_v<Event, CancelOrder>) {
-                output << concrete_event.sequence << ",C,," << concrete_event.order_id << ",0,0\n";
+                output << "CANCEL," << concrete_event.order_id << ",,,\n";
             } else {
-                output << concrete_event.sequence << ",E,," << concrete_event.order_id << ",0,"
-                       << concrete_event.quantity << '\n';
+                output << "EXECUTE," << concrete_event.order_id << ",,," << concrete_event.quantity
+                       << '\n';
             }
         },
-        event);
+        event.payload);
 }
 
 }  // namespace order_book

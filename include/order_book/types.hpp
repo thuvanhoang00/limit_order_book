@@ -25,6 +25,7 @@ enum class ApplyResult : std::uint8_t {
     UnknownOrder,
     InvalidPrice,
     InvalidQuantity,
+    UnknownInstrument,
     QuantityExceedsRemaining,
     ParseError,
     NotImplemented,
@@ -48,6 +49,8 @@ enum class ApplyResult : std::uint8_t {
             return "parse_error";
         case ApplyResult::NotImplemented:
             return "not_implemented";
+        case ApplyResult::UnknownInstrument:
+            return "unknown_instrument";
     }
 
     return "unknown";

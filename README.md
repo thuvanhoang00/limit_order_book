@@ -98,16 +98,17 @@ Define the invariants before optimizing:
 ## Generate workload
 
 ```bash
-./build/release/generate_events data/events.csv 1000000 42
+./build/release/generate_events data/events.csv 1000000 42 1001
 ```
 
 Arguments:
 
 ```text
-generate_events <output.csv> <event_count> <seed>
+generate_events <output.csv> <event_count> <seed> <instrument_id>
 ```
 
-The generator emits valid add/cancel/execute sequences and keeps active-order state internally.
+The generator emits valid add/cancel/execute sequences for one instrument and keeps
+active-order state internally. The instrument ID defaults to `1` when omitted.
 
 ## Replay
 
@@ -130,6 +131,7 @@ Output includes:
 - elapsed time
 - ns/event
 - million events/second
+- instrument count
 - remaining orders and level counts
 
 The CSV parser is intentionally included in replay timing. Later, create a second benchmark that preloads decoded events to separate parsing cost from book-update cost.
