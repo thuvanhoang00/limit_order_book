@@ -8,6 +8,10 @@
 
 namespace order_book {
 
+OrderBook::OrderBook()
+    : pool_(std::make_unique<memory::FixedSlotPool<CAPACITY_BYTES>>()), order_alloc_(*pool_)
+{}
+
 ApplyResult OrderBook::apply(const EventPayload& event) noexcept {
     return std::visit([this](const auto& concrete_event) noexcept { return apply(concrete_event); },
                       event);
@@ -28,7 +32,7 @@ ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
             auto it = std::prev(price_lv_it->second.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         } else {
-            auto [level_id, inserted] = bids_.try_emplace(event.price);// can be thrown-becareful
+            auto [level_id, inserted] = bids_.try_emplace(event.price, order_alloc_);// can be thrown-becareful
             auto& level = level_id->second;
             level.aggregate_quantity += event.quantity;
             level.orders.emplace_back(event.order_id, event.quantity);
@@ -44,7 +48,7 @@ ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
             auto it = std::prev(price_lv_it->second.orders.end(), 1);
             orders_by_id_[event.order_id] = {event.side, event.price, it};
         } else {
-            auto [level_id, inserted] = asks_.try_emplace(event.price);// can be thrown-becareful
+            auto [level_id, inserted] = asks_.try_emplace(event.price, order_alloc_);// can be thrown-becareful
             auto& level = level_id->second;
             level.aggregate_quantity += event.quantity;
             level.orders.emplace_back(event.order_id, event.quantity);// can be thrown-becareful
