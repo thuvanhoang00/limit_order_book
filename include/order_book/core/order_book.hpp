@@ -9,16 +9,37 @@
 
 #include "order_book/core/events.hpp"
 #include "order_book/core/types.hpp"
+#include "order_book/memory/fixed_slot_pool.hpp"
+#include "order_book/memory/allocator_adaptor.hpp"
 
 namespace order_book {
 
+namespace detail { struct BookInspection; }
+
 class OrderBook final {
    public:
-    OrderBook() = default;
+    OrderBook();
     OrderBook(const OrderBook&) = delete;
     OrderBook& operator=(const OrderBook&) = delete;
-    OrderBook(OrderBook&&) noexcept = default;
-    OrderBook& operator=(OrderBook&&) noexcept = default;
+    OrderBook(OrderBook&& other) noexcept // can be default, no need to call reset 
+        : pool_(std::move(other.pool_)), order_alloc_(std::move(other.order_alloc_)) 
+        {
+            bids_ = std::move(other.bids_);
+            asks_ = std::move(other.asks_);
+            orders_by_id_ = std::move(other.orders_by_id_);
+        }
+    OrderBook& operator=(OrderBook&& other) noexcept{
+        if(this != &other){
+            // move assignment need to manually written due to this call reset
+            reset();
+            pool_ = std::move(other.pool_);
+            order_alloc_ = std::move(other.order_alloc_);
+            bids_ = std::move(other.bids_);
+            asks_ = std::move(other.asks_);
+            orders_by_id_ = std::move(other.orders_by_id_);
+        }
+        return *this;
+    }
 
     [[nodiscard]] ApplyResult apply(const EventPayload& event) noexcept;
     [[nodiscard]] ApplyResult apply(const AddOrder& event) noexcept;
@@ -40,14 +61,22 @@ class OrderBook final {
     [[nodiscard]] bool validate_invariants(std::string* reason = nullptr) const;
 
    private:
+    friend struct detail::BookInspection;
     struct OrderEntry {
         OrderId order_id{};
         Quantity remaining_quantity{};
     };
-    using OrderQueue = std::list<OrderEntry>;
+    static constexpr size_t CAPACITY_BYTES = sizeof(OrderEntry) * 1024;
+
+    std::unique_ptr<memory::FixedSlotPool<CAPACITY_BYTES>> pool_;
+    using OrderAllocator = memory::AllocatorAdaptor<OrderEntry, CAPACITY_BYTES>;
+    OrderAllocator order_alloc_;
+
+    using OrderQueue = std::list<OrderEntry, OrderAllocator>;
     using OrderIterator = OrderQueue::iterator;
 
     struct PriceLevel {
+        explicit PriceLevel(const OrderAllocator& alloc) : orders(alloc) {}
         OrderQueue orders;
         std::uint64_t aggregate_quantity{};
     };

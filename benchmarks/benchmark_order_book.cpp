@@ -41,8 +41,8 @@ void BM_AddOrders(benchmark::State& state) {
 
         for (const auto& event : events) {
             ApplyResult result = book.apply(event);
-            if (result == ApplyResult::NotImplemented) {
-                state.SkipWithError("Implement OrderBook core before benchmarking");
+            if (result != ApplyResult::Ok) {
+                state.SkipWithError("Add failed: workload may exceed pool capacity");
                 return;
             }
             benchmark::DoNotOptimize(result);

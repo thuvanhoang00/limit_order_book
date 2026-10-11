@@ -8,7 +8,7 @@ mkdir -p "$output_dir"
 cmake --preset "$preset"
 cmake --build --preset "$preset" --parallel
 
-"build/${preset}/order_book_benchmarks" \
+"build/${preset}/order_book_allocator_benchmarks" \
   --benchmark_min_time=2s \
   --benchmark_repetitions=10 \
   --benchmark_report_aggregates_only=true \

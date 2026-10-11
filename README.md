@@ -11,10 +11,16 @@ The book uses ordered `std::map` price levels, a `std::unordered_map` order inde
 and per-level `std::list` order queues. Core contract tests are enabled, including
 mixed workloads checked against a reference model.
 
-Custom memory pools and allocator adaptors are implemented and tested separately.
-The order book still uses the standard containers' default allocators. Pool
-integration, allocation-failure handling, mixed-operation performance benchmarks,
-and concurrency remain future work.
+Each book owns a fixed-slot pool shared by its order queues; the price-level maps
+and order index still allocate on the heap. The pool outlives all queues.
+`apply(AddOrder)` remains `noexcept`: allocation failure returns
+`ApplyResult::AllocationFailed` and rolls back the attempted insertion, preserving
+existing orders, FIFO order, and aggregate quantities. Pool capacity is a byte
+budget, so the number of orders depends on the implementation's list-node size.
+Book construction can still throw if backing-storage allocation fails.
+
+Tests and full-book Add/Cancel benchmarks compare the pooled book against the
+implementation before pool integration. Concurrency remains future work.
 
 ## Layout
 
@@ -32,6 +38,8 @@ tests/
   io/                    # CSV tests
 benchmarks/
   benchmark_order_book.cpp
+  benchmark_book_allocators.cpp
+  support/               # frozen heap baseline, inspection and allocation probe
   support/slot_allocator.hpp  # reference allocator experiment
 tools/                  # build, test, replay, generation, profiling scripts
 cmake/                  # compiler warnings and sanitizer helpers
@@ -98,6 +106,11 @@ configuration, allocator rebinding, and `std::list` integration. Reference-arena
 tests cover growth and reuse after its final live allocation is returned. They
 also build when `ORDER_BOOK_BUILD_BENCHMARKS=OFF`.
 
+`order_book_allocation_tests` checks FIFO, slot return after cancel/full execution,
+reuse after level removal, and rollback on pool, map, index, and rehash allocation
+failures. It compares full state against the heap baseline after every event.
+Its allocation-failure probe is isolated from the production library.
+
 Run only memory tests after building:
 
 ```bash
@@ -142,6 +155,10 @@ add/cancel/execute sequences with a deterministic seed.
 Replay reports event count, elapsed time, ns/event, million events/second, and
 remaining orders/price levels, then checks book invariants. CSV parsing is
 included in replay timing.
+
+Replay stops on rejected updates, including `allocation_failed` when the active
+order set exceeds the pool's fixed capacity; large generated workloads may need
+a larger pool budget before they can be replayed successfully.
 ```text
 generate_events <output.csv> <event_count> <seed> <instrument_id>
 ```
@@ -182,16 +199,31 @@ The CSV parser is intentionally included in replay timing. Later, create a secon
 ./tools/run_benchmarks.sh release results
 ```
 
-Results are written to `results/benchmark.csv`. The current Google Benchmark
-harness measures add-only updates with predecoded events at 1,000 and 10,000
-orders. Reset is excluded from its timed region.
+Results are written to `results/benchmark.csv` by `order_book_allocator_benchmarks`.
+It compares the full pooled book with the frozen heap implementation from commit
+`7fbcf06`, using identical predecoded events at 128 and 256 active orders:
 
-There is no dedicated allocator performance benchmark yet. A useful next step
-is to compare the standard allocator, fixed-slot pool, and reference arena on
-both fill/clear cycles and mixed insert/erase workloads, reporting allocation
-counts and memory usage alongside time per operation. Arena results must account
-for its reuse-at-empty behavior. Then measure the full book with pooled order
-queues before optimizing other containers.
+- First-use fill/clear, including the pool's lazy metadata allocation.
+- Repeated fill/clear after a warm-up cycle.
+- Add/Cancel churn while the book stays nonempty.
+
+Before timing, every event's resulting state and FIFO order are compared and
+invariants checked. Book construction, backing-storage allocation, warm-up, seed
+orders, and state checks are excluded from timing. Heap allocation calls and
+requested bytes per event are collected in a separate untimed replay; these
+counters do not measure retained memory or RSS. The inactive allocation probe
+still adds overhead to allocation calls during timing.
+
+Reported time is per event batch; divide CPU time by the batch's event count
+(2N for fill/clear, 8N for churn) to obtain ns/event. The comparison includes the
+new Add rollback logic as well as allocator changes. Measure on a stable machine
+before drawing performance conclusions.
+
+The older `order_book_benchmarks` target retains its add-only workloads at 1,000
+and 10,000 orders. It reports an error when an Add fails, including pool exhaustion,
+instead of timing rejected updates as successful operations. The reference arena
+remains available in `support/slot_allocator.hpp`; this full-book comparison uses
+the heap and fixed-slot pool implementations.
 
 ## Profiling
 
@@ -214,12 +246,10 @@ misses/event. Compare the same workload and build settings across changes.
 
 ## Next steps
 
-1. Integrate a pool into per-level order queues, preserving lifetimes and book
-   invariants when capacity is exhausted. `apply(AddOrder)` currently uses
-   `noexcept` despite potentially throwing allocations, so failure handling must
-   be addressed during integration.
-2. Benchmark mixed add/cancel/execute updates and allocator behavior using fixed
-   seeds; collect latency distributions and memory usage.
+1. Choose a pool capacity from realistic peak active-order counts and measure
+   retained memory, including list nodes and pool metadata.
+2. Extend benchmarks with mixed add/cancel/execute updates using fixed seeds;
+   collect latency distributions and compare reference-arena behavior.
 3. Compare one storage change at a time: pool vs heap, linked FIFO vs intrusive
    storage, ordered maps vs indexed price ladders, and hash-index alternatives.
 4. Add a reader/parser -> SPSC queue -> single-writer pipeline only after the

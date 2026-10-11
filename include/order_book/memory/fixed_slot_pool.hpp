@@ -29,12 +29,16 @@ class FixedSlotPool {
    public:
     FixedSlotPool() { storage_ = upstream_.allocate(CAPACITY_BYTES); }
 
-    ~FixedSlotPool() { upstream_.deallocate(storage_, CAPACITY_BYTES); }
+    ~FixedSlotPool() { 
+        if(storage_)
+            upstream_.deallocate(storage_, CAPACITY_BYTES);
+    }
 
     // delete copy/move here
     FixedSlotPool(const FixedSlotPool&) = delete;
     FixedSlotPool& operator=(const FixedSlotPool&) = delete;
-    FixedSlotPool(FixedSlotPool&&) = delete;
+    FixedSlotPool(FixedSlotPool&& other) = delete;
+
     FixedSlotPool& operator=(FixedSlotPool&&) = delete;
 
     // only support number of element = 1

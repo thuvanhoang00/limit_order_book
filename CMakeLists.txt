@@ -47,6 +47,15 @@ if(ORDER_BOOK_BUILD_TOOLS)
     target_enable_sanitizers(replay_order_book)
 endif()
 
+# Actual pre-pool implementation, renamed for side-by-side verification.
+if(ORDER_BOOK_BUILD_TESTS OR ORDER_BOOK_BUILD_BENCHMARKS)
+    add_library(order_book_heap_baseline STATIC benchmarks/support/heap_order_book.cpp)
+    target_link_libraries(order_book_heap_baseline PUBLIC order_book::order_book)
+    target_include_directories(order_book_heap_baseline PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
+    target_set_project_warnings(order_book_heap_baseline)
+    target_enable_sanitizers(order_book_heap_baseline)
+endif()
+
 include(FetchContent)
 
 if(ORDER_BOOK_BUILD_TESTS)
@@ -84,9 +93,19 @@ if(ORDER_BOOK_BUILD_TESTS)
         include(GoogleTest)
         gtest_discover_tests(order_book_tests)
 
+        # Keep global operator-new interception isolated from the ordinary test binary.
+        add_executable(order_book_allocation_tests
+            tests/core/test_order_book_pool.cpp
+            benchmarks/support/allocation_probe.cpp)
+        target_link_libraries(order_book_allocation_tests PRIVATE
+            order_book_heap_baseline GTest::gtest_main)
+        target_set_project_warnings(order_book_allocation_tests)
+        target_enable_sanitizers(order_book_allocation_tests)
+        gtest_discover_tests(order_book_allocation_tests)
+
         add_custom_target(check
             COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-            DEPENDS order_book_tests
+            DEPENDS order_book_tests order_book_allocation_tests
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             USES_TERMINAL)
     else()
@@ -110,6 +129,14 @@ if(ORDER_BOOK_BUILD_BENCHMARKS)
     if(TARGET benchmark::benchmark_main)
         add_executable(order_book_benchmarks
             benchmarks/benchmark_order_book.cpp)
+        add_executable(order_book_allocator_benchmarks
+            benchmarks/benchmark_book_allocators.cpp
+            benchmarks/support/allocation_probe.cpp)
+        target_link_libraries(order_book_allocator_benchmarks PRIVATE
+            order_book_heap_baseline benchmark::benchmark_main)
+        target_set_project_warnings(order_book_allocator_benchmarks)
+        target_enable_sanitizers(order_book_allocator_benchmarks)
+
         target_link_libraries(order_book_benchmarks
             PRIVATE
                 order_book::order_book
