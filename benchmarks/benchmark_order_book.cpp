@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "order_book/order_book.hpp"
+#include "order_book/core/order_book.hpp"
 
 namespace order_book {
 namespace {

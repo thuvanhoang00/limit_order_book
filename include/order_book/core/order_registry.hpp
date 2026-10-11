@@ -1,12 +1,6 @@
 #pragma once
-
-#include <cstddef>
-#include <string>
 #include <unordered_map>
-#include <variant>
-
-#include "order_book/order_book.hpp"
-
+#include "order_book/core/order_book.hpp"
 namespace order_book {
 
 class OrderBookRegistry final {

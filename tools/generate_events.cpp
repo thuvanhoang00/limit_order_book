@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "order_book/event_io.hpp"
+#include "order_book/io/event_io.hpp"
 
 namespace {
 

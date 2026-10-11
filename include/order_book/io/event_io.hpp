@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-#include "order_book/events.hpp"
+#include "order_book/core/events.hpp"
 
 namespace order_book {
 

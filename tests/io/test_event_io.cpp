@@ -4,7 +4,7 @@
 #include <string_view>
 #include <variant>
 
-#include "order_book/event_io.hpp"
+#include "order_book/io/event_io.hpp"
 
 namespace order_book {
 namespace {
