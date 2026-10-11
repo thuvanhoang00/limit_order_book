@@ -2,6 +2,7 @@
 
 #include <iterator>
 #include <limits>
+#include <new>
 #include <type_traits>
 #include <unordered_set>
 #include <variant>
@@ -17,48 +18,45 @@ ApplyResult OrderBook::apply(const EventPayload& event) noexcept {
                       event);
 }
 
-// This function marked as noexcept but some action can throw bad alloc
+// Commit aggregate quantity only after both queue and index insertion succeed.
 ApplyResult OrderBook::apply(const AddOrder& event) noexcept {
     if (event.quantity == 0) return ApplyResult::InvalidQuantity;
     if (event.price == 0) return ApplyResult::InvalidPrice;
     if (orders_by_id_.contains(event.order_id)) return ApplyResult::DuplicateOrder;
+    if (event.side != Side::Bid && event.side != Side::Ask) return ApplyResult::UnknownOrder;
+    // A moved-from book no longer owns a pool; do not use its old allocator pointer.
+    if (!pool_) return ApplyResult::AllocationFailed;
 
-    if (event.side == Side::Bid) {
-        const auto& price_lv_it = bids_.find(event.price);
-        if (price_lv_it != bids_.end()) {
-            price_lv_it->second.aggregate_quantity += event.quantity;
-            price_lv_it->second.orders.emplace_back(event.order_id, event.quantity); // can be thrown-becareful
-
-            auto it = std::prev(price_lv_it->second.orders.end(), 1);
-            orders_by_id_[event.order_id] = {event.side, event.price, it};
-        } else {
-            auto [level_id, inserted] = bids_.try_emplace(event.price, order_alloc_);// can be thrown-becareful
-            auto& level = level_id->second;
-            level.aggregate_quantity += event.quantity;
+    const auto add_to = [&](auto& levels) -> ApplyResult {
+        auto level_it = levels.end();
+        bool created_level = false;
+        bool added_node = false;
+        try {
+            auto [it, inserted] = levels.try_emplace(event.price, order_alloc_);
+            level_it = it;
+            created_level = inserted;
+            auto& level = it->second;
             level.orders.emplace_back(event.order_id, event.quantity);
-            auto it = std::prev(level.orders.end(), 1);
-            orders_by_id_[event.order_id] = {event.side, event.price, it};
-        }
-    } else if (event.side == Side::Ask) {
-        const auto& price_lv_it = asks_.find(event.price);
-        if (price_lv_it != asks_.end()) {
-            price_lv_it->second.aggregate_quantity += event.quantity;
-            price_lv_it->second.orders.emplace_back(event.order_id, event.quantity);// can be thrown-becareful
-
-            auto it = std::prev(price_lv_it->second.orders.end(), 1);
-            orders_by_id_[event.order_id] = {event.side, event.price, it};
-        } else {
-            auto [level_id, inserted] = asks_.try_emplace(event.price, order_alloc_);// can be thrown-becareful
-            auto& level = level_id->second;
+            added_node = true;
+            const auto order_it = std::prev(level.orders.end());
+            const auto [index_it, indexed] = orders_by_id_.try_emplace(
+                event.order_id, OrderLocation{event.side, event.price, order_it});
+            (void)index_it;
+            if (!indexed) {
+                level.orders.pop_back();
+                if (created_level) levels.erase(level_it);
+                return ApplyResult::DuplicateOrder;
+            }
             level.aggregate_quantity += event.quantity;
-            level.orders.emplace_back(event.order_id, event.quantity);// can be thrown-becareful
-            auto it = std::prev(level.orders.end(), 1);
-            orders_by_id_[event.order_id] = {event.side, event.price, it};
+            return ApplyResult::Ok;
+        } catch (const std::bad_alloc&) {
+            if (added_node) level_it->second.orders.pop_back();
+            if (created_level) levels.erase(level_it);
+            return ApplyResult::AllocationFailed;
         }
-    } else {
-        return ApplyResult::UnknownOrder;
-    }
-    return ApplyResult::Ok;
+    };
+
+    return event.side == Side::Bid ? add_to(bids_) : add_to(asks_);
 }
 
 ApplyResult OrderBook::apply(const CancelOrder& event) noexcept {

@@ -14,6 +14,8 @@
 
 namespace order_book {
 
+namespace detail { struct BookInspection; }
+
 class OrderBook final {
    public:
     OrderBook();
@@ -59,6 +61,7 @@ class OrderBook final {
     [[nodiscard]] bool validate_invariants(std::string* reason = nullptr) const;
 
    private:
+    friend struct detail::BookInspection;
     struct OrderEntry {
         OrderId order_id{};
         Quantity remaining_quantity{};

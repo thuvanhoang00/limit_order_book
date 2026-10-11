@@ -1,0 +1,76 @@
+// Frozen heap baseline from commit 7fbcf06 (before pool integration).
+#pragma once
+
+#include <cstddef>
+#include <list>
+#include <map>
+#include <optional>
+#include <string>
+#include <unordered_map>
+
+#include "order_book/core/events.hpp"
+#include "order_book/core/types.hpp"
+
+namespace order_book {
+
+namespace detail {
+struct BookInspection;
+}
+
+class HeapOrderBook final {
+   public:
+    HeapOrderBook() = default;
+    HeapOrderBook(const HeapOrderBook&) = delete;
+    HeapOrderBook& operator=(const HeapOrderBook&) = delete;
+    HeapOrderBook(HeapOrderBook&&) noexcept = default;
+    HeapOrderBook& operator=(HeapOrderBook&&) noexcept = default;
+
+    [[nodiscard]] ApplyResult apply(const EventPayload& event) noexcept;
+    [[nodiscard]] ApplyResult apply(const AddOrder& event) noexcept;
+    [[nodiscard]] ApplyResult apply(const CancelOrder& event) noexcept;
+    [[nodiscard]] ApplyResult apply(const ExecuteOrder& event) noexcept;
+
+    [[nodiscard]] std::optional<Price> best_bid() const noexcept;
+    [[nodiscard]] std::optional<Price> best_ask() const noexcept;
+    [[nodiscard]] std::optional<Quantity> remaining_quantity(OrderId order_id) const noexcept;
+
+    [[nodiscard]] std::size_t order_count() const noexcept;
+    [[nodiscard]] std::size_t bid_level_count() const noexcept;
+    [[nodiscard]] std::size_t ask_level_count() const noexcept;
+
+    void reset() noexcept;
+
+    // This function is intentionally allowed to be slower than the hot path.
+    // Use it in tests and debug builds to validate internal consistency.
+    [[nodiscard]] bool validate_invariants(std::string* reason = nullptr) const;
+
+   private:
+    friend struct detail::BookInspection;
+    struct OrderEntry {
+        OrderId order_id{};
+        Quantity remaining_quantity{};
+    };
+    using OrderQueue = std::list<OrderEntry>;
+    using OrderIterator = OrderQueue::iterator;
+
+    struct PriceLevel {
+        OrderQueue orders;
+        std::uint64_t aggregate_quantity{};
+    };
+
+    struct OrderLocation {
+        Side side;
+        Price price;
+        OrderIterator iterator;
+    };
+
+    using BidLevels = std::map<Price, PriceLevel, std::greater<Price>>;
+    using AskLevels = std::map<Price, PriceLevel, std::less<Price>>;
+
+    BidLevels bids_;
+    AskLevels asks_;
+
+    std::unordered_map<OrderId, OrderLocation> orders_by_id_;
+};
+
+}  // namespace order_book

@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "order_book/core/order_book.hpp"
+#include "support/book_inspection.hpp"
 
 namespace order_book {
 namespace {
@@ -376,8 +377,13 @@ TEST(OrderBookContract, DeterministicMixedWorkloadMatchesReferenceModel) {
             const Price price = static_cast<Price>(9'900U + random() % 201U);
             const Quantity quantity = static_cast<Quantity>(1U + random() % 500U);
 
-            ASSERT_EQ(apply_event(AddOrder{order_id, side, price, quantity}),
-                      ApplyResult::Ok);
+            const auto result = apply_event(AddOrder{order_id, side, price, quantity});
+            if (result == ApplyResult::AllocationFailed) {
+                EXPECT_EQ(detail::BookInspection::free_bytes(book), 0U);
+                expect_matches_model(); // failed Add must leave the model/book unchanged
+                continue;
+            }
+            ASSERT_EQ(result, ApplyResult::Ok);
             orders.emplace(order_id, ModelOrder{side, price, quantity});
             if (side == Side::Bid) {
                 ++bids[price];
