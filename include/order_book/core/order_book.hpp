@@ -7,8 +7,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "order_book/events.hpp"
-#include "order_book/types.hpp"
+#include "order_book/core/events.hpp"
+#include "order_book/core/types.hpp"
 
 namespace order_book {
 

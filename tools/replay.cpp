@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 
-#include "order_book/event_io.hpp"
-#include "order_book/order_book.hpp"
+#include "order_book/io/event_io.hpp"
+#include "order_book/core/order_book.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         const auto result = book.apply(*parsed.event);
         if (result == order_book::ApplyResult::NotImplemented) {
             std::cerr << "OrderBook core is not implemented yet. Start with "
-                         "tests/test_order_book.cpp.\n";
+                         "tests/core/test_order_book.cpp.\n";
             return 2;
         }
         if (result != order_book::ApplyResult::Ok) {

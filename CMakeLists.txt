@@ -21,8 +21,8 @@ include(CompilerWarnings)
 include(Sanitizers)
 
 add_library(order_book STATIC
-    src/order_book.cpp
-    src/event_io.cpp)
+    src/core/order_book.cpp
+    src/io/event_io.cpp)
 
 add_library(order_book::order_book ALIAS order_book)
 
@@ -66,12 +66,18 @@ if(ORDER_BOOK_BUILD_TESTS)
 
     if(TARGET GTest::gtest_main)
         add_executable(order_book_tests
-            tests/test_order_book.cpp
-            tests/test_event_io.cpp)
+            tests/core/test_order_book.cpp
+            tests/io/test_event_io.cpp
+            tests/memory/test_memory_pool.cpp
+            tests/memory/test_byte_pool.cpp
+            tests/memory/test_fixed_slot_pool.cpp
+            tests/memory/test_allocator_adaptor.cpp
+            tests/memory/test_slot_allocator.cpp)
         target_link_libraries(order_book_tests
             PRIVATE
                 order_book::order_book
                 GTest::gtest_main)
+        target_include_directories(order_book_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
         target_set_project_warnings(order_book_tests)
         target_enable_sanitizers(order_book_tests)
 

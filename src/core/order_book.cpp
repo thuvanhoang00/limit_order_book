@@ -1,4 +1,4 @@
-#include "order_book/order_book.hpp"
+#include "order_book/core/order_book.hpp"
 
 #include <iterator>
 #include <limits>
@@ -70,7 +70,7 @@ ApplyResult OrderBook::apply(const CancelOrder& event) noexcept {
                 bid_it->second.orders.erase(iter);
                 if(bid_it->second.orders.size() == 0){
                     bids_.erase(bid_it);
-                } 
+                }
             }
             else return ApplyResult::UnknownOrder;
         }
@@ -81,7 +81,7 @@ ApplyResult OrderBook::apply(const CancelOrder& event) noexcept {
                 ask_it->second.orders.erase(iter);
                 if(ask_it->second.orders.size() == 0){
                     asks_.erase(ask_it);
-                } 
+                }
             }
             else return ApplyResult::UnknownOrder;
         }
@@ -89,11 +89,11 @@ ApplyResult OrderBook::apply(const CancelOrder& event) noexcept {
             return ApplyResult::NotImplemented;
         }
 
-        orders_by_id_.erase(order_loc_it); 
+        orders_by_id_.erase(order_loc_it);
     }
     else{
         return ApplyResult::UnknownOrder;
-    }   
+    }
     return ApplyResult::Ok;
 }
 
@@ -118,8 +118,8 @@ ApplyResult OrderBook::apply(const ExecuteOrder& event) noexcept {
             bid_it->second.orders.erase(iter);
             if(bid_it->second.orders.empty()){
                 bids_.erase(bid_it);
-            } 
-            orders_by_id_.erase(order_loc_it); 
+            }
+            orders_by_id_.erase(order_loc_it);
         }
     }
     else if(side == Side::Ask){
@@ -131,8 +131,8 @@ ApplyResult OrderBook::apply(const ExecuteOrder& event) noexcept {
             ask_it->second.orders.erase(iter);
             if(ask_it->second.orders.empty()){
                 asks_.erase(ask_it);
-            } 
-            orders_by_id_.erase(order_loc_it); 
+            }
+            orders_by_id_.erase(order_loc_it);
         }
     }
     else{
@@ -159,15 +159,15 @@ std::optional<Quantity> OrderBook::remaining_quantity(const OrderId order_id) co
     return index_id->second.iterator->remaining_quantity;
 }
 
-std::size_t OrderBook::order_count() const noexcept { 
+std::size_t OrderBook::order_count() const noexcept {
     return orders_by_id_.size();
 }
 
-std::size_t OrderBook::bid_level_count() const noexcept { 
+std::size_t OrderBook::bid_level_count() const noexcept {
     return bids_.size();
 }
 
-std::size_t OrderBook::ask_level_count() const noexcept { 
+std::size_t OrderBook::ask_level_count() const noexcept {
     return asks_.size();
 }
 
