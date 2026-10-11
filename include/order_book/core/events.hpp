@@ -7,7 +7,6 @@
 namespace order_book {
 
 struct AddOrder {
-    Sequence sequence{};
     OrderId order_id{};
     Side side{Side::Bid};
     Price price{};
@@ -17,20 +16,26 @@ struct AddOrder {
 };
 
 struct CancelOrder {
-    Sequence sequence{};
     OrderId order_id{};
 
     friend constexpr bool operator==(const CancelOrder&, const CancelOrder&) = default;
 };
 
 struct ExecuteOrder {
-    Sequence sequence{};
     OrderId order_id{};
     Quantity quantity{};
 
     friend constexpr bool operator==(const ExecuteOrder&, const ExecuteOrder&) = default;
 };
 
-using MarketEvent = std::variant<AddOrder, CancelOrder, ExecuteOrder>;
+using EventPayload = std::variant<AddOrder, CancelOrder, ExecuteOrder>;
+
+struct MarketEvent {
+    Sequence sequence{};
+    InstrumentId instrument_id{};
+    EventPayload payload;
+
+    friend constexpr bool operator==(const MarketEvent&, const MarketEvent&) = default;
+};
 
 }  // namespace order_book

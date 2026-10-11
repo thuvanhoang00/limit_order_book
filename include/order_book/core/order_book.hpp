@@ -20,7 +20,7 @@ class OrderBook final {
     OrderBook(OrderBook&&) noexcept = default;
     OrderBook& operator=(OrderBook&&) noexcept = default;
 
-    [[nodiscard]] ApplyResult apply(const MarketEvent& event) noexcept;
+    [[nodiscard]] ApplyResult apply(const EventPayload& event) noexcept;
     [[nodiscard]] ApplyResult apply(const AddOrder& event) noexcept;
     [[nodiscard]] ApplyResult apply(const CancelOrder& event) noexcept;
     [[nodiscard]] ApplyResult apply(const ExecuteOrder& event) noexcept;

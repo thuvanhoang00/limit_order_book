@@ -142,6 +142,39 @@ add/cancel/execute sequences with a deterministic seed.
 Replay reports event count, elapsed time, ns/event, million events/second, and
 remaining orders/price levels, then checks book invariants. CSV parsing is
 included in replay timing.
+```text
+generate_events <output.csv> <event_count> <seed> <instrument_id>
+```
+
+The generator emits valid add/cancel/execute sequences for one instrument and keeps
+active-order state internally. The instrument ID defaults to `1` when omitted.
+
+## Replay
+
+After implementing the core:
+
+```bash
+./tools/run.sh
+```
+
+By default, the script builds the `release` preset and replays
+`data/sample_events.csv`. Pass a preset and CSV path to override them:
+
+```bash
+./tools/run.sh debug data/events.csv
+```
+
+Output includes:
+
+- event count
+- elapsed time
+- ns/event
+- million events/second
+- instrument count
+- remaining orders and level counts
+
+The CSV parser is intentionally included in replay timing. Later, create a second benchmark that preloads decoded events to separate parsing cost from book-update cost.
+>>>>>>> main
 
 ## Benchmarks
 

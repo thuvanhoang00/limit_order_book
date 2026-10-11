@@ -8,7 +8,7 @@
 
 namespace order_book {
 
-ApplyResult OrderBook::apply(const MarketEvent& event) noexcept {
+ApplyResult OrderBook::apply(const EventPayload& event) noexcept {
     return std::visit([this](const auto& concrete_event) noexcept { return apply(concrete_event); },
                       event);
 }

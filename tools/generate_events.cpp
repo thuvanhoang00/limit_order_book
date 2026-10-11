@@ -31,6 +31,9 @@ int main(int argc, char** argv) {
     const std::string output_path = argc > 1 ? argv[1] : "data/events.csv";
     const std::size_t event_count = argc > 2 ? parse_size(argv[2], 100'000U) : 100'000U;
     const std::uint64_t seed = argc > 3 ? static_cast<std::uint64_t>(parse_size(argv[3], 42U)) : 42U;
+    const auto instrument_id = argc > 4
+                                   ? static_cast<order_book::InstrumentId>(parse_size(argv[4], 1U))
+                                   : order_book::InstrumentId{1U};
 
     std::ofstream output(output_path);
     if (!output) {
@@ -65,12 +68,14 @@ int main(int argc, char** argv) {
                 : 10'001U + offset;
             const order_book::Quantity quantity = quantity_distribution(random);
 
-            const order_book::AddOrder event{
+            const order_book::MarketEvent event{
                 .sequence = sequence,
-                .order_id = next_order_id,
-                .side = side,
-                .price = price,
-                .quantity = quantity};
+                .instrument_id = instrument_id,
+                .payload = order_book::AddOrder{
+                    .order_id = next_order_id,
+                    .side = side,
+                    .price = price,
+                    .quantity = quantity}};
 
             order_book::write_event_csv(output, event);
             active_orders.push_back(ActiveOrder{next_order_id, quantity});
@@ -84,9 +89,10 @@ int main(int argc, char** argv) {
         ActiveOrder& active = active_orders[active_index];
 
         if (operation < 82) {
-            order_book::write_event_csv(output, order_book::CancelOrder{
+            order_book::write_event_csv(output, order_book::MarketEvent{
                 .sequence = sequence,
-                .order_id = active.id});
+                .instrument_id = instrument_id,
+                .payload = order_book::CancelOrder{.order_id = active.id}});
 
             active_orders[active_index] = active_orders.back();
             active_orders.pop_back();
@@ -95,10 +101,12 @@ int main(int argc, char** argv) {
 
         std::uniform_int_distribution<std::uint32_t> execute_distribution(1U, active.remaining);
         const order_book::Quantity executed = execute_distribution(random);
-        order_book::write_event_csv(output, order_book::ExecuteOrder{
+        order_book::write_event_csv(output, order_book::MarketEvent{
             .sequence = sequence,
-            .order_id = active.id,
-            .quantity = executed});
+            .instrument_id = instrument_id,
+            .payload = order_book::ExecuteOrder{
+                .order_id = active.id,
+                .quantity = executed}});
 
         active.remaining -= executed;
         if (active.remaining == 0U) {
@@ -107,7 +115,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    std::cout << "Generated " << event_count << " events at " << output_path
-              << " with seed " << seed << '\n';
+    std::cout << "Generated " << event_count << " events for instrument " << instrument_id
+              << " at " << output_path << " with seed " << seed << '\n';
     return 0;
 }

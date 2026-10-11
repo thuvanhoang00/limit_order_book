@@ -21,7 +21,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    order_book::OrderBook book;
+    order_book::OrderBookRegistry book_registry;
+
     std::string line;
     std::size_t line_number = 0U;
     std::size_t event_count = 0U;
@@ -42,7 +43,13 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        const auto result = book.apply(*parsed.event);
+        if (!book_registry.seq_valid(parsed.event->sequence)) {
+            std::cerr << "Invalid sequence: last accepted=" << book_registry.get_seq()
+                      << ", received=" << parsed.event->sequence << '\n';
+            return 1;
+        }
+
+        const auto result = book_registry.apply(*parsed.event);
         if (result == order_book::ApplyResult::NotImplemented) {
             std::cerr << "OrderBook core is not implemented yet. Start with "
                          "tests/core/test_order_book.cpp.\n";
@@ -67,7 +74,7 @@ int main(int argc, char** argv) {
         : static_cast<double>(event_count) / elapsed / 1'000'000.0;
 
     std::string reason;
-    if (!book.validate_invariants(&reason)) {
+    if (!book_registry.validate_invariants(&reason)) {
         std::cerr << "Invariant failure after replay: " << reason << '\n';
         return 1;
     }
@@ -77,9 +84,10 @@ int main(int argc, char** argv) {
               << "elapsed_seconds=" << elapsed << '\n'
               << "ns_per_event=" << ns_per_event << '\n'
               << "million_events_per_second=" << million_events_per_second << '\n'
-              << "remaining_orders=" << book.order_count() << '\n'
-              << "bid_levels=" << book.bid_level_count() << '\n'
-              << "ask_levels=" << book.ask_level_count() << '\n';
+              << "instruments=" << book_registry.instrument_count() << '\n'
+              << "remaining_orders=" << book_registry.order_count() << '\n'
+              << "bid_levels=" << book_registry.bid_level_count() << '\n'
+              << "ask_levels=" << book_registry.ask_level_count() << '\n';
 
     return 0;
 }
