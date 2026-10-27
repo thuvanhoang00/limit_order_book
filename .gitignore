@@ -10,3 +10,5 @@ perf.data*
 /.cache/
 
 *.log
+
+__pycache__/

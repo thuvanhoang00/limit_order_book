@@ -1,0 +1,2 @@
+cd /home/thu/Desktop/Vibe/LOB
+taskset -c 2 /home/thu/Desktop/Vibe/LOB/build/release/order_book_allocator_benchmarks --benchmark_min_time=2s --benchmark_repetitions=10 --benchmark_enable_random_interleaving=true --benchmark_report_aggregates_only=false --benchmark_display_aggregates_only=true --benchmark_color=false --benchmark_out=/home/thu/Desktop/Vibe/LOB/results/20261027-201459-baseline-01-162f9cd/benchmark.json --benchmark_out_format=json

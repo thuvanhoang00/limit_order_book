@@ -1,0 +1,61 @@
+2026-10-27T20:15:55+07:00
+Running /home/thu/Desktop/Vibe/LOB/build/release/order_book_allocator_benchmarks
+Run on (8 X 3900 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x4)
+  L1 Instruction 32 KiB (x4)
+  L2 Unified 512 KiB (x4)
+  L3 Unified 4096 KiB (x1)
+Load Average: 1.35, 1.34, 1.24
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+---------------------------------------------------------------------------------------------------------
+Benchmark                                               Time             CPU   Iterations UserCounters...
+---------------------------------------------------------------------------------------------------------
+BM_FillClearReuse<HeapOrderBook>/256_mean           20184 ns        20175 ns           10 heap_allocs/event=1.0625 heap_requested_bytes/event=36.5 items_per_second=25.3806M/s
+BM_FillClearReuse<HeapOrderBook>/256_median         20115 ns        20106 ns           10 heap_allocs/event=1.0625 heap_requested_bytes/event=36.5 items_per_second=25.4655M/s
+BM_FillClearReuse<HeapOrderBook>/256_stddev           238 ns          237 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=297.644k/s
+BM_FillClearReuse<HeapOrderBook>/256_cv              1.18 %          1.18 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=1.17%
+BM_AddCancelChurn<OrderBook>/128_mean               33523 ns        33505 ns           10 heap_allocs/event=0.5 heap_requested_bytes/event=16 items_per_second=30.5644M/s
+BM_AddCancelChurn<OrderBook>/128_median             33518 ns        33500 ns           10 heap_allocs/event=0.5 heap_requested_bytes/event=16 items_per_second=30.567M/s
+BM_AddCancelChurn<OrderBook>/128_stddev               251 ns          252 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=229.297k/s
+BM_AddCancelChurn<OrderBook>/128_cv                  0.75 %          0.75 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.75%
+BM_AddCancelChurn<OrderBook>/256_mean               66408 ns        66385 ns           10 heap_allocs/event=0.5 heap_requested_bytes/event=16 items_per_second=30.8522M/s
+BM_AddCancelChurn<OrderBook>/256_median             66389 ns        66366 ns           10 heap_allocs/event=0.5 heap_requested_bytes/event=16 items_per_second=30.8595M/s
+BM_AddCancelChurn<OrderBook>/256_stddev               545 ns          544 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=253.022k/s
+BM_AddCancelChurn<OrderBook>/256_cv                  0.82 %          0.82 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.82%
+BM_AddCancelChurn<HeapOrderBook>/128_mean           36301 ns        36283 ns           10 heap_allocs/event=1 heap_requested_bytes/event=32 items_per_second=28.2249M/s
+BM_AddCancelChurn<HeapOrderBook>/128_median         36412 ns        36395 ns           10 heap_allocs/event=1 heap_requested_bytes/event=32 items_per_second=28.1355M/s
+BM_AddCancelChurn<HeapOrderBook>/128_stddev           369 ns          368 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=288.286k/s
+BM_AddCancelChurn<HeapOrderBook>/128_cv              1.02 %          1.01 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=1.02%
+BM_FillClearFirstUse<HeapOrderBook>/256_mean        26563 ns        26589 ns           10 heap_allocs/event=1.07227 heap_requested_bytes/event=44.0781 items_per_second=19.2584M/s
+BM_FillClearFirstUse<HeapOrderBook>/256_median      26521 ns        26547 ns           10 heap_allocs/event=1.07227 heap_requested_bytes/event=44.0781 items_per_second=19.2862M/s
+BM_FillClearFirstUse<HeapOrderBook>/256_stddev        321 ns          320 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=231.109k/s
+BM_FillClearFirstUse<HeapOrderBook>/256_cv           1.21 %          1.21 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=1.20%
+BM_FillClearReuse<HeapOrderBook>/128_mean           10847 ns        10840 ns           10 heap_allocs/event=1.125 heap_requested_bytes/event=41 items_per_second=23.6188M/s
+BM_FillClearReuse<HeapOrderBook>/128_median         10829 ns        10822 ns           10 heap_allocs/event=1.125 heap_requested_bytes/event=41 items_per_second=23.6563M/s
+BM_FillClearReuse<HeapOrderBook>/128_stddev          92.6 ns         92.1 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=200.762k/s
+BM_FillClearReuse<HeapOrderBook>/128_cv              0.85 %          0.85 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.85%
+BM_FillClearReuse<OrderBook>/128_mean               10128 ns        10118 ns           10 heap_allocs/event=0.625 heap_requested_bytes/event=26 items_per_second=25.3041M/s
+BM_FillClearReuse<OrderBook>/128_median             10149 ns        10139 ns           10 heap_allocs/event=0.625 heap_requested_bytes/event=26 items_per_second=25.2499M/s
+BM_FillClearReuse<OrderBook>/128_stddev              91.1 ns         91.1 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=228.27k/s
+BM_FillClearReuse<OrderBook>/128_cv                  0.90 %          0.90 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.90%
+BM_FillClearReuse<OrderBook>/256_mean               17900 ns        17889 ns           10 heap_allocs/event=0.5625 heap_requested_bytes/event=21 items_per_second=28.6219M/s
+BM_FillClearReuse<OrderBook>/256_median             17891 ns        17881 ns           10 heap_allocs/event=0.5625 heap_requested_bytes/event=21 items_per_second=28.6334M/s
+BM_FillClearReuse<OrderBook>/256_stddev               142 ns          142 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=227.476k/s
+BM_FillClearReuse<OrderBook>/256_cv                  0.79 %          0.79 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.79%
+BM_AddCancelChurn<HeapOrderBook>/256_mean           70144 ns        70123 ns           10 heap_allocs/event=1 heap_requested_bytes/event=32 items_per_second=29.2078M/s
+BM_AddCancelChurn<HeapOrderBook>/256_median         69940 ns        69919 ns           10 heap_allocs/event=1 heap_requested_bytes/event=32 items_per_second=29.2908M/s
+BM_AddCancelChurn<HeapOrderBook>/256_stddev           623 ns          623 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=256.422k/s
+BM_AddCancelChurn<HeapOrderBook>/256_cv              0.89 %          0.89 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.88%
+BM_FillClearFirstUse<OrderBook>/256_mean            24338 ns        24345 ns           10 heap_allocs/event=0.576172 heap_requested_bytes/event=36.7031 items_per_second=21.0325M/s
+BM_FillClearFirstUse<OrderBook>/256_median          24318 ns        24324 ns           10 heap_allocs/event=0.576172 heap_requested_bytes/event=36.7031 items_per_second=21.0491M/s
+BM_FillClearFirstUse<OrderBook>/256_stddev            206 ns          207 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=178.282k/s
+BM_FillClearFirstUse<OrderBook>/256_cv               0.85 %          0.85 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=0.85%
+BM_FillClearFirstUse<HeapOrderBook>/128_mean        11983 ns        12007 ns           10 heap_allocs/event=1.14453 heap_requested_bytes/event=56.1562 items_per_second=21.3274M/s
+BM_FillClearFirstUse<HeapOrderBook>/128_median      11989 ns        12012 ns           10 heap_allocs/event=1.14453 heap_requested_bytes/event=56.1562 items_per_second=21.3132M/s
+BM_FillClearFirstUse<HeapOrderBook>/128_stddev        220 ns          221 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=391.357k/s
+BM_FillClearFirstUse<HeapOrderBook>/128_cv           1.84 %          1.84 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=1.83%
+BM_FillClearFirstUse<OrderBook>/128_mean            14107 ns        14120 ns           10 heap_allocs/event=0.652344 heap_requested_bytes/event=57.4062 items_per_second=18.1383M/s
+BM_FillClearFirstUse<OrderBook>/128_median          14107 ns        14122 ns           10 heap_allocs/event=0.652344 heap_requested_bytes/event=57.4062 items_per_second=18.1283M/s
+BM_FillClearFirstUse<OrderBook>/128_stddev            309 ns          310 ns           10 heap_allocs/event=0 heap_requested_bytes/event=0 items_per_second=397.322k/s
+BM_FillClearFirstUse<OrderBook>/128_cv               2.19 %          2.20 %            10 heap_allocs/event=0.00% heap_requested_bytes/event=0.00% items_per_second=2.19%

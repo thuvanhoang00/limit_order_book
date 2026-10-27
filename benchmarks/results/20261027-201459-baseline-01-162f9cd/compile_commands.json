@@ -1,0 +1,152 @@
+[
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book.dir/src/core/order_book.cpp.o -c /home/thu/Desktop/Vibe/LOB/src/core/order_book.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/src/core/order_book.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book.dir/src/core/order_book.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book.dir/src/core/logger.cpp.o -c /home/thu/Desktop/Vibe/LOB/src/core/logger.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/src/core/logger.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book.dir/src/core/logger.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book.dir/src/io/event_io.cpp.o -c /home/thu/Desktop/Vibe/LOB/src/io/event_io.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/src/io/event_io.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book.dir/src/io/event_io.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/generate_events.dir/tools/generate_events.cpp.o -c /home/thu/Desktop/Vibe/LOB/tools/generate_events.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tools/generate_events.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/generate_events.dir/tools/generate_events.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/replay_order_book.dir/tools/replay.cpp.o -c /home/thu/Desktop/Vibe/LOB/tools/replay.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tools/replay.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/replay_order_book.dir/tools/replay.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_heap_baseline.dir/benchmarks/support/heap_order_book.cpp.o -c /home/thu/Desktop/Vibe/LOB/benchmarks/support/heap_order_book.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/benchmarks/support/heap_order_book.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_heap_baseline.dir/benchmarks/support/heap_order_book.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/core/test_order_book.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/core/test_order_book.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/core/test_order_book.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/core/test_order_book.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/core/test_lfqueue.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/core/test_lfqueue.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/core/test_lfqueue.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/core/test_lfqueue.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/core/test_logger.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/core/test_logger.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/core/test_logger.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/core/test_logger.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/test_order_registry.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/test_order_registry.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/test_order_registry.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/test_order_registry.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/io/test_event_io.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/io/test_event_io.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/io/test_event_io.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/io/test_event_io.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/memory/test_memory_pool.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/memory/test_memory_pool.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/memory/test_memory_pool.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/memory/test_memory_pool.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/memory/test_byte_pool.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/memory/test_byte_pool.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/memory/test_byte_pool.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/memory/test_byte_pool.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/memory/test_fixed_slot_pool.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/memory/test_fixed_slot_pool.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/memory/test_fixed_slot_pool.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/memory/test_fixed_slot_pool.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/memory/test_allocator_adaptor.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/memory/test_allocator_adaptor.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/memory/test_allocator_adaptor.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/memory/test_allocator_adaptor.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_tests.dir/tests/memory/test_slot_allocator.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/memory/test_slot_allocator.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/memory/test_slot_allocator.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_tests.dir/tests/memory/test_slot_allocator.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_allocation_tests.dir/tests/core/test_order_book_pool.cpp.o -c /home/thu/Desktop/Vibe/LOB/tests/core/test_order_book_pool.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/tests/core/test_order_book_pool.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_allocation_tests.dir/tests/core/test_order_book_pool.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_allocation_tests.dir/benchmarks/support/allocation_probe.cpp.o -c /home/thu/Desktop/Vibe/LOB/benchmarks/support/allocation_probe.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/benchmarks/support/allocation_probe.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_allocation_tests.dir/benchmarks/support/allocation_probe.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -DBENCHMARK_STATIC_DEFINE -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_benchmarks.dir/benchmarks/benchmark_order_book.cpp.o -c /home/thu/Desktop/Vibe/LOB/benchmarks/benchmark_order_book.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/benchmarks/benchmark_order_book.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_benchmarks.dir/benchmarks/benchmark_order_book.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -DBENCHMARK_STATIC_DEFINE -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_allocator_benchmarks.dir/benchmarks/benchmark_book_allocators.cpp.o -c /home/thu/Desktop/Vibe/LOB/benchmarks/benchmark_book_allocators.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/benchmarks/benchmark_book_allocators.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_allocator_benchmarks.dir/benchmarks/benchmark_book_allocators.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -DBENCHMARK_STATIC_DEFINE -I/home/thu/Desktop/Vibe/LOB/benchmarks -I/home/thu/Desktop/Vibe/LOB/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wnull-dereference -Wdouble-promotion -Wformat=2 -o CMakeFiles/order_book_allocator_benchmarks.dir/benchmarks/support/allocation_probe.cpp.o -c /home/thu/Desktop/Vibe/LOB/benchmarks/support/allocation_probe.cpp",
+  "file": "/home/thu/Desktop/Vibe/LOB/benchmarks/support/allocation_probe.cpp",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/CMakeFiles/order_book_allocator_benchmarks.dir/benchmarks/support/allocation_probe.cpp.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock/include -I/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "file": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "file": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -I/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -I/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o _deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "file": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o"
+},
+{
+  "directory": "/home/thu/Desktop/Vibe/LOB/build/release",
+  "command": "/usr/bin/c++ -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/include -isystem /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest -O3 -DNDEBUG -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "file": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "output": "/home/thu/Desktop/Vibe/LOB/build/release/_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o"
+}
+]

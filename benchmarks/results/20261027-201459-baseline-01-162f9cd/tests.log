@@ -1,0 +1,183 @@
+Test project /home/thu/Desktop/Vibe/LOB/build/release
+      Start  1: OrderBookScaffold.AddOrderIsImplemented
+      Start  2: OrderBookContract.AddFirstBid
+      Start  3: OrderBookContract.BetterBidBecomesBestBid
+      Start  4: OrderBookContract.LowerAskBecomesBestAsk
+ 1/89 Test  #1: OrderBookScaffold.AddOrderIsImplemented ..........................................   Passed    0.01 sec
+ 2/89 Test  #2: OrderBookContract.AddFirstBid ....................................................   Passed    0.00 sec
+      Start  5: OrderBookContract.OrdersAtSamePriceShareLevel
+      Start  6: OrderBookContract.DuplicateOrderIsRejected
+ 3/89 Test  #3: OrderBookContract.BetterBidBecomesBestBid ........................................   Passed    0.01 sec
+      Start  7: OrderBookContract.InvalidAddInputsAreRejectedWithoutMutation
+ 4/89 Test  #4: OrderBookContract.LowerAskBecomesBestAsk .........................................   Passed    0.01 sec
+ 5/89 Test  #5: OrderBookContract.OrdersAtSamePriceShareLevel ....................................   Passed    0.00 sec
+      Start  8: OrderBookContract.EventPayloadDispatchesAddOrder
+      Start  9: OrderBookContract.CancelRemovesOrderAndEmptyLevel
+ 6/89 Test  #6: OrderBookContract.DuplicateOrderIsRejected .......................................   Passed    0.01 sec
+      Start 10: OrderBookContract.UnknownCancelIsRejected
+ 7/89 Test  #7: OrderBookContract.InvalidAddInputsAreRejectedWithoutMutation .....................   Passed    0.01 sec
+ 8/89 Test  #8: OrderBookContract.EventPayloadDispatchesAddOrder .................................   Passed    0.01 sec
+      Start 11: OrderBookContract.PartialExecutionReducesQuantity
+      Start 12: OrderBookContract.FullExecutionRemovesOrder
+ 9/89 Test  #9: OrderBookContract.CancelRemovesOrderAndEmptyLevel ................................   Passed    0.01 sec
+      Start 13: OrderBookContract.OverExecutionIsRejectedWithoutMutation
+10/89 Test #10: OrderBookContract.UnknownCancelIsRejected ........................................   Passed    0.01 sec
+      Start 14: OrderBookContract.UnknownExecutionIsRejected
+11/89 Test #11: OrderBookContract.PartialExecutionReducesQuantity ................................   Passed    0.01 sec
+12/89 Test #12: OrderBookContract.FullExecutionRemovesOrder ......................................   Passed    0.00 sec
+      Start 15: OrderBookContract.InvalidExecutionQuantityIsRejected
+      Start 16: OrderBookContract.ResetClearsTheBook
+13/89 Test #13: OrderBookContract.OverExecutionIsRejectedWithoutMutation .........................   Passed    0.01 sec
+14/89 Test #14: OrderBookContract.UnknownExecutionIsRejected .....................................   Passed    0.00 sec
+      Start 17: OrderBookContract.InvariantsHoldAcrossMixedOperations
+      Start 18: OrderBookContract.AskOrdersSupportPartialExecutionCancellationAndFullExecution
+15/89 Test #15: OrderBookContract.InvalidExecutionQuantityIsRejected .............................   Passed    0.01 sec
+16/89 Test #16: OrderBookContract.ResetClearsTheBook .............................................   Passed    0.01 sec
+17/89 Test #17: OrderBookContract.InvariantsHoldAcrossMixedOperations ............................   Passed    0.00 sec
+      Start 19: OrderBookContract.RemovingBestLevelsRevealsTheNextBestPrices
+      Start 20: OrderBookContract.RemovingOneOrderKeepsOtherOrdersAtTheSamePrice
+      Start 21: OrderBookContract.RemovedOrderIdsCanBeReused
+18/89 Test #18: OrderBookContract.AskOrdersSupportPartialExecutionCancellationAndFullExecution ...   Passed    0.01 sec
+19/89 Test #19: OrderBookContract.RemovingBestLevelsRevealsTheNextBestPrices .....................   Passed    0.00 sec
+20/89 Test #20: OrderBookContract.RemovingOneOrderKeepsOtherOrdersAtTheSamePrice .................   Passed    0.00 sec
+      Start 22: OrderBookContract.AggregateQuantityHandlesMultipleMaximumSizedOrders
+      Start 23: OrderBookContract.MovingABookPreservesOrderIndexIterators
+      Start 24: OrderBookContract.ResetBookCanBeReused
+21/89 Test #21: OrderBookContract.RemovedOrderIdsCanBeReused .....................................   Passed    0.01 sec
+22/89 Test #22: OrderBookContract.AggregateQuantityHandlesMultipleMaximumSizedOrders .............   Passed    0.00 sec
+      Start 25: OrderBookContract.DeterministicMixedWorkloadMatchesReferenceModel
+      Start 26: LFQueue.UsesEverySlotAndPreservesFifoAcrossRingWraps
+23/89 Test #23: OrderBookContract.MovingABookPreservesOrderIndexIterators ........................   Passed    0.00 sec
+      Start 27: LFQueue.SupportsSingleSlotCapacity
+24/89 Test #24: OrderBookContract.ResetBookCanBeReused ...........................................   Passed    0.01 sec
+      Start 28: LFQueue.PublishesCompleteRecordsBetweenOneProducerAndOneConsumer
+25/89 Test #26: LFQueue.UsesEverySlotAndPreservesFifoAcrossRingWraps .............................   Passed    0.00 sec
+      Start 29: LoggerTest.DestructorDrainsAcceptedRecordsWithSourceAndTypedFields
+26/89 Test #27: LFQueue.SupportsSingleSlotCapacity ...............................................   Passed    0.01 sec
+      Start 30: LoggerTest.FiltersLevelsWithoutCountingDropsAndClosesIdempotently
+27/89 Test #28: LFQueue.PublishesCompleteRecordsBetweenOneProducerAndOneConsumer .................   Passed    0.01 sec
+      Start 31: LoggerTest.AppendsAcrossLoggerInstances
+28/89 Test #29: LoggerTest.DestructorDrainsAcceptedRecordsWithSourceAndTypedFields ...............   Passed    0.01 sec
+      Start 32: LoggerTest.SaturationAccountsForEveryAttemptAndDrainsAcceptedRecordsInOrder
+29/89 Test #30: LoggerTest.FiltersLevelsWithoutCountingDropsAndClosesIdempotently ................   Passed    0.01 sec
+      Start 33: LoggerTest.OffDisablesAllLevels
+30/89 Test #31: LoggerTest.AppendsAcrossLoggerInstances ..........................................   Passed    0.00 sec
+      Start 34: LoggerTest.ReportsOpenAndWriteFailures
+31/89 Test #33: LoggerTest.OffDisablesAllLevels ..................................................   Passed    0.00 sec
+      Start 35: LoggerTest.RegistryLogsAppliedAndRejectedOperationsWithInstrumentContext
+32/89 Test #34: LoggerTest.ReportsOpenAndWriteFailures ...........................................   Passed    0.00 sec
+      Start 36: LoggerTest.PoolExhaustionIsLoggedAsErrorAndKeepsExistingOrders
+33/89 Test #35: LoggerTest.RegistryLogsAppliedAndRejectedOperationsWithInstrumentContext .........   Passed    0.01 sec
+      Start 37: OrderBookRegistry.RoutesEventsAndKeepsInstrumentStateIndependent
+34/89 Test #32: LoggerTest.SaturationAccountsForEveryAttemptAndDrainsAcceptedRecordsInOrder ......   Passed    0.02 sec
+      Start 38: OrderBookRegistry.RejectsEventsForUnknownInstrumentWithoutCreatingBook
+35/89 Test #37: OrderBookRegistry.RoutesEventsAndKeepsInstrumentStateIndependent .................   Passed    0.00 sec
+      Start 39: OrderBookRegistry.DistinguishesUnknownOrderFromUnknownInstrument
+36/89 Test #36: LoggerTest.PoolExhaustionIsLoggedAsErrorAndKeepsExistingOrders ...................   Passed    0.02 sec
+      Start 40: OrderBookRegistry.InvalidAddDoesNotKeepAnEmptyInstrument
+37/89 Test #38: OrderBookRegistry.RejectsEventsForUnknownInstrumentWithoutCreatingBook ...........   Passed    0.00 sec
+      Start 41: OrderBookRegistry.RejectedAddDoesNotRemoveAnExistingInstrument
+38/89 Test #39: OrderBookRegistry.DistinguishesUnknownOrderFromUnknownInstrument .................   Passed    0.01 sec
+      Start 42: OrderBookRegistry.PartialAndFullExecutionUpdateAggregateCounts
+39/89 Test #40: OrderBookRegistry.InvalidAddDoesNotKeepAnEmptyInstrument .........................   Passed    0.00 sec
+      Start 43: OrderBookRegistry.AcceptsOnlyTheNextGlobalSequence
+40/89 Test #41: OrderBookRegistry.RejectedAddDoesNotRemoveAnExistingInstrument ...................   Passed    0.00 sec
+      Start 44: EventIo.ParsesAddOrder
+41/89 Test #42: OrderBookRegistry.PartialAndFullExecutionUpdateAggregateCounts ...................   Passed    0.00 sec
+      Start 45: EventIo.ParsesCancelOrder
+42/89 Test #43: OrderBookRegistry.AcceptsOnlyTheNextGlobalSequence ...............................   Passed    0.00 sec
+      Start 46: EventIo.ParsesExecuteOrder
+43/89 Test #44: EventIo.ParsesAddOrder ...........................................................   Passed    0.00 sec
+      Start 47: EventIo.RejectsMalformedInput
+44/89 Test #45: EventIo.ParsesCancelOrder ........................................................   Passed    0.00 sec
+      Start 48: EventIo.WritesRoundTrippableCsv
+45/89 Test #25: OrderBookContract.DeterministicMixedWorkloadMatchesReferenceModel ................   Passed    0.05 sec
+46/89 Test #46: EventIo.ParsesExecuteOrder .......................................................   Passed    0.00 sec
+      Start 49: EventIo.ParsesWindowsLineEnding
+      Start 50: EventIo.WritesCanonicalHeader
+47/89 Test #47: EventIo.RejectsMalformedInput ....................................................   Passed    0.01 sec
+      Start 51: EventIo.SkipsBlankCommentAndHeaderLinesWithoutErrors
+48/89 Test #48: EventIo.WritesRoundTrippableCsv ..................................................   Passed    0.01 sec
+49/89 Test #49: EventIo.ParsesWindowsLineEnding ..................................................   Passed    0.00 sec
+      Start 52: EventIo.RejectsInvalidCsvFields
+      Start 53: EventIo.RoundTripsEveryEventType
+50/89 Test #50: EventIo.WritesCanonicalHeader ....................................................   Passed    0.01 sec
+      Start 54: MemoryPool.ConstructsAlignedObjectsAndReportsExhaustion
+51/89 Test #51: EventIo.SkipsBlankCommentAndHeaderLinesWithoutErrors .............................   Passed    0.01 sec
+52/89 Test #52: EventIo.RejectsInvalidCsvFields ..................................................   Passed    0.00 sec
+      Start 55: MemoryPool.ConstructorFailureDoesNotConsumeCapacity
+      Start 56: MemoryPool.StaleHandleCannotReleaseReusedSlot
+53/89 Test #53: EventIo.RoundTripsEveryEventType .................................................   Passed    0.01 sec
+      Start 57: MemoryPool.InvalidHandlesAndDoubleReleaseDoNotChangeLiveObjects
+54/89 Test #54: MemoryPool.ConstructsAlignedObjectsAndReportsExhaustion ..........................   Passed    0.01 sec
+      Start 58: MemoryPool.RepeatedOutOfOrderReleasesPreserveCapacity
+55/89 Test #55: MemoryPool.ConstructorFailureDoesNotConsumeCapacity ..............................   Passed    0.01 sec
+56/89 Test #56: MemoryPool.StaleHandleCannotReleaseReusedSlot ....................................   Passed    0.00 sec
+      Start 59: MemoryPool.DestructionDestroysOnlyRemainingLiveObjects
+      Start 60: BytePool.EmptyAndOversizedRequestsDoNotConsumeCapacity
+57/89 Test #57: MemoryPool.InvalidHandlesAndDoubleReleaseDoNotChangeLiveObjects ..................   Passed    0.01 sec
+      Start 61: BytePool.ExhaustedStorageCanBeReused
+58/89 Test #58: MemoryPool.RepeatedOutOfOrderReleasesPreserveCapacity ............................   Passed    0.01 sec
+59/89 Test #59: MemoryPool.DestructionDestroysOnlyRemainingLiveObjects ...........................   Passed    0.00 sec
+      Start 62: BytePool.AlignmentPaddingIsRecovered
+      Start 63: BytePool.CoalescesAdjacentBlocksInEveryReleaseOrder
+60/89 Test #60: BytePool.EmptyAndOversizedRequestsDoNotConsumeCapacity ...........................   Passed    0.01 sec
+      Start 64: BytePool.InvalidSizesAndDoubleReleaseDoNotDuplicateFreeStorage
+61/89 Test #61: BytePool.ExhaustedStorageCanBeReused .............................................   Passed    0.01 sec
+62/89 Test #62: BytePool.AlignmentPaddingIsRecovered .............................................   Passed    0.00 sec
+      Start 65: BytePool.MixedSizedAllocationsPreservePayloadsAndRecoverCapacity
+      Start 66: FixedSlotPool.EmptyAndOversizedRequestsAllowLaterInitialization
+63/89 Test #63: BytePool.CoalescesAdjacentBlocksInEveryReleaseOrder ..............................   Passed    0.01 sec
+      Start 67: FixedSlotPool.AlignedDistinctSlotsAreReusableAfterExhaustion
+64/89 Test #64: BytePool.InvalidSizesAndDoubleReleaseDoNotDuplicateFreeStorage ...................   Passed    0.01 sec
+65/89 Test #65: BytePool.MixedSizedAllocationsPreservePayloadsAndRecoverCapacity .................   Passed    0.00 sec
+      Start 68: FixedSlotPool.RejectsDifferentSlotSizeOrAlignmentWithoutConsumingCapacity
+      Start 69: FixedSlotPool.InvalidReleaseAndDoubleReleaseCannotDuplicateSlots
+66/89 Test #66: FixedSlotPool.EmptyAndOversizedRequestsAllowLaterInitialization ..................   Passed    0.01 sec
+      Start 70: AllocatorAdaptor.ReboundAllocatorsCompareByPoolIdentity
+67/89 Test #67: FixedSlotPool.AlignedDistinctSlotsAreReusableAfterExhaustion .....................   Passed    0.01 sec
+      Start 71: AllocatorAdaptor.UnsupportedCountsLeavePoolAvailable
+68/89 Test #68: FixedSlotPool.RejectsDifferentSlotSizeOrAlignmentWithoutConsumingCapacity ........   Passed    0.01 sec
+69/89 Test #69: FixedSlotPool.InvalidReleaseAndDoubleReleaseCannotDuplicateSlots .................   Passed    0.00 sec
+      Start 72: AllocatorAdaptor.ListReusesNodesAcrossMixedInsertEraseAndClear
+      Start 73: AllocatorAdaptor.FailedListInsertionPreservesExistingNodesAndAllowsReuse
+70/89 Test #70: AllocatorAdaptor.ReboundAllocatorsCompareByPoolIdentity ..........................   Passed    0.01 sec
+      Start 74: SlotArenaReference.GrowsWithDistinctAlignedSlotsAndResetsAfterFinalRelease
+71/89 Test #71: AllocatorAdaptor.UnsupportedCountsLeavePoolAvailable .............................   Passed    0.01 sec
+72/89 Test #72: AllocatorAdaptor.ListReusesNodesAcrossMixedInsertEraseAndClear ...................   Passed    0.01 sec
+      Start 75: SlotArenaReference.PartialReleaseDoesNotReuseLiveEpochStorage
+      Start 76: SlotAllocatorReference.ListSurvivesArenaGrowthAndRepeatedClear
+73/89 Test #73: AllocatorAdaptor.FailedListInsertionPreservesExistingNodesAndAllowsReuse .........   Passed    0.01 sec
+      Start 77: FixedSlotReference.ListReusesReturnedNodes
+74/89 Test #74: SlotArenaReference.GrowsWithDistinctAlignedSlotsAndResetsAfterFinalRelease .......   Passed    0.01 sec
+75/89 Test #75: SlotArenaReference.PartialReleaseDoesNotReuseLiveEpochStorage ....................   Passed    0.00 sec
+      Start 78: OrderBookPool.AddAndCancelPreserveFifoOnBothSides
+      Start 79: OrderBookPool.CancelReturnsSlotForNextAdd
+76/89 Test #76: SlotAllocatorReference.ListSurvivesArenaGrowthAndRepeatedClear ...................   Passed    0.01 sec
+      Start 80: OrderBookPool.PartialExecuteRetainsSlotAndFullExecuteReturnsIt
+77/89 Test #77: FixedSlotReference.ListReusesReturnedNodes .......................................   Passed    0.01 sec
+      Start 81: OrderBookPool.RecreatedPriceLevelReusesReleasedSlot
+78/89 Test #78: OrderBookPool.AddAndCancelPreserveFifoOnBothSides ................................   Passed    0.01 sec
+79/89 Test #79: OrderBookPool.CancelReturnsSlotForNextAdd ........................................   Passed    0.00 sec
+      Start 82: OrderBookPool.ExhaustedAddLeavesExistingAndNewLevelsUnchanged
+      Start 83: OrderBookPool.IndexFailureRollsBackExistingLevel
+80/89 Test #80: OrderBookPool.PartialExecuteRetainsSlotAndFullExecuteReturnsIt ...................   Passed    0.01 sec
+      Start 84: OrderBookPool.MapAndIndexFailuresRollBackNewLevel
+81/89 Test #81: OrderBookPool.RecreatedPriceLevelReusesReleasedSlot ..............................   Passed    0.01 sec
+82/89 Test #82: OrderBookPool.ExhaustedAddLeavesExistingAndNewLevelsUnchanged ....................   Passed    0.01 sec
+      Start 85: OrderBookPool.BucketRehashFailuresRollBackNewAndExistingLevels
+      Start 86: OrderBookPool.FirstUseMetadataAndIndexFailuresLeaveBookEmpty
+83/89 Test #83: OrderBookPool.IndexFailureRollsBackExistingLevel .................................   Passed    0.01 sec
+84/89 Test #84: OrderBookPool.MapAndIndexFailuresRollBackNewLevel ................................   Passed    0.01 sec
+      Start 87: OrderBookPool.MovedFromBookDoesNotUseFormerPool
+      Start 88: OrderBookPool.MatchesPrePoolBaselineAfterEveryBenchmarkEvent
+85/89 Test #86: OrderBookPool.FirstUseMetadataAndIndexFailuresLeaveBookEmpty .....................   Passed    0.01 sec
+      Start 89: OrderBookRegistry.AllocationFailureCreatingInstrumentReturnsResultAndRollsBack
+86/89 Test #85: OrderBookPool.BucketRehashFailuresRollBackNewAndExistingLevels ...................   Passed    0.02 sec
+87/89 Test #87: OrderBookPool.MovedFromBookDoesNotUseFormerPool ..................................   Passed    0.01 sec
+88/89 Test #89: OrderBookRegistry.AllocationFailureCreatingInstrumentReturnsResultAndRollsBack ...   Passed    0.01 sec
+89/89 Test #88: OrderBookPool.MatchesPrePoolBaselineAfterEveryBenchmarkEvent .....................   Passed    0.13 sec
+
+100% tests passed out of 89
+
+Total Test time (real) =   0.29 sec
