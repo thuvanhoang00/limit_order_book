@@ -67,6 +67,7 @@ performance claims are preserved; those claims are not measured project results.
 - Ninja
 - GCC or Clang with C++20 support
 - Git when `ORDER_BOOK_FETCH_DEPS=ON`
+- Python 3 and matplotlib for benchmark reports (`python3 -m pip install matplotlib`)
 - `perf` for profiling
 
 GoogleTest and Google Benchmark are fetched automatically when not installed.
@@ -244,8 +245,40 @@ failure, and registry result/context logging, including pool exhaustion.
 ./tools/run_benchmarks.sh release results
 ```
 
-Results are written to `results/benchmark.csv` by `order_book_allocator_benchmarks`.
-It compares the full pooled book with the frozen heap implementation from commit
+Each run creates a new `results/<timestamp>-<commit>/` directory instead of
+replacing previous results. Open its `report.html` for the comparison table and
+charts, or view `latency.png` and `allocations.png` directly. SVG versions are
+also saved. Bars show repetition medians, error bars show sample standard
+deviation, and dots show individual repetition means. These are batch averages
+per event, not per-order latency percentiles.
+
+The directory also retains all repetitions in `benchmark.json` and
+`repetitions.csv`, normalized statistics in `summary.csv`, a `summary.md` report,
+`metadata.json`, exact invocation, console/build logs, and the actual CMake cache
+and compiler commands. Dirty worktrees are labeled in the report and their
+tracked patch and untracked project sources are saved for traceability.
+`results/` remains gitignored.
+
+Defaults are 2 seconds of timed CPU work per repetition, 10 repetitions per case,
+and random interleaving. Pin to the same logical CPU across comparison runs:
+
+```bash
+./tools/run_benchmarks.sh release results --cpu 2
+# Short smoke check of the reporting pipeline; do not use as a baseline:
+./tools/run_benchmarks.sh release results/smoke --min-time 0.01s --repetitions 2
+# Re-render existing raw JSON without running benchmarks again:
+python3 tools/benchmark_report.py render results/<run-directory>
+# Verify normalization and input validation:
+python3 -m unittest discover -s tests/tools -v
+```
+
+Keep hardware, CPU affinity, governor/boost settings, compiler/build flags,
+benchmark-library version, workloads and timing protocol consistent when
+comparing runs. Metadata records the environment without changing system power
+settings. Reports measure the core with logging disabled; they do not measure
+Execute events, CSV parsing, registry dispatch or logger overhead.
+
+`order_book_allocator_benchmarks` compares the full pooled book with the frozen heap implementation from commit
 `7fbcf06`, using identical predecoded events at 128 and 256 active orders:
 
 - First-use fill/clear, including the pool's lazy metadata allocation.
