@@ -1,0 +1,26 @@
+2026-10-27T20:15:14+07:00
+Running build/release/order_book_allocator_benchmarks
+Run on (8 X 3900 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x4)
+  L1 Instruction 32 KiB (x4)
+  L2 Unified 512 KiB (x4)
+  L3 Unified 4096 KiB (x1)
+Load Average: 1.62, 1.37, 1.25
+dry_run: true
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+--------------------------------------------------------------------------------------------------
+Benchmark                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------
+BM_FillClearFirstUse<HeapOrderBook>/128      20489 ns        19336 ns            1 heap_allocs/event=1.14453 heap_requested_bytes/event=56.1562 items_per_second=13.2396M/s
+BM_FillClearFirstUse<HeapOrderBook>/256      38291 ns        37040 ns            1 heap_allocs/event=1.07227 heap_requested_bytes/event=44.0781 items_per_second=13.8229M/s
+BM_FillClearFirstUse<OrderBook>/128          27753 ns        26590 ns            1 heap_allocs/event=0.652344 heap_requested_bytes/event=57.4062 items_per_second=9.62768M/s
+BM_FillClearFirstUse<OrderBook>/256          33572 ns        32451 ns            1 heap_allocs/event=0.576172 heap_requested_bytes/event=36.7031 items_per_second=15.7776M/s
+BM_FillClearReuse<HeapOrderBook>/128         17312 ns        16511 ns            1 heap_allocs/event=1.125 heap_requested_bytes/event=41 items_per_second=15.5048M/s
+BM_FillClearReuse<HeapOrderBook>/256         30208 ns        28995 ns            1 heap_allocs/event=1.0625 heap_requested_bytes/event=36.5 items_per_second=17.6582M/s
+BM_FillClearReuse<OrderBook>/128             14526 ns        14327 ns            1 heap_allocs/event=0.625 heap_requested_bytes/event=26 items_per_second=17.8684M/s
+BM_FillClearReuse<OrderBook>/256             24196 ns        23043 ns            1 heap_allocs/event=0.5625 heap_requested_bytes/event=21 items_per_second=22.2193M/s
+BM_AddCancelChurn<HeapOrderBook>/128         40757 ns        39124 ns            1 heap_allocs/event=1 heap_requested_bytes/event=32 items_per_second=26.1732M/s
+BM_AddCancelChurn<HeapOrderBook>/256         75022 ns        73668 ns            1 heap_allocs/event=1 heap_requested_bytes/event=32 items_per_second=27.8004M/s
+BM_AddCancelChurn<OrderBook>/128             47299 ns        45135 ns            1 heap_allocs/event=0.5 heap_requested_bytes/event=16 items_per_second=22.6875M/s
+BM_AddCancelChurn<OrderBook>/256            105920 ns       104517 ns            1 heap_allocs/event=0.5 heap_requested_bytes/event=16 items_per_second=19.5949M/s

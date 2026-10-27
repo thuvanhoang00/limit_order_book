@@ -257,7 +257,8 @@ The directory also retains all repetitions in `benchmark.json` and
 `metadata.json`, exact invocation, console/build logs, and the actual CMake cache
 and compiler commands. Dirty worktrees are labeled in the report and their
 tracked patch and untracked project sources are saved for traceability.
-`results/` remains gitignored.
+`results/` remains gitignored. Selected historical runs, including their PNG/SVG
+charts, are committed under [benchmarks/results](benchmarks/results/README.md).
 
 Defaults are 2 seconds of timed CPU work per repetition, 10 repetitions per case,
 and random interleaving. Pin to the same logical CPU across comparison runs:

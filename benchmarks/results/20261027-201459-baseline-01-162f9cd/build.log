@@ -1,0 +1,32 @@
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/thu/Desktop/Vibe/LOB/build/release
+[1/29] Building CXX object CMakeFiles/order_book.dir/src/io/event_io.cpp.o
+[2/29] Building CXX object CMakeFiles/generate_events.dir/tools/generate_events.cpp.o
+[3/29] Building CXX object CMakeFiles/replay_order_book.dir/tools/replay.cpp.o
+[4/29] Building CXX object CMakeFiles/order_book.dir/src/core/order_book.cpp.o
+[5/29] Building CXX object CMakeFiles/order_book_heap_baseline.dir/benchmarks/support/heap_order_book.cpp.o
+[6/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/core/test_lfqueue.cpp.o
+[7/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/core/test_logger.cpp.o
+[8/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/core/test_order_book.cpp.o
+[9/29] Building CXX object CMakeFiles/order_book.dir/src/core/logger.cpp.o
+[10/29] Linking CXX static library liborder_book.a
+[11/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/test_order_registry.cpp.o
+[12/29] Linking CXX executable generate_events
+[13/29] Linking CXX executable replay_order_book
+[14/29] Linking CXX static library liborder_book_heap_baseline.a
+[15/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/io/test_event_io.cpp.o
+[16/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/memory/test_memory_pool.cpp.o
+[17/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/memory/test_byte_pool.cpp.o
+[18/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/memory/test_fixed_slot_pool.cpp.o
+[19/29] Building CXX object CMakeFiles/order_book_allocation_tests.dir/benchmarks/support/allocation_probe.cpp.o
+[20/29] Building CXX object CMakeFiles/order_book_benchmarks.dir/benchmarks/benchmark_order_book.cpp.o
+[21/29] Linking CXX executable order_book_benchmarks
+[22/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/memory/test_slot_allocator.cpp.o
+[23/29] Building CXX object CMakeFiles/order_book_tests.dir/tests/memory/test_allocator_adaptor.cpp.o
+[24/29] Building CXX object CMakeFiles/order_book_allocator_benchmarks.dir/benchmarks/support/allocation_probe.cpp.o
+[25/29] Linking CXX executable order_book_tests
+[26/29] Building CXX object CMakeFiles/order_book_allocation_tests.dir/tests/core/test_order_book_pool.cpp.o
+[27/29] Building CXX object CMakeFiles/order_book_allocator_benchmarks.dir/benchmarks/benchmark_book_allocators.cpp.o
+[28/29] Linking CXX executable order_book_allocation_tests
+[29/29] Linking CXX executable order_book_allocator_benchmarks
