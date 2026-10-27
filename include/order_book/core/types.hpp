@@ -29,6 +29,7 @@ enum class ApplyResult : std::uint8_t {
     QuantityExceedsRemaining,
     ParseError,
     NotImplemented,
+    AllocationFailed,
 };
 
 [[nodiscard]] constexpr std::string_view to_string(const ApplyResult result) noexcept {
@@ -49,6 +50,8 @@ enum class ApplyResult : std::uint8_t {
             return "parse_error";
         case ApplyResult::NotImplemented:
             return "not_implemented";
+        case ApplyResult::AllocationFailed:
+            return "allocation_failed";
         case ApplyResult::UnknownInstrument:
             return "unknown_instrument";
     }

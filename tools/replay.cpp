@@ -7,6 +7,7 @@
 
 #include "order_book/io/event_io.hpp"
 #include "order_book/core/order_book.hpp"
+#include "order_book/core/order_registry.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
