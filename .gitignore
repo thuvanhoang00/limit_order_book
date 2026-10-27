@@ -8,3 +8,5 @@ compile_commands.json
 perf.data*
 /cache/
 /.cache/
+
+*.log

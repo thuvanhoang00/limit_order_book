@@ -20,13 +20,14 @@ budget, so the number of orders depends on the implementation's list-node size.
 Book construction can still throw if backing-storage allocation fails.
 
 Tests and full-book Add/Cancel benchmarks compare the pooled book against the
-implementation before pool integration. Concurrency remains future work.
+implementation before pool integration. The book remains single-writer; an optional
+SPSC logger writes records asynchronously on a dedicated worker.
 
 ## Layout
 
 ```text
 include/order_book/
-  core/                  # types, events, book, registry
+  core/                  # types, events, book, registry, logger, SPSC queue
   memory/                # typed pool, byte pool, fixed-slot pool, adaptor
   io/                    # CSV parsing and writing
 src/
@@ -46,7 +47,7 @@ cmake/                  # compiler warnings and sanitizer helpers
 data/                   # sample CSV and generated workloads
 ```
 
-Public headers use the `order_book/` prefix:
+Public C++ headers use `.hpp` and the `order_book/` prefix:
 
 ```cpp
 #include "order_book/core/order_book.hpp"
@@ -191,7 +192,51 @@ Output includes:
 - remaining orders and level counts
 
 The CSV parser is intentionally included in replay timing. Later, create a second benchmark that preloads decoded events to separate parsing cost from book-update cost.
->>>>>>> main
+
+## Asynchronous logging
+
+Replay appends to `order_book.log` by default. Supply a separate path per process
+or run when needed (parent directories must already exist):
+
+```bash
+./build/debug/replay_order_book data/sample_events.csv results/replay.log
+```
+
+`Logger` uses `LFQueue<LogRecord, 4096>` as a bounded single-producer,
+single-consumer queue. Only the producer captures time/source and copies a fixed
+record; the worker formats and writes it. Queue-full attempts are dropped without
+waiting and counted by `dropped_count()`. This is best-effort diagnostic logging,
+so even error records can be dropped under saturation.
+
+The registry records every attempted add/cancel/execute with sequence, instrument,
+order, side, price/quantity, and `ApplyResult`. Successful updates use DEBUG, rejected
+updates WARN, and allocation failures ERROR. Replay logs start/finish at INFO and
+input, parsing, sequence, and invariant errors at ERROR/FATAL. Detailed parser and
+invariant reasons remain on stderr. The direct `OrderBook` API stays independent
+of logging; use the registry when operation logs are needed.
+
+```cpp
+#include "order_book/core/logger.hpp"
+#include "order_book/core/order_registry.hpp"
+
+order_book::Logger logger("orders.log", order_book::LogLevel::Warn);
+order_book::OrderBookRegistry registry(&logger);
+// Apply events from one producer thread. Declare logger before registry so it
+// outlives it. Omitting the logger keeps logging disabled for library callers.
+```
+
+Logger level defaults to DEBUG; `LogLevel::Off` disables records. A logger shared
+by registries still requires exactly one producer thread. `close()` is idempotent:
+stop producing first, then close to join the worker and drain accepted records.
+The destructor does the same. Replay reports `log_dropped`, `log_format_failures`,
+and `log_write_failed` after closing, and returns failure on formatting/write
+errors. An invalid log path also fails replay. Dropped records do not fail replay.
+Replay timing includes enqueue overhead but excludes the final drain; compare
+benchmarks with the same logging settings. Book benchmarks do not attach a logger.
+
+Tests cover ring reuse/full/empty handling, concurrent SPSC record integrity,
+filtering, draining on shutdown, append behavior, saturation accounting, write
+failure, and registry result/context logging, including pool exhaustion.
 
 ## Benchmarks
 

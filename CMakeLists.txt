@@ -22,10 +22,13 @@ include(Sanitizers)
 
 add_library(order_book STATIC
     src/core/order_book.cpp
+    src/core/logger.cpp
     src/io/event_io.cpp)
 
 add_library(order_book::order_book ALIAS order_book)
 
+find_package(Threads REQUIRED)
+target_link_libraries(order_book PUBLIC Threads::Threads)
 target_compile_features(order_book PUBLIC cxx_std_20)
 target_include_directories(order_book
     PUBLIC
@@ -76,6 +79,9 @@ if(ORDER_BOOK_BUILD_TESTS)
     if(TARGET GTest::gtest_main)
         add_executable(order_book_tests
             tests/core/test_order_book.cpp
+            tests/core/test_lfqueue.cpp
+            tests/core/test_logger.cpp
+            tests/test_order_registry.cpp
             tests/io/test_event_io.cpp
             tests/memory/test_memory_pool.cpp
             tests/memory/test_byte_pool.cpp

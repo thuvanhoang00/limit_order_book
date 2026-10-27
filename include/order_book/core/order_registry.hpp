@@ -1,16 +1,29 @@
 #pragma once
+#include <new>
 #include <unordered_map>
+
+#include "order_book/core/logger.hpp"
 #include "order_book/core/order_book.hpp"
 namespace order_book {
 
 class OrderBookRegistry final {
    public:
+    // The optional logger must outlive this registry; all calls share one writer.
+    explicit OrderBookRegistry(Logger* logger = nullptr) noexcept : logger_(logger) {}
+
     [[nodiscard]] ApplyResult apply(const MarketEvent& event) {
-        return std::visit(
-            [this, &event](const auto& concrete_event) {
-                return apply(concrete_event, event.instrument_id);
-            },
-            event.payload);
+        ApplyResult result;
+        try {
+            result = std::visit(
+                [this, &event](const auto& concrete_event) {
+                    return apply(concrete_event, event.instrument_id);
+                },
+                event.payload);
+        } catch (const std::bad_alloc&) {
+            result = ApplyResult::AllocationFailed;
+        }
+        if (logger_) logger_->log_event(event, result);
+        return result;
     }
 
     [[nodiscard]] bool seq_valid(const Sequence seq) noexcept {
@@ -91,6 +104,7 @@ class OrderBookRegistry final {
         return ApplyResult::UnknownInstrument;
     }
 
+    Logger* logger_{};
     Sequence sequence_{};
     std::unordered_map<InstrumentId, OrderBook> books_;
 };
