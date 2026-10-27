@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "order_book/core/order_book.hpp"
+#include "order_book/core/order_registry.hpp"
 #include "support/allocation_probe.hpp"
 #include "support/book_inspection.hpp"
 
@@ -199,6 +200,38 @@ TEST(OrderBookPool, MatchesPrePoolBaselineAfterEveryBenchmarkEvent) {
             replay(workload.events);
         }
     }
+}
+}  // namespace
+}  // namespace order_book
+
+namespace order_book {
+namespace {
+TEST(OrderBookRegistry, AllocationFailureCreatingInstrumentReturnsResultAndRollsBack) {
+    bool reached_success = false;
+    std::size_t failures = 0;
+    for (std::size_t nth = 0; nth < 20; ++nth) {
+        OrderBookRegistry registry;
+        ApplyResult result;
+        {
+            FailNth fail(nth);
+            result = registry.apply({1, 1001, AddOrder{1, Side::Bid, 10000, 20}});
+        }
+        if (result == ApplyResult::Ok) {
+            reached_success = true;
+            EXPECT_EQ(registry.instrument_count(), 1U);
+            EXPECT_EQ(registry.order_count(), 1U);
+            break;
+        }
+        ++failures;
+        ASSERT_EQ(result, ApplyResult::AllocationFailed);
+        EXPECT_EQ(registry.instrument_count(), 0U);
+        EXPECT_EQ(registry.order_count(), 0U);
+        EXPECT_TRUE(registry.validate_invariants());
+        ASSERT_EQ(registry.apply({1, 1001, AddOrder{1, Side::Bid, 10000, 20}}), ApplyResult::Ok);
+        EXPECT_TRUE(registry.validate_invariants());
+    }
+    EXPECT_TRUE(reached_success);
+    EXPECT_GT(failures, 0U);
 }
 }  // namespace
 }  // namespace order_book

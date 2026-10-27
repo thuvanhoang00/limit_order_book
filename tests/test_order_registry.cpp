@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "order_book/order_registry.hpp"
+#include "order_book/core/order_registry.hpp"
 
 namespace order_book {
 namespace {
