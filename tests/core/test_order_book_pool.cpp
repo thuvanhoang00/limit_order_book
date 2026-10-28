@@ -211,6 +211,7 @@ TEST(OrderBookRegistry, AllocationFailureCreatingInstrumentReturnsResultAndRolls
     std::size_t failures = 0;
     for (std::size_t nth = 0; nth < 20; ++nth) {
         OrderBookRegistry registry;
+        ASSERT_TRUE(registry.seq_valid(1));
         ApplyResult result;
         {
             FailNth fail(nth);
@@ -220,14 +221,18 @@ TEST(OrderBookRegistry, AllocationFailureCreatingInstrumentReturnsResultAndRolls
             reached_success = true;
             EXPECT_EQ(registry.instrument_count(), 1U);
             EXPECT_EQ(registry.order_count(), 1U);
+            EXPECT_EQ(registry.get_seq(), 1U);
             break;
         }
         ++failures;
         ASSERT_EQ(result, ApplyResult::AllocationFailed);
         EXPECT_EQ(registry.instrument_count(), 0U);
         EXPECT_EQ(registry.order_count(), 0U);
+        EXPECT_EQ(registry.get_seq(), 0U);
+        ASSERT_TRUE(registry.seq_valid(1));
         EXPECT_TRUE(registry.validate_invariants());
         ASSERT_EQ(registry.apply({1, 1001, AddOrder{1, Side::Bid, 10000, 20}}), ApplyResult::Ok);
+        EXPECT_EQ(registry.get_seq(), 1U);
         EXPECT_TRUE(registry.validate_invariants());
     }
     EXPECT_TRUE(reached_success);

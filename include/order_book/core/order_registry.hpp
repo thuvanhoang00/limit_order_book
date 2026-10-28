@@ -11,6 +11,7 @@ class OrderBookRegistry final {
     // The optional logger must outlive this registry; all calls share one writer.
     explicit OrderBookRegistry(Logger* logger = nullptr) noexcept : logger_(logger) {}
 
+    // Call seq_valid() first to enforce ordering; only successful updates commit sequence.
     [[nodiscard]] ApplyResult apply(const MarketEvent& event) {
         ApplyResult result;
         try {
@@ -22,16 +23,13 @@ class OrderBookRegistry final {
         } catch (const std::bad_alloc&) {
             result = ApplyResult::AllocationFailed;
         }
+        if (result == ApplyResult::Ok) sequence_ = event.sequence;
         if (logger_) logger_->log_event(event, result);
         return result;
     }
 
-    [[nodiscard]] bool seq_valid(const Sequence seq) noexcept {
-        if (seq <= sequence_ || seq - sequence_ != 1U) {
-            return false;
-        }
-        sequence_ = seq;
-        return true;
+    [[nodiscard]] bool seq_valid(const Sequence seq) const noexcept {
+        return seq > sequence_ && seq - sequence_ == 1U;
     }
 
     [[nodiscard]] Sequence get_seq() const noexcept { return sequence_; }
