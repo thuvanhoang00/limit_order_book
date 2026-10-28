@@ -2,7 +2,7 @@
 
 A single-writer order-book baseline with implemented add, cancel, partial/full
 execution, best bid/ask queries, reset, and invariant validation. The project also
-includes CSV generation/replay, contract tests, profiling tools, and standalone
+includes CSV generation/replay, TCP event ingress, contract tests, profiling tools, and standalone
 memory-pool experiments.
 
 ## Current scope
@@ -30,13 +30,16 @@ include/order_book/
   core/                  # types, events, book, registry, logger, SPSC queue
   memory/                # typed pool, byte pool, fixed-slot pool, adaptor
   io/                    # CSV parsing and writing
+  net/                   # TCP transport and versioned binary event/ACK codec
 src/
   core/                  # order-book implementation
   io/                    # CSV implementation
+  net/                   # Linux blocking sockets and wire codec
 tests/
   core/                  # order-book contract tests
   memory/                # pool and allocator contract tests
   io/                    # CSV tests
+  net/                   # transport, protocol and two-process TCP tests
 benchmarks/
   benchmark_order_book.cpp
   benchmark_book_allocators.cpp
@@ -193,6 +196,38 @@ Output includes:
 - remaining orders and level counts
 
 The CSV parser is intentionally included in replay timing. Later, create a second benchmark that preloads decoded events to separate parsing cost from book-update cost.
+
+## TCP event ingress
+
+The TCP server applies `MarketEvent` frames to the same multi-instrument registry
+used by CSV replay. It binds to loopback, accepts one client, and exits after that
+session. Build using the existing presets, then run in two terminals:
+
+```bash
+./build/debug/tcp_event_server 9000 results/tcp_server.log
+./build/debug/tcp_event_client data/sample_events.csv 9000 results/tcp_client.log
+```
+
+The client sends each decoded CSV event as a 40-byte binary frame and waits for
+its 16-byte apply-result ACK before sending the next. Sequence starts at 1 and
+is consecutive globally across instruments. Validation does not consume the
+sequence: only a successful apply advances it. Rejected updates return their
+`ApplyResult`; the sample client exits, while a custom client can correct and
+retry that sequence on the same connection. Invalid sequences or malformed frames
+close the connection before applying the event. ACKs confirm in-memory updates.
+
+Server/client logging defaults to `tcp_server.log` / `tcp_client.log` when the
+last argument is omitted. Both record connection lifecycle, ACKs and failures;
+the server also logs every book operation through the registry. Both drain their
+logs and report dropped records, formatting failures and write failures on stderr.
+They return failure on formatting/write errors.
+
+Networking builds by default on Linux. Set `ORDER_BOOK_BUILD_NETWORKING=OFF` to
+exclude it. Python 3 enables the two-process tests in the regular `check` target;
+protocol/transport tests use GoogleTest. This first step uses blocking sockets,
+with one book writer, no socket deadlines, and no state recovery across sessions.
+See [the TCP protocol and session guide](docs/tcp_first_step.md) for wire format,
+error behavior, and implementation details.
 
 ## Asynchronous logging
 

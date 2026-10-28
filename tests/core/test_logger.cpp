@@ -138,6 +138,28 @@ TEST_F(LoggerTest, RegistryLogsAppliedAndRejectedOperationsWithInstrumentContext
     EXPECT_TRUE(registry.validate_invariants());
 }
 
+TEST_F(LoggerTest, TcpRecordsIncludeAckResultPortAndSystemError) {
+    Logger logger(path_);
+    ASSERT_TRUE(logger.try_log({.level = LogLevel::Warn,
+                                .event = LogEvent::TcpAckReceived,
+                                .sequence = 2,
+                                .instrument_id = 55,
+                                .result = ApplyResult::InvalidQuantity,
+                                .port = 9000}));
+    ASSERT_TRUE(logger.try_log({.level = LogLevel::Error,
+                                .event = LogEvent::TcpTransportFailed,
+                                .port = 9000,
+                                .error_code = 111}));
+    logger.close();
+    const auto text = contents();
+    EXPECT_NE(text.find("[WARN]"), std::string::npos);
+    EXPECT_NE(text.find("TcpAckReceived sequence=2 instrument_id=55"), std::string::npos);
+    EXPECT_NE(text.find("result=invalid_quantity"), std::string::npos);
+    EXPECT_NE(text.find("TcpTransportFailed"), std::string::npos);
+    EXPECT_NE(text.find("port=9000 error_code=111"), std::string::npos);
+    EXPECT_FALSE(logger.has_file_write_error());
+}
+
 TEST_F(LoggerTest, PoolExhaustionIsLoggedAsErrorAndKeepsExistingOrders) {
     Logger logger(path_);
     OrderBookRegistry registry(&logger);

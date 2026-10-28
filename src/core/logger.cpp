@@ -48,6 +48,22 @@ const char* event_name(LogEvent event) noexcept {
             return "InputOpenFailed";
         case LogEvent::InputReadFailed:
             return "InputReadFailed";
+        case LogEvent::TcpListening:
+            return "TcpListening";
+        case LogEvent::TcpConnected:
+            return "TcpConnected";
+        case LogEvent::TcpDisconnected:
+            return "TcpDisconnected";
+        case LogEvent::TcpFinished:
+            return "TcpFinished";
+        case LogEvent::TcpTransportFailed:
+            return "TcpTransportFailed";
+        case LogEvent::TcpProtocolFailed:
+            return "TcpProtocolFailed";
+        case LogEvent::TcpAckSent:
+            return "TcpAckSent";
+        case LogEvent::TcpAckReceived:
+            return "TcpAckReceived";
     }
     return "Unknown";
 }
@@ -137,11 +153,14 @@ std::string Logger::format_record(const LogRecord& record) {
         << " order_id=" << record.order_id << " price_ticks=" << record.price_ticks
         << " qty=" << record.quantity;
     if (record.event == LogEvent::AddOrder || record.event == LogEvent::CancelOrder ||
-        record.event == LogEvent::ExecuteOrder || record.event == LogEvent::ParseFailed) {
+        record.event == LogEvent::ExecuteOrder || record.event == LogEvent::ParseFailed ||
+        record.event == LogEvent::TcpAckSent || record.event == LogEvent::TcpAckReceived) {
         out << " result=" << to_string(record.result);
     }
     out << " line=" << record.line_number;
     if (record.event == LogEvent::AddOrder) out << " side=" << to_string(record.side);
+    if (record.port != 0) out << " port=" << record.port;
+    if (record.error_code != 0) out << " error_code=" << record.error_code;
     return out.str();
 }
 
