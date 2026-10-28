@@ -8,6 +8,7 @@ project(order_book
 option(ORDER_BOOK_BUILD_TESTS "Build unit tests" ON)
 option(ORDER_BOOK_BUILD_BENCHMARKS "Build Google Benchmark targets" ON)
 option(ORDER_BOOK_BUILD_TOOLS "Build replay and event-generator tools" ON)
+option(ORDER_BOOK_BUILD_NETWORKING "Build Linux blocking TCP event transport" ON)
 option(ORDER_BOOK_FETCH_DEPS "Fetch missing test dependencies with FetchContent" ON)
 option(ORDER_BOOK_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ORDER_BOOK_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
@@ -37,6 +38,25 @@ target_include_directories(order_book
 
 target_set_project_warnings(order_book)
 target_enable_sanitizers(order_book)
+
+if(ORDER_BOOK_BUILD_NETWORKING)
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        message(FATAL_ERROR "TCP demo currently supports Linux; set ORDER_BOOK_BUILD_NETWORKING=OFF")
+    endif()
+    add_library(order_book_net STATIC src/net/tcp.cpp src/net/protocol.cpp)
+    add_library(order_book::net ALIAS order_book_net)
+    target_link_libraries(order_book_net PUBLIC order_book::order_book)
+    target_set_project_warnings(order_book_net)
+    target_enable_sanitizers(order_book_net)
+    if(ORDER_BOOK_BUILD_TOOLS)
+        foreach(tool IN ITEMS tcp_event_server tcp_event_client)
+            add_executable(${tool} tools/${tool}.cpp)
+            target_link_libraries(${tool} PRIVATE order_book::net)
+            target_set_project_warnings(${tool})
+            target_enable_sanitizers(${tool})
+        endforeach()
+    endif()
+endif()
 
 if(ORDER_BOOK_BUILD_TOOLS)
     add_executable(generate_events tools/generate_events.cpp)
@@ -96,8 +116,24 @@ if(ORDER_BOOK_BUILD_TESTS)
         target_set_project_warnings(order_book_tests)
         target_enable_sanitizers(order_book_tests)
 
+        if(ORDER_BOOK_BUILD_NETWORKING)
+            target_sources(order_book_tests PRIVATE tests/net/test_tcp.cpp)
+            target_link_libraries(order_book_tests PRIVATE order_book::net)
+        endif()
+
         include(GoogleTest)
         gtest_discover_tests(order_book_tests)
+
+        if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS)
+            find_package(Python3 COMPONENTS Interpreter QUIET)
+            if(Python3_Interpreter_FOUND)
+                add_test(NAME TcpCli.IntegratedBook
+                    COMMAND ${Python3_EXECUTABLE}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/tests/net/test_tcp_cli.py
+                        --bin-dir $<TARGET_FILE_DIR:tcp_event_server>)
+                set_tests_properties(TcpCli.IntegratedBook PROPERTIES TIMEOUT 60)
+            endif()
+        endif()
 
         # Keep global operator-new interception isolated from the ordinary test binary.
         add_executable(order_book_allocation_tests
@@ -114,6 +150,9 @@ if(ORDER_BOOK_BUILD_TESTS)
             DEPENDS order_book_tests order_book_allocation_tests
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             USES_TERMINAL)
+        if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS AND Python3_Interpreter_FOUND)
+            add_dependencies(check tcp_event_server tcp_event_client replay_order_book)
+        endif()
     else()
         message(WARNING "GoogleTest was not found; tests are disabled")
     endif()

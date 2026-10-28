@@ -21,6 +21,9 @@ Sau mỗi lần hoàn thành một point trong roadmap, phải cập nhật lạ
 - [x] `OrderBookRegistry` route event tới nhiều instrument.
 - [x] Generator và deterministic CSV replay cơ bản.
 - [x] Global sequence validation phát hiện duplicate, out-of-order và gap.
+- [x] Chỉ commit sequence sau khi apply thành công; retry giữ cùng sequence khi lỗi.
+- [x] TCP event ingress trên loopback: binary codec, server/client, apply-result ACK,
+  logging bất đồng bộ và test protocol/transport/hai process.
 
 ### Important limitation
 
@@ -101,7 +104,8 @@ best_bid=10000 best_ask=-
 
 ### 9. Production pipeline
 
-- [ ] Network protocol và input validation.
+- [x] TCP protocol V1 và input validation cho Add/Cancel/Execute.
+- [ ] Socket deadlines, reconnect/session identity và deduplication/recovery.
 - [ ] Reader/parser -> queue -> single-writer matching engine.
 - [ ] Threading, backpressure và graceful shutdown.
 - [ ] Monitoring, metrics và operational recovery.

@@ -24,7 +24,15 @@ enum class LogEvent {
     InvalidSequence,
     InvariantFailed,
     InputOpenFailed,
-    InputReadFailed
+    InputReadFailed,
+    TcpListening,
+    TcpConnected,
+    TcpDisconnected,
+    TcpFinished,
+    TcpTransportFailed,
+    TcpProtocolFailed,
+    TcpAckSent,
+    TcpAckReceived
 };
 
 struct LogRecord {
@@ -40,6 +48,8 @@ struct LogRecord {
     Side side{Side::Bid};
     ApplyResult result{ApplyResult::Ok};
     std::uint64_t line_number{};
+    std::uint16_t port{};
+    int error_code{};
 };
 
 // Exactly one producer calls try_log()/log_event(). The worker consumes the SPSC
