@@ -39,18 +39,27 @@ target_include_directories(order_book
 target_set_project_warnings(order_book)
 target_enable_sanitizers(order_book)
 
+add_library(order_book_trading STATIC
+    src/trading/messages.cpp src/trading/engine.cpp src/trading/journal.cpp
+    src/trading/replica.cpp src/trading/strategy.cpp)
+add_library(order_book::trading ALIAS order_book_trading)
+target_link_libraries(order_book_trading PUBLIC order_book::order_book)
+target_set_project_warnings(order_book_trading)
+target_enable_sanitizers(order_book_trading)
+
 if(ORDER_BOOK_BUILD_NETWORKING)
     if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
         message(FATAL_ERROR "Networking demos support Linux; set ORDER_BOOK_BUILD_NETWORKING=OFF")
     endif()
     add_library(order_book_net STATIC
-        src/net/socket.cpp src/net/tcp.cpp src/net/udp.cpp src/net/protocol.cpp)
+        src/net/socket.cpp src/net/tcp.cpp src/net/udp.cpp src/net/protocol.cpp
+        src/trading/server.cpp src/trading/client.cpp)
     add_library(order_book::net ALIAS order_book_net)
-    target_link_libraries(order_book_net PUBLIC order_book::order_book)
+    target_link_libraries(order_book_net PUBLIC order_book::order_book order_book::trading)
     target_set_project_warnings(order_book_net)
     target_enable_sanitizers(order_book_net)
     if(ORDER_BOOK_BUILD_TOOLS)
-        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber)
+        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber exchange_server trading_app)
             add_executable(${tool} tools/${tool}.cpp)
             target_link_libraries(${tool} PRIVATE order_book::net)
             target_set_project_warnings(${tool})
@@ -60,6 +69,14 @@ if(ORDER_BOOK_BUILD_NETWORKING)
 endif()
 
 if(ORDER_BOOK_BUILD_TOOLS)
+    add_executable(trading_benchmark tools/trading_benchmark.cpp)
+    target_link_libraries(trading_benchmark PRIVATE order_book::trading)
+    target_set_project_warnings(trading_benchmark)
+    target_enable_sanitizers(trading_benchmark)
+    add_executable(exchange_replay tools/exchange_replay.cpp)
+    target_link_libraries(exchange_replay PRIVATE order_book::trading)
+    target_set_project_warnings(exchange_replay)
+    target_enable_sanitizers(exchange_replay)
     add_executable(generate_events tools/generate_events.cpp)
     target_link_libraries(generate_events PRIVATE order_book::order_book)
     target_set_project_warnings(generate_events)
@@ -104,6 +121,8 @@ if(ORDER_BOOK_BUILD_TESTS)
             tests/core/test_logger.cpp
             tests/test_order_registry.cpp
             tests/io/test_event_io.cpp
+            tests/trading/test_engine.cpp
+            tests/trading/test_recovery.cpp
             tests/memory/test_memory_pool.cpp
             tests/memory/test_byte_pool.cpp
             tests/memory/test_fixed_slot_pool.cpp
@@ -112,6 +131,7 @@ if(ORDER_BOOK_BUILD_TESTS)
         target_link_libraries(order_book_tests
             PRIVATE
                 order_book::order_book
+                order_book::trading
                 GTest::gtest_main)
         target_include_directories(order_book_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
         target_set_project_warnings(order_book_tests)
@@ -138,6 +158,11 @@ if(ORDER_BOOK_BUILD_TESTS)
                         ${CMAKE_CURRENT_SOURCE_DIR}/tests/net/test_udp_cli.py
                         --bin-dir $<TARGET_FILE_DIR:udp_event_subscriber>)
                 set_tests_properties(UdpCli.MulticastBook PROPERTIES TIMEOUT 60)
+                add_test(NAME TradingSystem.EndToEnd
+                    COMMAND ${Python3_EXECUTABLE}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/tests/trading/test_system.py
+                        --bin-dir $<TARGET_FILE_DIR:exchange_server>)
+                set_tests_properties(TradingSystem.EndToEnd PROPERTIES TIMEOUT 90)
             endif()
         endif()
 
@@ -158,7 +183,7 @@ if(ORDER_BOOK_BUILD_TESTS)
             USES_TERMINAL)
         if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS AND Python3_Interpreter_FOUND)
             add_dependencies(check tcp_event_server tcp_event_client replay_order_book
-                udp_event_publisher udp_event_subscriber)
+                udp_event_publisher udp_event_subscriber exchange_server trading_app exchange_replay)
         endif()
     else()
         message(WARNING "GoogleTest was not found; tests are disabled")

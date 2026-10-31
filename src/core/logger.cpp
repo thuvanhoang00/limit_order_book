@@ -80,6 +80,8 @@ const char* event_name(LogEvent event) noexcept {
             return "UdpGapDetected";
         case LogEvent::UdpApplyRejected:
             return "UdpApplyRejected";
+        case LogEvent::TradingCommand:
+            return "TradingCommand";
     }
     return "Unknown";
 }

@@ -1,0 +1,3 @@
+instrument,tick_size,lot_size,min_price,max_price,max_order_quantity,max_notional,max_position,max_open_orders
+1,1,1,1,1000000,100000,10000000000,1000000,128
+2,5,10,5,1000000,100000,10000000000,1000000,128

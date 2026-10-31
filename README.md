@@ -1,11 +1,31 @@
-# C++20 Order Book Practice Project
+# C++20 Order Book and Local Trading System
 
 A single-writer order-book baseline with implemented add, cancel, partial/full
 execution, best bid/ask queries, reset, and invariant validation. The project also
 includes CSV generation/replay, TCP and UDP multicast event ingress, contract tests, profiling tools, and standalone
 memory-pool experiments.
 
-## Current scope
+## Run a complete local trading scenario
+
+The exchange simulator accepts orders over TCP, matches by price-time priority,
+returns ACKs/private fills, and publishes sequenced market data over UDP multicast.
+Trading apps maintain local books, orders, risk and positions/PnL. Limit/market,
+IOC/FOK, post-only, cancel/replace, self-trade prevention, journal restart recovery,
+maker/taker strategies and snapshot recovery are implemented.
+
+```sh
+cmake --preset release
+cmake --build --preset release --parallel 4
+python3 tools/run_trading_demo.py --bin-dir build/release
+```
+
+The finite demo verifies two real TCP clients, matching, multicast book updates,
+cash/position conservation and durable replay. It retains logs and JSON evidence
+under `results/`. See [the trading system guide](docs/trading_system.md) for the
+architecture, scripts, configuration, wire format, benchmarks and remaining scope.
+This runs locally and does not connect to a real exchange.
+
+## Current LOB scope
 
 The book uses ordered `std::map` price levels, a `std::unordered_map` order index,
 and per-level `std::list` order queues. Core contract tests are enabled, including
@@ -377,6 +397,6 @@ misses/event. Compare the same workload and build settings across changes.
    collect latency distributions and compare reference-arena behavior.
 3. Compare one storage change at a time: pool vs heap, linked FIFO vs intrusive
    storage, ordered maps vs indexed price ladders, and hash-index alternatives.
-4. Add a reader/parser -> SPSC queue -> single-writer pipeline only after the
-   core's correctness and performance baseline are stable. TSan becomes useful
-   at that stage; `./tools/build.sh tsan` prepares the instrumented build.
+4. Profile the implemented TCP -> SPSC -> matching -> UDP pipeline, including
+   queueing and journal latency; `./tools/build.sh tsan` prepares a race-instrumented
+   build. Add private gateway reconciliation and journal checkpoints next.
