@@ -24,6 +24,9 @@ Sau mỗi lần hoàn thành một point trong roadmap, phải cập nhật lạ
 - [x] Chỉ commit sequence sau khi apply thành công; retry giữ cùng sequence khi lỗi.
 - [x] TCP event ingress trên loopback: binary codec, server/client, apply-result ACK,
   logging bất đồng bộ và test protocol/transport/hai process.
+- [x] UDP multicast event ingress trên loopback: publisher/subscriber, dùng lại
+  EventFrame 40 byte, fan-out nhiều book, bỏ gói cũ/trùng, dừng khi gap/lỗi,
+  timeout và kiểm tra state so với CSV replay; async logging ở subscriber.
 
 ### Important limitation
 
@@ -105,6 +108,8 @@ best_bid=10000 best_ask=-
 ### 9. Production pipeline
 
 - [x] TCP protocol V1 và input validation cho Add/Cancel/Execute.
+- [x] UDP multicast V1, bảo toàn ranh giới datagram và phát hiện gap/stale.
+- [ ] UDP session/heartbeat, reorder window, snapshot và gap recovery.
 - [ ] Socket deadlines, reconnect/session identity và deduplication/recovery.
 - [ ] Reader/parser -> queue -> single-writer matching engine.
 - [ ] Threading, backpressure và graceful shutdown.
