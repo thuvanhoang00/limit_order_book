@@ -28,10 +28,25 @@ Sau mỗi lần hoàn thành một point trong roadmap, phải cập nhật lạ
   EventFrame 40 byte, fan-out nhiều book, bỏ gói cũ/trùng, dừng khi gap/lỗi,
   timeout và kiểm tra state so với CSV replay; async logging ở subscriber.
 
-### Important limitation
+- [x] Local trading pipeline: matching engine, multi-client TCP order server/gateway,
+  SPSC request/response/market queues, UDP publisher, subscriber/local LOB và trading app.
+- [x] Price-time matching, limit/market, IOC/FOK, post-only, STP, cancel/replace,
+  owner routing và ACK/fill hai phía; order manager, risk, position/PnL và maker/taker/random.
+- [x] Journal đồng bộ trước ACK, deterministic restart, snapshot qua TCP, heartbeat
+  và khôi phục market book sau gap/join muộn; demo tự kiểm tra và metrics JSON.
 
-`ExecuteOrder` hiện chỉ thông báo rằng một order đã khớp một quantity rồi cập nhật
-book. Hệ thống chưa tự tìm order đối ứng, chưa matching và chưa sinh trade.
+- [x] Unified PR: durable engine/risk/CI từ #16; gateway/subscriber workers + client
+  SPSC queues, microprice/trade-ratio features và graceful cancellation từ #17.
+- [x] Buffered suffix validation sau TCP snapshot; test half-close, 5,000-command
+  burst, SIGTERM, adaptive maker và trade-driven taker qua process thật.
+
+### Current boundary
+
+`OrderBook::apply(ExecuteOrder)` vẫn là primitive tái dựng book; module
+`order_book::trading::MatchingEngine` nhận order command riêng và tự sinh trades.
+Đây là mô phỏng local hoàn chỉnh theo pipeline. Private gateway reconciliation,
+engine checkpoint/rotation, real-venue adapter và production operations còn bên dưới.
+Xem [trading_system.md](docs/trading_system.md) để chạy demo và đọc contracts.
 
 ## Work order
 
@@ -47,7 +62,7 @@ book. Hệ thống chưa tự tìm order đối ứng, chưa matching và chưa 
 
 ### 2. Add observability
 
-- [ ] Thêm read-only `OrderBook::snapshot()` để lấy price levels và orders mà không lộ
+- [x] Thêm read-only `OrderBook::snapshot()` để lấy price levels và orders mà không lộ
   container nội bộ.
 - [ ] Thêm `replay --verbose` để in từng event, kết quả apply và top of book.
 - [ ] Thêm `--continue-on-error` để quan sát cả event thành công và thất bại.
@@ -70,50 +85,55 @@ best_bid=10000 best_ask=-
 
 ### 4. Build matching engine V1
 
-- [ ] Tách inbound order command khỏi market-data `ExecuteOrder`.
-- [ ] Thêm `submit(LimitOrder)`.
-- [ ] Tự matching với phía đối diện theo price-time priority.
-- [ ] Sinh trade/execution reports cho mỗi match.
-- [ ] Đưa remaining quantity vào book nếu order chưa khớp hết.
-- [ ] Test full fill, partial fill, multiple price levels và FIFO tại cùng price.
+- [x] Tách inbound order command khỏi market-data `ExecuteOrder`.
+- [x] Thêm `MatchingEngine::process(New)` cho limit/market command.
+- [x] Tự matching với phía đối diện theo price-time priority.
+- [x] Sinh trade/execution reports cho mỗi match.
+- [x] Đưa remaining quantity vào book nếu order chưa khớp hết.
+- [x] Test full fill, partial fill, multiple price levels và FIFO tại cùng price.
 
 ### 5. Complete order lifecycle
 
-- [ ] Replace/amend order và quy tắc giữ/mất priority.
-- [ ] Market order.
-- [ ] Time-in-force: IOC và FOK.
-- [ ] Post-only.
-- [ ] Self-trade prevention.
+- [x] Replace/amend order và quy tắc giữ/mất priority.
+- [x] Market order.
+- [x] Time-in-force: IOC và FOK.
+- [x] Post-only.
+- [x] Self-trade prevention.
 
 ### 6. Add validation and risk rules
 
-- [ ] Tick size và lot size.
-- [ ] Price bands.
-- [ ] Quantity/notional limits và các pre-trade risk checks cơ bản.
+- [x] Tick size và lot size.
+- [x] Price bands.
+- [x] Quantity/notional limits và các pre-trade risk checks cơ bản.
 
 ### 7. Persistence and recovery
 
-- [ ] Append-only journal.
-- [ ] Snapshot và restore.
-- [ ] Deterministic replay sau restart.
-- [ ] Kiểm tra recovered state giống state trước restart.
+- [x] Append-only journal.
+- [x] Snapshot/restore market book theo watermark và boot epoch.
+- [ ] Engine checkpoint và journal rotation/compaction.
+- [x] Deterministic replay sau restart.
+- [x] Kiểm tra recovered state giống state trước restart.
 
 ### 8. Measure before optimizing
 
-- [ ] Predecoded in-memory benchmark.
-- [ ] Mixed add/cancel/execute/match workload với fixed seed.
-- [ ] Theo dõi throughput, ns/event và p50/p95/p99 latency.
+- [x] Predecoded in-memory benchmark.
+- [x] Predecoded mixed add/reduce/match/cancel workload và kiểm tra state.
+- [x] Benchmark core ns/command và p50/p95/p99/max; JSON output.
+- [ ] End-to-end throughput và latency, gồm queue/network/journal.
 - [ ] `perf stat`, flame graph và regression baseline.
 
 ### 9. Production pipeline
 
 - [x] TCP protocol V1 và input validation cho Add/Cancel/Execute.
 - [x] UDP multicast V1, bảo toàn ranh giới datagram và phát hiện gap/stale.
-- [ ] UDP session/heartbeat, reorder window, snapshot và gap recovery.
-- [ ] Socket deadlines, reconnect/session identity và deduplication/recovery.
-- [ ] Reader/parser -> queue -> single-writer matching engine.
-- [ ] Threading, backpressure và graceful shutdown.
-- [ ] Monitoring, metrics và operational recovery.
+- [x] UDP boot epoch/heartbeat và gap recovery bằng TCP snapshot.
+- [ ] UDP reorder window/retransmission và multicast snapshot channel.
+- [x] Socket timeouts, session binding và idempotent last-request replay.
+- [ ] Private gateway reconnect/reconciliation cho unobserved fills.
+- [x] Reader/parser -> SPSC queue -> single-writer matching engine.
+- [x] Threading, bounded queue backpressure, slow-client isolation và graceful shutdown.
+- [x] Command logs và shutdown metrics JSON.
+- [ ] Live monitoring, active/passive failover và operational tooling.
 
 ## Architecture progression
 

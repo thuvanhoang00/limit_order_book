@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "order_book/core/events.hpp"
 #include "order_book/core/types.hpp"
@@ -15,6 +16,22 @@
 namespace order_book {
 
 namespace detail { struct BookInspection; }
+
+struct OrderView {
+    OrderId order_id{};
+    Side side{Side::Bid};
+    Price price{};
+    Quantity quantity{};
+    friend bool operator==(const OrderView&, const OrderView&) = default;
+};
+
+struct LevelView {
+    Side side{Side::Bid};
+    Price price{};
+    std::uint64_t quantity{};
+    std::vector<OrderView> orders;
+    friend bool operator==(const LevelView&, const LevelView&) = default;
+};
 
 class OrderBook final {
    public:
@@ -46,9 +63,25 @@ class OrderBook final {
     [[nodiscard]] ApplyResult apply(const CancelOrder& event) noexcept;
     [[nodiscard]] ApplyResult apply(const ExecuteOrder& event) noexcept;
 
+    [[nodiscard]] std::uint64_t best_quantity(Side side) const noexcept;
     [[nodiscard]] std::optional<Price> best_bid() const noexcept;
     [[nodiscard]] std::optional<Price> best_ask() const noexcept;
     [[nodiscard]] std::optional<Quantity> remaining_quantity(OrderId order_id) const noexcept;
+
+    [[nodiscard]] std::optional<OrderView> front(Side side) const noexcept;
+    [[nodiscard]] std::optional<OrderView> order(OrderId order_id) const noexcept;
+    [[nodiscard]] std::vector<LevelView> snapshot() const;
+    // Visits copies in price-time order. Return false to stop at the price limit.
+    template <class Visitor>
+    void for_each_order(Side side, Visitor&& visitor) const {
+        const auto visit = [&](const auto& levels) {
+            for (const auto& [price, level] : levels)
+                for (const auto& entry : level.orders)
+                    if (!visitor(OrderView{entry.order_id, side, price, entry.remaining_quantity})) return;
+        };
+        if (side == Side::Bid) visit(bids_);
+        else if (side == Side::Ask) visit(asks_);
+    }
 
     [[nodiscard]] std::size_t order_count() const noexcept;
     [[nodiscard]] std::size_t bid_level_count() const noexcept;

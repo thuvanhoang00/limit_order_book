@@ -1,0 +1,3 @@
+action,instrument,order_id,side,type,tif,price,quantity,post_only
+NEW,1,1,BUY,LIMIT,IOC,101,4,0
+NEW,1,2,SELL,MARKET,IOC,0,3,0

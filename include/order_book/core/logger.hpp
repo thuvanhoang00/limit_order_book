@@ -40,7 +40,8 @@ enum class LogEvent {
     UdpTransportFailed,
     UdpStaleDropped,
     UdpGapDetected,
-    UdpApplyRejected
+    UdpApplyRejected,
+    TradingCommand
 };
 
 struct LogRecord {

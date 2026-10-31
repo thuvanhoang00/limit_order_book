@@ -144,6 +144,12 @@ ApplyResult OrderBook::apply(const ExecuteOrder& event) noexcept {
     return ApplyResult::Ok;
 }
 
+std::uint64_t OrderBook::best_quantity(Side side) const noexcept {
+    if (side == Side::Bid) return bids_.empty() ? 0 : bids_.begin()->second.aggregate_quantity;
+    if (side == Side::Ask) return asks_.empty() ? 0 : asks_.begin()->second.aggregate_quantity;
+    return 0;
+}
+
 std::optional<Price> OrderBook::best_bid() const noexcept {
     if (bids_.empty()) return std::nullopt;
     return bids_.cbegin()->first;
@@ -163,6 +169,36 @@ std::optional<Quantity> OrderBook::remaining_quantity(const OrderId order_id) co
 
 std::size_t OrderBook::order_count() const noexcept {
     return orders_by_id_.size();
+}
+
+std::optional<OrderView> OrderBook::order(OrderId id) const noexcept {
+    const auto it = orders_by_id_.find(id);
+    if (it == orders_by_id_.end()) return std::nullopt;
+    const auto& loc = it->second;
+    return OrderView{id, loc.side, loc.price, loc.iterator->remaining_quantity};
+}
+
+std::optional<OrderView> OrderBook::front(Side side) const noexcept {
+    if (side == Side::Bid && !bids_.empty()) return order(bids_.begin()->second.orders.front().order_id);
+    if (side == Side::Ask && !asks_.empty()) return order(asks_.begin()->second.orders.front().order_id);
+    return std::nullopt;
+}
+
+std::vector<LevelView> OrderBook::snapshot() const {
+    std::vector<LevelView> result;
+    result.reserve(bids_.size() + asks_.size());
+    const auto append = [&](const auto& levels, Side side) {
+        for (const auto& [price, level] : levels) {
+            LevelView view{side, price, level.aggregate_quantity, {}};
+            view.orders.reserve(level.orders.size());
+            for (const auto& entry : level.orders)
+                view.orders.push_back({entry.order_id, side, price, entry.remaining_quantity});
+            result.push_back(std::move(view));
+        }
+    };
+    append(bids_, Side::Bid);
+    append(asks_, Side::Ask);
+    return result;
 }
 
 std::size_t OrderBook::bid_level_count() const noexcept {

@@ -1,0 +1,4 @@
+action,instrument,order_id,side,type,tif,price,quantity,post_only
+NEW,1,1,SELL,LIMIT,GTC,101,10,1
+NEW,1,2,BUY,LIMIT,GTC,99,10,1
+WAIT,1500
