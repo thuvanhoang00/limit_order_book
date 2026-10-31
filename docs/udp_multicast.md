@@ -5,6 +5,47 @@ TCP transport, codec and async logger. Socket fd ownership is extracted from
 `tcp.hpp`/`tcp.cpp` into `socket.hpp`/`socket.cpp`; including `tcp.hpp` still exposes
 the same `Socket` API. TCP behavior and event wire format are unchanged.
 
+## Local quickstart
+
+Run from the repository root on Linux. Loopback multicast needs no root access
+or second machine:
+
+```sh
+cmake -S . -B build/udp -DCMAKE_BUILD_TYPE=Debug -DORDER_BOOK_BUILD_BENCHMARKS=OFF
+cmake --build build/udp --parallel
+ctest --test-dir build/udp --output-on-failure
+```
+
+Start the subscriber in one terminal:
+
+```sh
+./build/udp/udp_event_subscriber 60
+```
+
+Wait for `Joined group=239.255.0.1 port=9001 interface=127.0.0.1`, then run
+the publisher in another terminal within the subscriber's 30-second timeout:
+
+```sh
+./build/udp/udp_event_publisher data/sample_events.csv
+```
+
+The subscriber applies the sample's 60 events, checks the book and reports
+`book_synchronized=1 sequence=60 received=60 applied=60 stale=0`. It writes
+asynchronous logs to `udp_subscriber.log`. Restart the subscriber before each run.
+
+To check fan-out, start a second subscriber before publishing, using its own log:
+
+```sh
+./build/udp/udp_event_subscriber 60 9001 239.255.0.1 127.0.0.1 30000 udp_second.log
+```
+
+Run the UDP transport and process tests after building:
+
+```sh
+ctest --test-dir build/udp -R '^Udp' --output-on-failure
+python3 tests/net/test_udp_cli.py --bin-dir build/udp -v
+```
+
 ## Read the flow
 
 1. `tools/udp_event_publisher.cpp`: CSV -> native event -> existing 40-byte codec

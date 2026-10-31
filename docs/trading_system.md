@@ -334,3 +334,14 @@ record compiler/hardware settings and retain raw results before comparing runs.
 This is a complete local trading **pipeline**, with standard containers and some
 allocations still on its hot path. It has no real-venue adapter, account security,
 clearing/settlement, live production operations or measured HFT latency guarantee.
+
+## Remaining work
+
+- Replay observability: per-event results and top-of-book output with `--verbose`,
+  plus an explicit `--continue-on-error` mode.
+- Engine checkpoints and journal rotation/compaction.
+- End-to-end throughput and latency measurements including queues, networking and
+  journaling; `perf stat`, flame graphs and a regression baseline.
+- UDP reorder buffering/retransmission and a multicast snapshot channel.
+- Private gateway reconnect and reconciliation for unobserved fills.
+- Live monitoring, active/passive failover and operational tooling.

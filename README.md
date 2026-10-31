@@ -260,8 +260,8 @@ update multiple independent books. There are no ACKs. Stale packets are dropped;
 gaps, malformed packets and rejected updates stop the feed before further apply.
 The demo uses a known event count and receive timeout; recovery is a future step.
 
-See [UDP_QUICKSTART.md](UDP_QUICKSTART.md) for local build/run commands and
-[the UDP guide](docs/udp_multicast.md) for socket setup and sequencing policy.
+See [the UDP guide](docs/udp_multicast.md) for local build/run commands, socket
+setup and sequencing policy.
 
 ## Asynchronous logging
 
