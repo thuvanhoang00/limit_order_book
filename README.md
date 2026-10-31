@@ -2,7 +2,7 @@
 
 A single-writer order-book baseline with implemented add, cancel, partial/full
 execution, best bid/ask queries, reset, and invariant validation. The project also
-includes CSV generation/replay, TCP event ingress, contract tests, profiling tools, and standalone
+includes CSV generation/replay, TCP and UDP multicast event ingress, contract tests, profiling tools, and standalone
 memory-pool experiments.
 
 ## Current scope
@@ -30,7 +30,7 @@ include/order_book/
   core/                  # types, events, book, registry, logger, SPSC queue
   memory/                # typed pool, byte pool, fixed-slot pool, adaptor
   io/                    # CSV parsing and writing
-  net/                   # TCP transport and versioned binary event/ACK codec
+  net/                   # TCP/UDP multicast transports, shared fd ownership, wire codec
 src/
   core/                  # order-book implementation
   io/                    # CSV implementation
@@ -39,7 +39,7 @@ tests/
   core/                  # order-book contract tests
   memory/                # pool and allocator contract tests
   io/                    # CSV tests
-  net/                   # transport, protocol and two-process TCP tests
+  net/                   # transport, protocol and TCP/multicast process tests
 benchmarks/
   benchmark_order_book.cpp
   benchmark_book_allocators.cpp
@@ -228,6 +228,17 @@ protocol/transport tests use GoogleTest. This first step uses blocking sockets,
 with one book writer, no socket deadlines, and no state recovery across sessions.
 See [the TCP protocol and session guide](docs/tcp_first_step.md) for wire format,
 error behavior, and implementation details.
+
+## UDP multicast event ingress
+
+The multicast subscriber applies the same 40-byte event format directly to its
+single-writer registry. Start subscribers before publishing; one publisher can
+update multiple independent books. There are no ACKs. Stale packets are dropped;
+gaps, malformed packets and rejected updates stop the feed before further apply.
+The demo uses a known event count and receive timeout; recovery is a future step.
+
+See [UDP_QUICKSTART.md](UDP_QUICKSTART.md) for local build/run commands and
+[the UDP guide](docs/udp_multicast.md) for socket setup and sequencing policy.
 
 ## Asynchronous logging
 

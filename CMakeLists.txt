@@ -8,7 +8,7 @@ project(order_book
 option(ORDER_BOOK_BUILD_TESTS "Build unit tests" ON)
 option(ORDER_BOOK_BUILD_BENCHMARKS "Build Google Benchmark targets" ON)
 option(ORDER_BOOK_BUILD_TOOLS "Build replay and event-generator tools" ON)
-option(ORDER_BOOK_BUILD_NETWORKING "Build Linux blocking TCP event transport" ON)
+option(ORDER_BOOK_BUILD_NETWORKING "Build Linux TCP and UDP multicast event transports" ON)
 option(ORDER_BOOK_FETCH_DEPS "Fetch missing test dependencies with FetchContent" ON)
 option(ORDER_BOOK_ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ORDER_BOOK_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
@@ -41,15 +41,16 @@ target_enable_sanitizers(order_book)
 
 if(ORDER_BOOK_BUILD_NETWORKING)
     if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        message(FATAL_ERROR "TCP demo currently supports Linux; set ORDER_BOOK_BUILD_NETWORKING=OFF")
+        message(FATAL_ERROR "Networking demos support Linux; set ORDER_BOOK_BUILD_NETWORKING=OFF")
     endif()
-    add_library(order_book_net STATIC src/net/tcp.cpp src/net/protocol.cpp)
+    add_library(order_book_net STATIC
+        src/net/socket.cpp src/net/tcp.cpp src/net/udp.cpp src/net/protocol.cpp)
     add_library(order_book::net ALIAS order_book_net)
     target_link_libraries(order_book_net PUBLIC order_book::order_book)
     target_set_project_warnings(order_book_net)
     target_enable_sanitizers(order_book_net)
     if(ORDER_BOOK_BUILD_TOOLS)
-        foreach(tool IN ITEMS tcp_event_server tcp_event_client)
+        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber)
             add_executable(${tool} tools/${tool}.cpp)
             target_link_libraries(${tool} PRIVATE order_book::net)
             target_set_project_warnings(${tool})
@@ -117,7 +118,7 @@ if(ORDER_BOOK_BUILD_TESTS)
         target_enable_sanitizers(order_book_tests)
 
         if(ORDER_BOOK_BUILD_NETWORKING)
-            target_sources(order_book_tests PRIVATE tests/net/test_tcp.cpp)
+            target_sources(order_book_tests PRIVATE tests/net/test_tcp.cpp tests/net/test_udp.cpp)
             target_link_libraries(order_book_tests PRIVATE order_book::net)
         endif()
 
@@ -132,6 +133,11 @@ if(ORDER_BOOK_BUILD_TESTS)
                         ${CMAKE_CURRENT_SOURCE_DIR}/tests/net/test_tcp_cli.py
                         --bin-dir $<TARGET_FILE_DIR:tcp_event_server>)
                 set_tests_properties(TcpCli.IntegratedBook PROPERTIES TIMEOUT 60)
+                add_test(NAME UdpCli.MulticastBook
+                    COMMAND ${Python3_EXECUTABLE}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/tests/net/test_udp_cli.py
+                        --bin-dir $<TARGET_FILE_DIR:udp_event_subscriber>)
+                set_tests_properties(UdpCli.MulticastBook PROPERTIES TIMEOUT 60)
             endif()
         endif()
 
@@ -151,7 +157,8 @@ if(ORDER_BOOK_BUILD_TESTS)
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             USES_TERMINAL)
         if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS AND Python3_Interpreter_FOUND)
-            add_dependencies(check tcp_event_server tcp_event_client replay_order_book)
+            add_dependencies(check tcp_event_server tcp_event_client replay_order_book
+                udp_event_publisher udp_event_subscriber)
         endif()
     else()
         message(WARNING "GoogleTest was not found; tests are disabled")

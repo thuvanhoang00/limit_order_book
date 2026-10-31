@@ -64,6 +64,22 @@ const char* event_name(LogEvent event) noexcept {
             return "TcpAckSent";
         case LogEvent::TcpAckReceived:
             return "TcpAckReceived";
+        case LogEvent::UdpJoined:
+            return "UdpJoined";
+        case LogEvent::UdpFinished:
+            return "UdpFinished";
+        case LogEvent::UdpTimeout:
+            return "UdpTimeout";
+        case LogEvent::UdpProtocolFailed:
+            return "UdpProtocolFailed";
+        case LogEvent::UdpTransportFailed:
+            return "UdpTransportFailed";
+        case LogEvent::UdpStaleDropped:
+            return "UdpStaleDropped";
+        case LogEvent::UdpGapDetected:
+            return "UdpGapDetected";
+        case LogEvent::UdpApplyRejected:
+            return "UdpApplyRejected";
     }
     return "Unknown";
 }

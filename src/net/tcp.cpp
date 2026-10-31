@@ -3,14 +3,12 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <cerrno>
 #include <limits>
 #include <stdexcept>
 #include <system_error>
-#include <utility>
 
 namespace order_book::net {
 namespace {
@@ -40,17 +38,6 @@ std::size_t syscall_size(std::size_t size) {
 }
 }  // namespace
 
-Socket::~Socket() {
-    if (fd_ >= 0) (void)::close(fd_);
-}
-Socket::Socket(Socket&& other) noexcept : fd_(std::exchange(other.fd_, -1)) {}
-Socket& Socket::operator=(Socket&& other) noexcept {
-    if (this != &other) {
-        if (fd_ >= 0) (void)::close(fd_);
-        fd_ = std::exchange(other.fd_, -1);
-    }
-    return *this;
-}
 Socket listen_tcp(const char* address, std::uint16_t port) {
     const auto addr = endpoint(address, port);
     auto socket = make_socket();

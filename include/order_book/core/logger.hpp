@@ -32,7 +32,15 @@ enum class LogEvent {
     TcpTransportFailed,
     TcpProtocolFailed,
     TcpAckSent,
-    TcpAckReceived
+    TcpAckReceived,
+    UdpJoined,
+    UdpFinished,
+    UdpTimeout,
+    UdpProtocolFailed,
+    UdpTransportFailed,
+    UdpStaleDropped,
+    UdpGapDetected,
+    UdpApplyRejected
 };
 
 struct LogRecord {
