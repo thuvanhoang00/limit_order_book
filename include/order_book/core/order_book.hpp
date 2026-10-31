@@ -63,6 +63,7 @@ class OrderBook final {
     [[nodiscard]] ApplyResult apply(const CancelOrder& event) noexcept;
     [[nodiscard]] ApplyResult apply(const ExecuteOrder& event) noexcept;
 
+    [[nodiscard]] std::uint64_t best_quantity(Side side) const noexcept;
     [[nodiscard]] std::optional<Price> best_bid() const noexcept;
     [[nodiscard]] std::optional<Price> best_ask() const noexcept;
     [[nodiscard]] std::optional<Quantity> remaining_quantity(OrderId order_id) const noexcept;

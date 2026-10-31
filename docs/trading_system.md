@@ -10,6 +10,13 @@ components in [Packt's reference at the requested commit](https://github.com/Pac
 The implementation is written for this project's APIs. It does not vendor the
 reference source or claim the reference's performance numbers.
 
+The unified implementation combines PR #16's durable exchange, server-side risk,
+TCP snapshots and CI with PR #17's queued client transport, market features,
+coordinated shutdown and transport stress coverage. One `LTR1` protocol and one
+matching implementation are maintained. Snapshot recovery deliberately uses TCP
+with a buffered multicast suffix; a second periodic multicast snapshot protocol
+is not introduced.
+
 ```mermaid
 flowchart TD
     APP[Trading app: script / maker / taker / random]
@@ -22,11 +29,14 @@ flowchart TD
     PUB[Market-data publisher + heartbeat]
     LOCAL[Subscriber + local LOB]
     JOURNAL[Checksummed command journal]
-    APP -->|new / cancel / replace / cancel-all| GW
+    CQ[Client request SPSC queue]
+    CR[Client report SPSC queue]
+    CM[Client market SPSC queue]
+    APP -->|new / cancel / replace / cancel-all| CQ --> GW
     GW --> IO --> REQ --> ME
     ME --> RESP --> IO
-    IO -->|ACK / reject / maker and taker fills| GW --> APP
-    ME --> MD --> PUB -->|UDP multicast| LOCAL -->|book / positions / risk| APP
+    IO -->|ACK / reject / maker and taker fills| GW --> CR --> APP
+    ME --> MD --> PUB -->|UDP multicast| LOCAL --> CM -->|replica / features / risk| APP
     IO -->|snapshot request via queue| ME
     ME -->|snapshot at an exact sequence via TCP| LOCAL
     REQ -->|fdatasync before processing / reports| JOURNAL
@@ -37,7 +47,12 @@ The server has one I/O thread for all TCP clients, one engine thread, one publis
 thread, and the existing logger worker. Only the engine mutates exchange books.
 Each SPSC queue has capacity 4096 and exactly one producer/consumer. A Linux
 `eventfd` wakes the TCP poller when reports become available. The client keeps
-strategy, order management, positions and replica state on one application thread.
+strategy, order management, features, positions and replica state on one application
+thread; separate gateway and multicast workers exchange messages through three
+bounded SPSC queues. Workers retain messages while snapshot transfer blocks the
+strategy thread. The buffered suffix must validate before new risk is allowed.
+The command API stays serialized: one caller waits for each Complete, so there
+is only one command in flight per application client.
 
 ## Build and run the verified scenario
 
@@ -50,7 +65,9 @@ python3 tools/run_trading_demo.py --bin-dir build/release
 The script starts an exchange on an ephemeral TCP port, starts a maker with a bid
 and ask, waits for both acknowledgements, then starts a taker that buys four at
 101 and sells three at 99. It verifies two trades, quantity seven, conservation of
-cash and positions, synchronized market sequences, and journal replay. All
+cash and positions, synchronized snapshots and journal replay. A final observer
+verifies the empty book after both clients cancel their remaining orders. Clients
+can exit at different valid watermarks because exit itself generates cancels. All
 processes stop after the scenario. No exchange account or elevated privileges
 are required.
 
@@ -80,7 +97,10 @@ Then start strategies in separate terminals:
   --fair-price 105 --edge 1 --clip 2 --duration-ms 4000
 ```
 
-Strategies cancel their remaining orders before normal exit. Ctrl-C/SIGTERM to
+Trading apps cancel remaining orders on normal exit and SIGINT/SIGTERM, await
+completion and join both I/O workers. `--cancel-on-exit 0` explicitly leaves script
+orders at the exchange; later use of the same private account still requires
+reconciliation. Failed cancellation reports an error. Ctrl-C/SIGTERM to
 the **server** stops ingress, drains requests already admitted to the queue,
 drains output queues and accepted logs, then joins workers. TCP input still in a
 client/kernel buffer has not been admitted. Shutdown has a five-second drain
@@ -160,6 +180,19 @@ bid/ask per instrument and cancels a side when its inventory limit is reached.
 The taker sends IOC orders only when the observed opposite price offers the
 configured edge. Random trading uses a seeded generator and IOC orders. These
 are demonstrator strategies, not claims of profitable signals.
+
+`--pricing microprice` replaces the maker/taker fair-price anchor with the
+quantity-weighted microprice when both BBO sides exist; configured fair price is
+used to seed an empty market. `--signal trade-ratio --trade-ratio 0.2` makes the
+taker follow aggressive trades above the specified depth ratio, once per trade ID.
+The denominator is captured before the passive Execute update, even though Trade
+arrives afterwards. Snapshot recovery resets signals and reconstructs microprice.
+`--pricing fixed --signal edge` retains the configured-price strategy behavior.
+
+```sh
+./build/release/trading_app --client-id 20 --strategy maker --pricing microprice
+./build/release/trading_app --client-id 21 --strategy taker --signal trade-ratio --trade-ratio 0.2
+```
 
 ## Scripts
 
@@ -286,6 +319,8 @@ accounting, strict codecs, snapshot faults and journal replay/corruption. A seed
 2,000-order workload compares every execution to an independent price-time model.
 Process tests exercise actual multi-client TCP, private maker fills, multicast
 fan-out and heartbeats, partial input, restart recovery and the C++ trading apps.
+Additional cases exercise microprice quotes, pre-Execute trade signals, SIGTERM
+cancellation, TCP half-close and a 5,000-command FIFO/drain burst.
 The original core, memory, logging, TCP, UDP and allocation tests remain enabled.
 
 The standalone benchmark predecodes a deterministic mix of add, quantity reduction,

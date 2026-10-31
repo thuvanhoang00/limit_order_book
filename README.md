@@ -11,7 +11,10 @@ The exchange simulator accepts orders over TCP, matches by price-time priority,
 returns ACKs/private fills, and publishes sequenced market data over UDP multicast.
 Trading apps maintain local books, orders, risk and positions/PnL. Limit/market,
 IOC/FOK, post-only, cancel/replace, self-trade prevention, journal restart recovery,
-maker/taker strategies and snapshot recovery are implemented.
+maker/taker strategies and snapshot recovery are implemented. Gateway and multicast
+workers use bounded queues; optional microprice/trade-ratio strategies derive
+signals from the local book. Trading apps cancel remaining orders and drain their
+workers on normal exit or SIGINT/SIGTERM.
 
 ```sh
 cmake --preset release
@@ -19,7 +22,7 @@ cmake --build --preset release --parallel 4
 python3 tools/run_trading_demo.py --bin-dir build/release
 ```
 
-The finite demo verifies two real TCP clients, matching, multicast book updates,
+The finite demo verifies two trading clients plus a final observer, matching, multicast book updates,
 cash/position conservation and durable replay. It retains logs and JSON evidence
 under `results/`. See [the trading system guide](docs/trading_system.md) for the
 architecture, scripts, configuration, wire format, benchmarks and remaining scope.

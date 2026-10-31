@@ -62,6 +62,15 @@ def main():
                 raise RuntimeError('Taker failed; inspect taker.stderr')
             if maker.wait(timeout=10):
                 raise RuntimeError('Maker failed; inspect maker.stderr')
+            # Clients exit at different watermarks because safe exit generates
+            # cancels. Observe the final drained book after both clients stop.
+            observer_script = output / 'observer.csv'
+            observer_script.write_text('# Observe only\n')
+            observer = subprocess.run([*base, '--client-id', '3', '--orders', str(observer_script)],
+                capture_output=True, text=True, timeout=10)
+            (output / 'observer.stdout').write_text(observer.stdout)
+            (output / 'observer.stderr').write_text(observer.stderr)
+            if observer.returncode: raise RuntimeError('Final observer failed; inspect observer.stderr')
             server.send_signal(signal.SIGTERM)
             server_output, _ = server.communicate(timeout=10)
             (output / 'exchange.stdout').write_text(ready + '\n' + server_output)
@@ -79,6 +88,7 @@ def main():
             server.stdout.close()
     maker_state = json.loads((output / 'maker.stdout').read_text().splitlines()[-1])
     taker_state = json.loads((output / 'taker.stdout').read_text().splitlines()[-1])
+    observer_state = json.loads((output / 'observer.stdout').read_text().splitlines()[-1])
     metrics = json.loads((output / 'metrics.json').read_text())
     replay = subprocess.run([str(binaries / 'exchange_replay'), str(output / 'exchange.journal')],
                             capture_output=True, text=True, timeout=10, check=True)
@@ -89,10 +99,13 @@ def main():
         'cash_conserved': maker_state['cash'] + taker_state['cash'] == 0,
         'two_trades': metrics['trades'] == 2 and metrics['volume'] == 7,
         'books_synchronized': maker_state['synchronized'] and taker_state['synchronized'] and
-            maker_state['market_sequence'] == taker_state['market_sequence'] == metrics['market_sequence'],
+            maker_state['market_sequence'] <= observer_state['market_sequence'] and
+            taker_state['market_sequence'] <= observer_state['market_sequence'] and
+            observer_state['synchronized'] and observer_state['market_sequence'] == metrics['market_sequence'],
+        'orders_drained': maker_state['open_orders'] == taker_state['open_orders'] == 0 and observer_state['book_orders'] == 0,
         'durable_replay_matches': recovered['trades'] == metrics['trades'] and recovered['sequence'] == metrics['market_sequence'],
     }
-    summary = dict(maker=maker_state, taker=taker_state, exchange=metrics, checks=checks)
+    summary = dict(maker=maker_state, taker=taker_state, observer=observer_state, exchange=metrics, checks=checks)
     (output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(summary, indent=2))
     if not all(checks.values()):

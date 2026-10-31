@@ -1,10 +1,12 @@
 #pragma once
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <string>
 
 #include "order_book/net/tcp.hpp"
 #include "order_book/net/udp.hpp"
+#include "order_book/trading/features.hpp"
 #include "order_book/trading/strategy.hpp"
 
 namespace order_book::trading {
@@ -15,11 +17,18 @@ struct ClientConfig {
     InstrumentRules limits;
     long double max_loss{100'000};
 };
-// One application thread multiplexes order reports and multicast data. A snapshot
-// connection is separate, so recovery cannot consume private execution reports.
+// Gateway and multicast workers exchange bounded SPSC messages with one
+// strategy thread. Snapshot recovery uses a separate TCP connection.
 class TradingClient final {
    public:
     explicit TradingClient(ClientConfig config);
+    ~TradingClient();
+    TradingClient(const TradingClient&) = delete;
+    TradingClient& operator=(const TradingClient&) = delete;
+    void close(bool cancel_orders = true);
+    [[nodiscard]] const Features& features(InstrumentId id) const noexcept {
+        return features_.get(id);
+    }
     void recover();
     [[nodiscard]] std::vector<Message> submit(Message command);
     void poll(std::chrono::milliseconds duration);
@@ -41,5 +50,9 @@ class TradingClient final {
     std::chrono::steady_clock::time_point last_market_{std::chrono::steady_clock::now()};
     std::optional<Message> receive_report(std::chrono::milliseconds wait);
     void drain_market();
+    FeatureEngine features_;
+    struct Transport;
+    std::unique_ptr<Transport> transport_;
+    bool closed_{};
 };
 }  // namespace order_book::trading

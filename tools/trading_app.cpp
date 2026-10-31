@@ -1,5 +1,7 @@
 #include <charconv>
 #include <chrono>
+#include <cmath>
+#include <csignal>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -16,6 +18,8 @@ namespace {
 using namespace order_book;
 using namespace order_book::trading;
 using namespace std::chrono_literals;
+volatile std::sig_atomic_t stopped = 0;
+void signal_handler(int) { stopped = 1; }
 std::uint64_t number(const std::string& s,
                      std::uint64_t max = std::numeric_limits<std::uint64_t>::max()) {
     std::uint64_t n{};
@@ -36,11 +40,13 @@ void script(TradingClient& client, const std::string& path) {
     std::ifstream input(path);
     if (!input) throw std::runtime_error("Cannot open orders script");
     std::string line;
-    while (std::getline(input, line)) {
+    while (!stopped && std::getline(input, line)) {
         if (line.empty() || line.front() == '#' || line.starts_with("action,")) continue;
         const auto f = fields(line);
         if (f.size() == 2 && f[0] == "WAIT") {
-            client.poll(std::chrono::milliseconds(number(f[1], 60'000)));
+            const auto end =
+                std::chrono::steady_clock::now() + std::chrono::milliseconds(number(f[1], 60'000));
+            while (!stopped && std::chrono::steady_clock::now() < end) client.poll(20ms);
             continue;
         }
         if (f.size() == 1 && f[0] == "SNAPSHOT") {
@@ -80,7 +86,7 @@ void script(TradingClient& client, const std::string& path) {
         c.post_only = number(f[8], 1) != 0;
         (void)client.submit(c);
     }
-    if (!input.eof()) throw std::runtime_error("Orders script read failed");
+    if (!stopped && !input.eof()) throw std::runtime_error("Orders script read failed");
 }
 void strategy(TradingClient& client, const std::string& name, const StrategyConfig& cfg,
               std::uint64_t duration, ClientId id) {
@@ -88,11 +94,16 @@ void strategy(TradingClient& client, const std::string& name, const StrategyConf
     const auto until = Clock::now() + std::chrono::milliseconds(duration);
     OrderId next_id{1};
     std::mt19937 random(id);
-    while (Clock::now() < until) {
+    std::uint64_t consumed_trade = 0;
+    while (!stopped && Clock::now() < until) {
         client.poll(20ms);
         const auto inventory = client.orders().position(cfg.instrument).quantity;
+        auto pricing = cfg;
+        const auto& feature = client.features(cfg.instrument);
+        if (cfg.use_microprice && feature.microprice)
+            pricing.fair_price = static_cast<Price>(std::round(*feature.microprice));
         if (name == "maker") {
-            const auto desired = maker_quotes(cfg, inventory);
+            const auto desired = maker_quotes(pricing, inventory);
             for (const auto side : {Side::Bid, Side::Ask}) {
                 const auto wanted = std::find_if(desired.begin(), desired.end(),
                                                  [&](const auto& q) { return q.side == side; });
@@ -125,7 +136,24 @@ void strategy(TradingClient& client, const std::string& name, const StrategyConf
                 (void)client.submit(c);
             }
         } else if (name == "taker") {
-            if (const auto q = taker_quote(cfg, client.market().book(cfg.instrument), inventory)) {
+            std::optional<Quote> desired;
+            if (cfg.use_trade_ratio) {
+                const auto* book = client.market().book(cfg.instrument);
+                if (book && feature.aggressive_ratio &&
+                    *feature.aggressive_ratio >= cfg.trade_ratio &&
+                    feature.trade_id > consumed_trade) {
+                    consumed_trade = feature.trade_id;
+                    const auto price =
+                        feature.aggressor == Side::Bid ? book->best_ask() : book->best_bid();
+                    const auto projected =
+                        inventory + (feature.aggressor == Side::Bid ? std::int64_t{cfg.clip}
+                                                                    : -std::int64_t{cfg.clip});
+                    if (price && std::abs(projected) <= cfg.inventory_limit)
+                        desired = Quote{feature.aggressor, *price, cfg.clip};
+                }
+            } else
+                desired = taker_quote(pricing, client.market().book(cfg.instrument), inventory);
+            if (const auto& q = desired) {
                 Message c;
                 c.instrument_id = cfg.instrument;
                 c.order_id = next_id++;
@@ -164,7 +192,8 @@ int main(int argc, char** argv) {
                "[--tcp-port 9100] [--md-port 9101] [--group 239.255.0.2] [--interface 127.0.0.1] "
                "[--duration-ms 3000] [--instrument 1] [--fair-price 100] [--clip 5] [--edge 2] "
                "[--max-position 50] [--max-order-qty 100000] [--max-notional 10000000000] "
-               "[--max-loss 100000]\n";
+               "[--max-loss 100000] [--pricing fixed|microprice] [--signal edge|trade-ratio] "
+               "[--trade-ratio 0.5] [--cancel-on-exit 1]\n";
         return 0;
     }
     try {
@@ -194,7 +223,23 @@ int main(int argc, char** argv) {
         c.limits.max_notional = args.number("--max-notional", 10'000'000'000ULL, 1,
                                             std::numeric_limits<std::uint64_t>::max());
         c.max_loss = args.number("--max-loss", 100'000, 0, 1'000'000'000);
+        const auto pricing_mode = args.text("--pricing", "fixed");
+        if (pricing_mode != "fixed" && pricing_mode != "microprice")
+            throw std::invalid_argument("Pricing must be fixed or microprice");
+        s.use_microprice = pricing_mode == "microprice";
+        const auto signal_mode = args.text("--signal", "edge");
+        if (signal_mode != "edge" && signal_mode != "trade-ratio")
+            throw std::invalid_argument("Signal must be edge or trade-ratio");
+        s.use_trade_ratio = signal_mode == "trade-ratio";
+        const auto ratio = args.text("--trade-ratio", "0.5");
+        std::size_t parsed = 0;
+        s.trade_ratio = std::stold(ratio, &parsed);
+        if (parsed != ratio.size() || !std::isfinite(s.trade_ratio) || s.trade_ratio < 0)
+            throw std::invalid_argument("Invalid trade ratio");
+        const bool cancel_on_exit = args.number("--cancel-on-exit", 1, 0, 1) != 0;
         args.finish();
+        std::signal(SIGINT, signal_handler);
+        std::signal(SIGTERM, signal_handler);
         TradingClient client(c);
         client.set_report_handler([](const Message& m) {
             std::cout << "{\"report\":\"" << to_string(m.report) << "\",\"reject\":\""
@@ -205,11 +250,21 @@ int main(int argc, char** argv) {
                       << std::endl;
         });
         std::cout << "CLIENT_READY id=" << c.client_id << std::endl;
-        if (!orders.empty())
-            script(client, orders);
-        else
-            strategy(client, algo, s, duration, c.client_id);
-        client.poll(100ms);
+        try {
+            if (!orders.empty())
+                script(client, orders);
+            else
+                strategy(client, algo, s, duration, c.client_id);
+            client.poll(100ms);
+            client.close(cancel_on_exit);
+        } catch (...) {
+            const auto error = std::current_exception();
+            try {
+                client.close(cancel_on_exit);
+            } catch (...) {
+            }
+            std::rethrow_exception(error);
+        }
         client.recover();
         const auto p = client.orders().position(s.instrument);
         const auto* book = client.market().book(s.instrument);

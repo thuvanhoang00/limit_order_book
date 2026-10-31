@@ -41,7 +41,7 @@ target_enable_sanitizers(order_book)
 
 add_library(order_book_trading STATIC
     src/trading/messages.cpp src/trading/engine.cpp src/trading/journal.cpp
-    src/trading/replica.cpp src/trading/strategy.cpp)
+    src/trading/replica.cpp src/trading/strategy.cpp src/trading/features.cpp)
 add_library(order_book::trading ALIAS order_book_trading)
 target_link_libraries(order_book_trading PUBLIC order_book::order_book)
 target_set_project_warnings(order_book_trading)
@@ -123,6 +123,7 @@ if(ORDER_BOOK_BUILD_TESTS)
             tests/io/test_event_io.cpp
             tests/trading/test_engine.cpp
             tests/trading/test_recovery.cpp
+            tests/trading/test_features.cpp
             tests/memory/test_memory_pool.cpp
             tests/memory/test_byte_pool.cpp
             tests/memory/test_fixed_slot_pool.cpp

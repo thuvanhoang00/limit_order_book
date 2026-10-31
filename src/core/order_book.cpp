@@ -144,6 +144,12 @@ ApplyResult OrderBook::apply(const ExecuteOrder& event) noexcept {
     return ApplyResult::Ok;
 }
 
+std::uint64_t OrderBook::best_quantity(Side side) const noexcept {
+    if (side == Side::Bid) return bids_.empty() ? 0 : bids_.begin()->second.aggregate_quantity;
+    if (side == Side::Ask) return asks_.empty() ? 0 : asks_.begin()->second.aggregate_quantity;
+    return 0;
+}
+
 std::optional<Price> OrderBook::best_bid() const noexcept {
     if (bids_.empty()) return std::nullopt;
     return bids_.cbegin()->first;

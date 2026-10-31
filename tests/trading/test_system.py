@@ -211,7 +211,7 @@ class TradingSystem(unittest.TestCase):
         taker_script = self.temp / 'taker.csv'
         taker_script.write_text('NEW,1,1,BUY,LIMIT,IOC,101,4,0\n')
         with self.server() as (port, _):
-            base = [str(BIN / 'trading_app'), '--tcp-port', str(port), '--md-port', str(self.md_port), '--group', GROUP]
+            base = [str(BIN / 'trading_app'), '--tcp-port', str(port), '--md-port', str(self.md_port), '--group', GROUP, '--cancel-on-exit', '0']
             maker = subprocess.Popen([*base, '--client-id', '10', '--orders', str(maker_script)],
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             try:
@@ -308,6 +308,98 @@ class TradingSystem(unittest.TestCase):
                         self.assertEqual(recv(client)['report'], 1)
                         self.assertEqual(recv(client)['report'], 6)
             self.assertEqual(len(self.snapshot(port)) - 2, 1024)
+
+    def test_half_close_preserves_reports_for_admitted_command(self):
+        with self.server() as (port, _):
+            with self.connection(port) as client:
+                client.sendall(pack())
+                client.shutdown(socket.SHUT_WR)
+                self.assertEqual(recv(client)['report'], 1)
+                self.assertEqual(recv(client)['report'], 6)
+                self.assertEqual(client.recv(1), b'')
+
+    def test_five_thousand_command_burst_preserves_fifo_and_drains(self):
+        with self.server() as (port, _):
+            with self.connection(port) as client:
+                wire = []
+                for i in range(1, 2501):
+                    wire.append(pack(request=2*i-1, order=i, price=90, quantity=1))
+                    wire.append(pack(request=2*i, order=i, action=2, price=0, quantity=0))
+                client.sendall(b''.join(wire))
+                for i in range(1, 5001):
+                    first, complete = recv(client), recv(client)
+                    self.assertEqual(first['report'], 1 if i % 2 else 4)
+                    self.assertEqual(complete['report'], 6)
+                    self.assertEqual(complete['request'], i)
+                self.assertEqual(len(self.snapshot(port)), 2)
+
+    def test_sigterm_cancels_maker_orders_and_joins_workers(self):
+        with self.server() as (port, _):
+            maker = subprocess.Popen([str(BIN / 'trading_app'), '--tcp-port', str(port),
+                '--md-port', str(self.md_port), '--group', GROUP, '--client-id', '70',
+                '--strategy', 'maker', '--duration-ms', '10000'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            try:
+                deadline = time.monotonic() + 5
+                while len(self.snapshot(port)) < 4:
+                    self.assertIsNone(maker.poll())
+                    self.assertLess(time.monotonic(), deadline)
+                    time.sleep(0.01)
+                maker.send_signal(signal.SIGTERM)
+                out, err = maker.communicate(timeout=5)
+                self.assertEqual(maker.returncode, 0, err)
+                self.assertEqual(json.loads(out.splitlines()[-1])['open_orders'], 0)
+                self.assertEqual(len(self.snapshot(port)), 2)
+            finally:
+                if maker.poll() is None: maker.kill()
+                maker.communicate()
+
+    def test_microprice_maker_quotes_from_weighted_market(self):
+        with self.server() as (port, _):
+            with self.connection(port) as seed:
+                command(seed, pack(side=0, price=90, quantity=10))
+                command(seed, pack(request=2, order=2, side=1, price=110, quantity=30))
+                maker = subprocess.Popen([str(BIN / 'trading_app'), '--tcp-port', str(port),
+                    '--md-port', str(self.md_port), '--group', GROUP, '--client-id', '71',
+                    '--strategy', 'maker', '--pricing', 'microprice', '--clip', '1', '--duration-ms', '500'],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                try:
+                    deadline = time.monotonic() + 5
+                    while True:
+                        prices = {row['price'] for row in self.snapshot(port)[1:-1]}
+                        if {93, 97}.issubset(prices): break
+                        self.assertIsNone(maker.poll())
+                        self.assertLess(time.monotonic(), deadline)
+                        time.sleep(0.01)
+                    out, err = maker.communicate(timeout=5)
+                    self.assertEqual(maker.returncode, 0, err)
+                    self.assertEqual(json.loads(out.splitlines()[-1])['open_orders'], 0)
+                finally:
+                    if maker.poll() is None: maker.kill()
+                    maker.communicate()
+
+    def test_trade_ratio_taker_uses_pre_execute_depth_once(self):
+        with self.server() as (port, _):
+            with self.connection(port) as seed:
+                command(seed, pack(side=0, price=90, quantity=20))
+                command(seed, pack(request=2, order=2, side=1, price=100, quantity=20))
+                taker = subprocess.Popen([str(BIN / 'trading_app'), '--tcp-port', str(port),
+                    '--md-port', str(self.md_port), '--group', GROUP, '--client-id', '72',
+                    '--strategy', 'taker', '--signal', 'trade-ratio', '--trade-ratio', '0.2',
+                    '--clip', '2', '--duration-ms', '500'], stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, text=True)
+                try:
+                    self.assertIn('CLIENT_READY', taker.stdout.readline())
+                    with self.connection(port) as aggressor:
+                        command(aggressor, pack(client=3, price=100, quantity=5))
+                    out, err = taker.communicate(timeout=5)
+                    self.assertEqual(taker.returncode, 0, err)
+                    state = json.loads(out.splitlines()[-1])
+                    self.assertEqual(state['volume'], 2)
+                    self.assertEqual(state['position'], 2)
+                finally:
+                    if taker.poll() is None: taker.kill()
+                    taker.communicate()
 
     def test_shutdown_drains_accepted_requests_and_persists_them(self):
         journal = self.temp / 'drain.journal'

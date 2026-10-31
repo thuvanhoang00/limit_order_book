@@ -35,6 +35,11 @@ Sau mỗi lần hoàn thành một point trong roadmap, phải cập nhật lạ
 - [x] Journal đồng bộ trước ACK, deterministic restart, snapshot qua TCP, heartbeat
   và khôi phục market book sau gap/join muộn; demo tự kiểm tra và metrics JSON.
 
+- [x] Unified PR: durable engine/risk/CI từ #16; gateway/subscriber workers + client
+  SPSC queues, microprice/trade-ratio features và graceful cancellation từ #17.
+- [x] Buffered suffix validation sau TCP snapshot; test half-close, 5,000-command
+  burst, SIGTERM, adaptive maker và trade-driven taker qua process thật.
+
 ### Current boundary
 
 `OrderBook::apply(ExecuteOrder)` vẫn là primitive tái dựng book; module

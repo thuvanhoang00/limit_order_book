@@ -33,6 +33,8 @@ struct StrategyConfig {
     Price edge{2};
     Price tick{1};
     std::int64_t inventory_limit{50};
+    bool use_microprice{}, use_trade_ratio{};
+    long double trade_ratio{0.5};
 };
 [[nodiscard]] std::vector<Quote> maker_quotes(const StrategyConfig& config, std::int64_t inventory);
 [[nodiscard]] std::optional<Quote> taker_quote(const StrategyConfig& config, const OrderBook* book,

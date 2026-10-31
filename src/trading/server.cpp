@@ -20,6 +20,7 @@
 #include <thread>
 #include <type_traits>
 
+#include "../net/poll_io.hpp"
 #include "order_book/core/lfqueue.hpp"
 #include "order_book/core/logger.hpp"
 #include "order_book/net/tcp.hpp"
@@ -56,7 +57,8 @@ struct Connection {
     std::size_t used{}, offset{};
     std::deque<Frame> output;
     ClientId client{};
-    bool closing{};
+    bool closing{}, read_closed{};
+    std::size_t admitted{};
     Clock::time_point progress{Clock::now()}, read_progress{Clock::now()};
 };
 }  // namespace
@@ -208,6 +210,11 @@ void run_exchange(const ServerConfig& config, const volatile std::sig_atomic_t& 
             return;
         }
         if (c.output.empty()) c.progress = Clock::now();
+        if (((m.kind == Kind::Report &&
+              (m.report == ReportType::Complete || m.report == ReportType::Status)) ||
+             m.kind == Kind::SnapshotEnd) &&
+            c.admitted)
+            --c.admitted;
         c.output.push_back(encode(m));
     };
     std::cout << "READY tcp_port=" << port_of(listener.fd()) << " md_port=" << config.multicast_port
@@ -251,7 +258,7 @@ void run_exchange(const ServerConfig& config, const volatile std::sig_atomic_t& 
             std::vector<std::uint64_t> ids{0, 0};
             for (auto& [id, c] : connections) {
                 short events = 0;
-                if (!draining && !c.closing) events |= POLLIN;
+                if (!draining && !c.closing && !c.read_closed) events |= POLLIN;
                 if (!c.output.empty()) events |= POLLOUT;
                 polls.push_back({c.socket.fd(), events, 0});
                 ids.push_back(id);
@@ -292,30 +299,27 @@ void run_exchange(const ServerConfig& config, const volatile std::sig_atomic_t& 
                 const auto events = polls[i].revents;
                 bool dead = (events & (POLLERR | POLLNVAL)) != 0;
                 if ((events & POLLOUT) != 0 && !c.output.empty()) {
-                    const auto& frame = c.output.front();
-                    const auto n = ::send(c.socket.fd(), frame.data() + c.offset,
-                                          frame.size() - c.offset, MSG_NOSIGNAL);
-                    if (n > 0) {
-                        c.offset += static_cast<std::size_t>(n);
-                        c.progress = Clock::now();
-                        if (c.offset == frame.size()) {
-                            c.output.pop_front();
-                            c.offset = 0;
-                        }
-                    } else if (n == 0 ||
-                               (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR))
+                    const auto before_size = c.output.size();
+                    const auto before_offset = c.offset;
+                    try {
+                        net::detail::flush(c.socket.fd(), c.output, c.offset);
+                    } catch (const std::runtime_error&) {
                         dead = true;
+                    }
+                    if (c.output.size() != before_size || c.offset != before_offset)
+                        c.progress = Clock::now();
                 }
-                if (!draining && !c.closing &&
+                if (!draining && !c.closing && !c.read_closed &&
                     ((events & (POLLIN | POLLHUP)) != 0 || c.used == frame_size)) {
                     if (c.used < frame_size) {
                         const auto n =
                             ::recv(c.socket.fd(), c.input.data() + c.used, frame_size - c.used, 0);
                         if (n > 0) {
+                            if (!c.used) c.read_progress = Clock::now();
                             c.used += static_cast<std::size_t>(n);
-                            c.read_progress = Clock::now();
-                        } else if (n == 0 ||
-                                   (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR))
+                        } else if (n == 0)
+                            c.read_closed = true;
+                        else if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
                             dead = true;
                     }
                     if (c.used == frame_size && !dead) {
@@ -342,7 +346,10 @@ void run_exchange(const ServerConfig& config, const volatile std::sig_atomic_t& 
                                     routes.emplace(c.client, id);
                                 }
                             }
-                            if (allowed && requests->try_push({id, *m})) c.used = 0;
+                            if (allowed && requests->try_push({id, *m})) {
+                                c.used = 0;
+                                ++c.admitted;
+                            }
                         }
                     }
                 }
@@ -351,7 +358,7 @@ void run_exchange(const ServerConfig& config, const volatile std::sig_atomic_t& 
                     dead = true;
                     ++slow_clients;
                 }
-                if (c.closing && c.output.empty()) dead = true;
+                if ((c.closing || (c.read_closed && !c.admitted)) && c.output.empty()) dead = true;
                 if (dead) remove.push_back(id);
             }
             for (auto id : remove) {
