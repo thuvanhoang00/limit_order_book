@@ -9,6 +9,9 @@ perf.data*
 /cache/
 /.cache/
 
+# Local agent instructions and reviewer account configuration.
+/AGENTS.md
+
 *.log
 
 __pycache__/
