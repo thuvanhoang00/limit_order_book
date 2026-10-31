@@ -80,6 +80,12 @@ const char* event_name(LogEvent event) noexcept {
             return "UdpGapDetected";
         case LogEvent::UdpApplyRejected:
             return "UdpApplyRejected";
+        case LogEvent::ExchangeRequest: return "ExchangeRequest";
+        case LogEvent::ExchangeReport: return "ExchangeReport";
+        case LogEvent::ExchangeMarket: return "ExchangeMarket";
+        case LogEvent::TradingRequest: return "TradingRequest";
+        case LogEvent::TradingReport: return "TradingReport";
+        case LogEvent::TradingRecovery: return "TradingRecovery";
     }
     return "Unknown";
 }
@@ -177,6 +183,11 @@ std::string Logger::format_record(const LogRecord& record) {
     if (record.event == LogEvent::AddOrder) out << " side=" << to_string(record.side);
     if (record.port != 0) out << " port=" << record.port;
     if (record.error_code != 0) out << " error_code=" << record.error_code;
+    if (record.event == LogEvent::ExchangeRequest || record.event == LogEvent::ExchangeReport ||
+        record.event == LogEvent::ExchangeMarket || record.event == LogEvent::TradingRequest ||
+        record.event == LogEvent::TradingReport || record.event == LogEvent::TradingRecovery)
+        out << " client_id=" << record.client_id << " message_type=" << unsigned(record.message_type)
+            << " message_status=" << unsigned(record.message_status) << " side=" << to_string(record.side);
     return out.str();
 }
 

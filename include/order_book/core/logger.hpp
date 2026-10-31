@@ -40,7 +40,13 @@ enum class LogEvent {
     UdpTransportFailed,
     UdpStaleDropped,
     UdpGapDetected,
-    UdpApplyRejected
+    UdpApplyRejected,
+    ExchangeRequest,
+    ExchangeReport,
+    ExchangeMarket,
+    TradingRequest,
+    TradingReport,
+    TradingRecovery
 };
 
 struct LogRecord {
@@ -58,6 +64,8 @@ struct LogRecord {
     std::uint64_t line_number{};
     std::uint16_t port{};
     int error_code{};
+    std::uint64_t client_id{};
+    std::uint8_t message_type{}, message_status{};
 };
 
 // Exactly one producer calls try_log()/log_event(). The worker consumes the SPSC

@@ -165,6 +165,47 @@ std::size_t OrderBook::order_count() const noexcept {
     return orders_by_id_.size();
 }
 
+std::optional<AddOrder> OrderBook::order(const OrderId id) const noexcept {
+    const auto it = orders_by_id_.find(id);
+    if (it == orders_by_id_.end()) return std::nullopt;
+    const auto& location = it->second;
+    return AddOrder{id, location.side, location.price, location.iterator->remaining_quantity};
+}
+
+std::optional<AddOrder> OrderBook::top_order(const Side side) const noexcept {
+    if (side != Side::Bid && side != Side::Ask) return std::nullopt;
+    const auto first = [side](const auto& levels) -> std::optional<AddOrder> {
+        if (levels.empty()) return std::nullopt;
+        const auto& [price, level] = *levels.begin();
+        const auto& entry = level.orders.front();
+        return AddOrder{entry.order_id, side, price, entry.remaining_quantity};
+    };
+    return side == Side::Bid ? first(bids_) : first(asks_);
+}
+
+BookSnapshot OrderBook::snapshot() const {
+    BookSnapshot result;
+    const auto copy = [](const auto& levels, const Side side, auto& out) {
+        out.reserve(levels.size());
+        for (const auto& [price, level] : levels) {
+            LevelSnapshot value{price, level.aggregate_quantity, {}};
+            value.orders.reserve(level.orders.size());
+            for (const auto& entry : level.orders)
+                value.orders.push_back({entry.order_id, side, price, entry.remaining_quantity});
+            out.push_back(std::move(value));
+        }
+    };
+    copy(bids_, Side::Bid, result.bids);
+    copy(asks_, Side::Ask, result.asks);
+    return result;
+}
+
+std::uint64_t OrderBook::best_quantity(const Side side) const noexcept {
+    if (side != Side::Bid && side != Side::Ask) return 0;
+    if (side == Side::Bid) return bids_.empty() ? 0 : bids_.begin()->second.aggregate_quantity;
+    return asks_.empty() ? 0 : asks_.begin()->second.aggregate_quantity;
+}
+
 std::size_t OrderBook::bid_level_count() const noexcept {
     return bids_.size();
 }

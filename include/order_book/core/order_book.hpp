@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "order_book/core/events.hpp"
 #include "order_book/core/types.hpp"
@@ -15,6 +16,18 @@
 namespace order_book {
 
 namespace detail { struct BookInspection; }
+
+struct LevelSnapshot {
+    Price price{};
+    std::uint64_t quantity{};
+    std::vector<AddOrder> orders; // FIFO within this price level.
+    friend bool operator==(const LevelSnapshot&, const LevelSnapshot&) = default;
+};
+struct BookSnapshot {
+    std::vector<LevelSnapshot> bids;
+    std::vector<LevelSnapshot> asks;
+    friend bool operator==(const BookSnapshot&, const BookSnapshot&) = default;
+};
 
 class OrderBook final {
    public:
@@ -49,6 +62,10 @@ class OrderBook final {
     [[nodiscard]] std::optional<Price> best_bid() const noexcept;
     [[nodiscard]] std::optional<Price> best_ask() const noexcept;
     [[nodiscard]] std::optional<Quantity> remaining_quantity(OrderId order_id) const noexcept;
+    [[nodiscard]] std::optional<AddOrder> order(OrderId order_id) const noexcept;
+    [[nodiscard]] std::optional<AddOrder> top_order(Side side) const noexcept;
+    [[nodiscard]] std::uint64_t best_quantity(Side side) const noexcept;
+    [[nodiscard]] BookSnapshot snapshot() const;
 
     [[nodiscard]] std::size_t order_count() const noexcept;
     [[nodiscard]] std::size_t bid_level_count() const noexcept;

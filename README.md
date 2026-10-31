@@ -1,11 +1,28 @@
-# C++20 Order Book Practice Project
+# C++20 Order Book and Trading System
 
-A single-writer order-book baseline with implemented add, cancel, partial/full
-execution, best bid/ask queries, reset, and invariant validation. The project also
-includes CSV generation/replay, TCP and UDP multicast event ingress, contract tests, profiling tools, and standalone
-memory-pool experiments.
+A C++20 exchange and trading system with price-time matching, a multi-client TCP
+order server, UDP incremental/snapshot market data, local subscriber books, and
+market-maker, liquidity-taker and seeded random strategies. Trading includes
+order management, pending-order risk, positions and realized/unrealized PnL.
 
-## Current scope
+It also retains reconstructive Add/Cancel/Execute books, CSV generation/replay,
+the original TCP/UDP ingress demos, asynchronous logging, memory-pool experiments,
+contract tests and profiling tools.
+
+```bash
+cmake --preset debug
+cmake --build --preset debug --parallel 4
+python3 tools/run_trading_demo.py --bin-dir build/debug
+```
+
+The demo starts the entire architecture, creates trades and prints each client's
+positions before canceling orders and draining shutdown. See the [trading system
+guide](docs/trading_system.md) for the diagram, commands, reference feature mapping,
+order semantics, risk, recovery, wire formats, tests and scope. Run
+`./build/debug/benchmark_matching 100000` for the predecoded mixed matching
+workload and latency percentiles.
+
+## Book storage
 
 The book uses ordered `std::map` price levels, a `std::unordered_map` order index,
 and per-level `std::list` order queues. Core contract tests are enabled, including
@@ -31,6 +48,8 @@ include/order_book/
   memory/                # typed pool, byte pool, fixed-slot pool, adaptor
   io/                    # CSV parsing and writing
   net/                   # TCP/UDP multicast transports, shared fd ownership, wire codec
+  exchange/              # matching, commands/reports, market data, protocol, exchange runtime
+  trading/               # positions, risk, order manager, features, strategies, client runtime
 src/
   core/                  # order-book implementation
   io/                    # CSV implementation
@@ -370,6 +389,9 @@ Track ns/event, cycles/event, instructions/event, branch misses/event, and cache
 misses/event. Compare the same workload and build settings across changes.
 
 ## Next steps
+
+See [NEXT_STEPS.md](NEXT_STEPS.md) for the current matching/trading roadmap.
+
 
 1. Choose a pool capacity from realistic peak active-order counts and measure
    retained memory, including list nodes and pool metadata.

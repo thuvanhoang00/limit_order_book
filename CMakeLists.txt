@@ -24,7 +24,10 @@ include(Sanitizers)
 add_library(order_book STATIC
     src/core/order_book.cpp
     src/core/logger.cpp
-    src/io/event_io.cpp)
+    src/io/event_io.cpp
+    src/exchange/matching_engine.cpp
+    src/exchange/market_data.cpp
+    src/trading/engine.cpp)
 
 add_library(order_book::order_book ALIAS order_book)
 
@@ -44,13 +47,14 @@ if(ORDER_BOOK_BUILD_NETWORKING)
         message(FATAL_ERROR "Networking demos support Linux; set ORDER_BOOK_BUILD_NETWORKING=OFF")
     endif()
     add_library(order_book_net STATIC
-        src/net/socket.cpp src/net/tcp.cpp src/net/udp.cpp src/net/protocol.cpp)
+        src/net/socket.cpp src/net/tcp.cpp src/net/udp.cpp src/net/protocol.cpp
+        src/exchange/protocol.cpp src/exchange/runtime.cpp src/trading/runtime.cpp)
     add_library(order_book::net ALIAS order_book_net)
     target_link_libraries(order_book_net PUBLIC order_book::order_book)
     target_set_project_warnings(order_book_net)
     target_enable_sanitizers(order_book_net)
     if(ORDER_BOOK_BUILD_TOOLS)
-        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber)
+        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber exchange_server trading_client)
             add_executable(${tool} tools/${tool}.cpp)
             target_link_libraries(${tool} PRIVATE order_book::net)
             target_set_project_warnings(${tool})
@@ -60,6 +64,11 @@ if(ORDER_BOOK_BUILD_NETWORKING)
 endif()
 
 if(ORDER_BOOK_BUILD_TOOLS)
+    add_executable(benchmark_matching tools/benchmark_matching.cpp)
+    target_link_libraries(benchmark_matching PRIVATE order_book::order_book)
+    target_set_project_warnings(benchmark_matching)
+    target_enable_sanitizers(benchmark_matching)
+
     add_executable(generate_events tools/generate_events.cpp)
     target_link_libraries(generate_events PRIVATE order_book::order_book)
     target_set_project_warnings(generate_events)
@@ -102,6 +111,8 @@ if(ORDER_BOOK_BUILD_TESTS)
             tests/core/test_order_book.cpp
             tests/core/test_lfqueue.cpp
             tests/core/test_logger.cpp
+            tests/exchange/test_matching.cpp
+            tests/trading/test_engine.cpp
             tests/test_order_registry.cpp
             tests/io/test_event_io.cpp
             tests/memory/test_memory_pool.cpp
@@ -118,7 +129,8 @@ if(ORDER_BOOK_BUILD_TESTS)
         target_enable_sanitizers(order_book_tests)
 
         if(ORDER_BOOK_BUILD_NETWORKING)
-            target_sources(order_book_tests PRIVATE tests/net/test_tcp.cpp tests/net/test_udp.cpp)
+            target_sources(order_book_tests PRIVATE tests/net/test_tcp.cpp tests/net/test_udp.cpp
+                tests/exchange/test_market_data.cpp)
             target_link_libraries(order_book_tests PRIVATE order_book::net)
         endif()
 
@@ -138,6 +150,11 @@ if(ORDER_BOOK_BUILD_TESTS)
                         ${CMAKE_CURRENT_SOURCE_DIR}/tests/net/test_udp_cli.py
                         --bin-dir $<TARGET_FILE_DIR:udp_event_subscriber>)
                 set_tests_properties(UdpCli.MulticastBook PROPERTIES TIMEOUT 60)
+                add_test(NAME TradingSystem.Processes
+                    COMMAND ${Python3_EXECUTABLE}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/tests/exchange/test_system.py
+                        --bin-dir $<TARGET_FILE_DIR:exchange_server>)
+                set_tests_properties(TradingSystem.Processes PROPERTIES TIMEOUT 60)
             endif()
         endif()
 
@@ -158,7 +175,7 @@ if(ORDER_BOOK_BUILD_TESTS)
             USES_TERMINAL)
         if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS AND Python3_Interpreter_FOUND)
             add_dependencies(check tcp_event_server tcp_event_client replay_order_book
-                udp_event_publisher udp_event_subscriber)
+                udp_event_publisher udp_event_subscriber exchange_server trading_client)
         endif()
     else()
         message(WARNING "GoogleTest was not found; tests are disabled")

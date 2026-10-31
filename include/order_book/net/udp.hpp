@@ -39,6 +39,7 @@ class MulticastSubscriber final {
                         const char* interface_ipv4 = "127.0.0.1",
                         std::chrono::milliseconds timeout = std::chrono::seconds(3));
     [[nodiscard]] std::uint16_t local_port() const;
+    [[nodiscard]] int fd() const noexcept { return socket_.fd(); }
     // nullopt = receive timeout. A zero-byte datagram is a message, never EOF.
     // Exactly one datagram is consumed; excess bytes are discarded by the kernel.
     [[nodiscard]] std::optional<Datagram> receive(std::span<std::uint8_t> bytes) const;
