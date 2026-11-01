@@ -284,7 +284,7 @@ def run_benchmark(args):
     update()
     try:
         with (directory / "build.log").open("w") as log:
-            subprocess.run(["cmake", "--preset", args.preset], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
+            subprocess.run(["cmake", "--preset", args.preset, "-DORDER_BOOK_BUILD_BENCHMARKS=ON"], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
             subprocess.run(["cmake", "--build", "--preset", args.preset, "--parallel", str(args.jobs)], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
         build = ROOT / "build" / args.preset
         for filename in ("CMakeCache.txt", "compile_commands.json"):
