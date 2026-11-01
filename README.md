@@ -46,6 +46,8 @@ See [supported messages, file framing and verification](docs/market_data.md).
 HOSE/HNX require their own feed specifications. Cboe uses specification-based
 fixtures so far; Nasdaq has a [complete-day latency/throughput measurement](benchmarks/results/20261101-full-itch-latency/README.md)
 with exact p50/p99/p99.9 frequencies, full EOF/CRC checks and repeated book validation.
+The follow-up [observer overhead and CPU/outlier report](benchmarks/results/20261101-itch-observer-overhead/report.html)
+provides paired controls and evidence for the next optimization; open the HTML locally.
 
 ## Current LOB scope
 
@@ -329,6 +331,9 @@ filtering, draining on shutdown, append behavior, saturation accounting, write
 failure, and registry result/context logging, including pool exhaustion.
 
 ## Benchmarks
+
+New performance reports use [standalone HTML](docs/reporting.md), with concise
+Markdown summaries and retained raw measurements.
 
 ```bash
 ./tools/run_benchmarks.sh release results

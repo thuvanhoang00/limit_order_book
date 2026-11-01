@@ -8,12 +8,14 @@ import os
 from pathlib import Path
 import platform
 import shutil
-import statistics
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 ENDPOINTS = ('read_decode_apply', 'decode_apply', 'selected_update_decode_apply', 'clock_pair_overhead')
+TIME_FORMAT = ('{"user_seconds":%U,"system_seconds":%S,"process_elapsed_seconds":%e,'
+               '"max_rss_kb":%M,"voluntary_switches":%w,"involuntary_switches":%c,'
+               '"minor_faults":%R,"major_faults":%F}')
 
 
 def sha256(path):
@@ -61,39 +63,8 @@ def verify(report, frequencies):
         raise ValueError('ITCH timing counts do not match input records/selected book updates')
 
 
-def render(runs):
-    lines = ['# Full-archive ITCH replay latency', '',
-             'Offline service times on each input record; no network or order-entry matching. '
-             'All records are measured, including the first and final exchange records. Histograms and three clock reads '
-             'per record add overhead; throughput is for the instrumented replay. Gzip is buffered, '
-             'so read/decompression cost is concentrated in refill records.', '',
-             '| Run | Path | Count | p50 (ns) | p99 (ns) | p99.9 (ns) | Max (ns) |',
-             '|---|---|---:|---:|---:|---:|---:|']
-    for index, run in enumerate(runs, 1):
-        for endpoint in ENDPOINTS:
-            s = run['latency'][endpoint]
-            lines.append(f'| {index} | {endpoint} | {s["count"]:,} | {s["p50_ns"]:,} | '
-                         f'{s["p99_ns"]:,} | {s["p999_ns"]:,} | {s["max_ns"]:,} |')
-    lines += ['', '| Run | Seconds | Million records/s | Selected updates |',
-              '|---|---:|---:|---:|']
-    for index, run in enumerate(runs, 1):
-        lines.append(f'| {index} | {run["elapsed_seconds"]:.3f} | '
-                     f'{run["messages_per_second"] / 1e6:.3f} | {run["book_updates"]:,} |')
-    lines += ['', 'Medians across per-run statistics (not pooled percentiles):', '',
-              '| Path | p50 (ns) | p99 (ns) | p99.9 (ns) |', '|---|---:|---:|---:|']
-    for endpoint in ENDPOINTS:
-        values = [statistics.median(run['latency'][endpoint][p] for run in runs)
-                  for p in ('p50_ns', 'p99_ns', 'p999_ns')]
-        lines.append(f'| {endpoint} | {values[0]:,.0f} | {values[1]:,.0f} | {values[2]:,.0f} |')
-    lines += ['', 'Exact nearest-rank p50/p95/p99/p99.9, means, extremes and counts were '
-              'independently recalculated from the frequency JSON for every run. All runs '
-              'reached exchange End of Messages and gzip EOF/CRC checks with valid final books. '
-              'No clock overhead is subtracted. Startup, archive hash and warmup are before the '
-              'replay timer; final invariants, histogram serialization and snapshots are after it.', '']
-    return '\n'.join(lines)
-
-
 def main():
+    from feed_report import write_report
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, required=True)
     parser.add_argument('--bin-dir', type=Path, default=ROOT / 'build/release')
@@ -103,9 +74,13 @@ def main():
     parser.add_argument('--repetitions', type=int, default=3)
     parser.add_argument('--warmup-records', type=int, default=1_000_000)
     parser.add_argument('--cpu', type=int)
+    parser.add_argument('--compare-instrumentation', action='store_true',
+                        help='paired complete off/on runs, alternating order between pairs')
     args = parser.parse_args()
     if args.repetitions < 1 or args.pool_bytes < 1 or args.warmup_records < 0:
         parser.error('repetitions/pool-bytes must be positive; warmup-records nonnegative')
+    if args.compare_instrumentation and not Path('/usr/bin/time').is_file():
+        parser.error('paired process resource measurement requires GNU /usr/bin/time')
     if args.cpu is not None:
         os.sched_setaffinity(0, {args.cpu})
     archive = args.input.resolve()
@@ -115,7 +90,8 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     binary = output / 'replay_market_data'
     shutil.copy2(args.bin_dir.resolve() / 'replay_market_data', binary)
-    sources = ('tools/replay_market_data.cpp', 'tools/latency_histogram.hpp', 'tools/run_feed_benchmarks.py',
+    sources = ('tools/replay_market_data.cpp', 'tools/latency_histogram.hpp', 'tools/feed_outliers.hpp',
+               'tools/run_feed_benchmarks.py', 'tools/feed_report.py',
                'src/feed/input.cpp', 'src/feed/itch.cpp', 'src/feed/books.cpp', 'src/core/order_book.cpp')
     for name in sources:
         target = output / 'source' / name
@@ -135,6 +111,7 @@ def main():
                     cache_policy='No cache flush; full archive hash and prefix warmup precede measured runs',
                     repetitions=args.repetitions, symbol=args.symbol, pool_bytes=args.pool_bytes,
                     warmup_records=args.warmup_records)
+    metadata['compare_instrumentation'] = args.compare_instrumentation
     for name in ('scaling_governor', 'scaling_cur_freq'):
         path = Path(f'/sys/devices/system/cpu/cpu{min(os.sched_getaffinity(0))}/cpufreq/{name}')
         if path.exists(): metadata[name] = path.read_text().strip()
@@ -154,6 +131,42 @@ def main():
     if args.warmup_records:
         print('Prefix warmup (not included in measured statistics)', flush=True)
         execute([*base, '--max-records', str(args.warmup_records)], 'warmup')
+    if args.compare_instrumentation:
+        runs = []
+        reference_snapshot = None
+        for repetition in range(1, args.repetitions + 1):
+            for mode in (('off', 'on') if repetition % 2 else ('on', 'off')):
+                label = f'{repetition:02d}-{mode}'
+                print(f'Full paired run {label}', flush=True)
+                histogram = output / f'{label}.histogram.json'
+                command = [*base, '--latency', '1' if mode == 'on' else '0',
+                           '--output', str(output / f'{label}.json'),
+                           '--snapshot', str(output / f'{label}.snapshot.json')]
+                if mode == 'on': command += ['--histogram', str(histogram)]
+                execute(['/usr/bin/time', '-f', TIME_FORMAT, '-o',
+                         str(output / f'{label}.resources.json'), '--', *command], label)
+                run = json.loads((output / f'{label}.json').read_text())
+                if not run['complete_input'] or run['limited'] or not run['session_ended'] or \
+                        not run['invariants_valid']:
+                    raise ValueError('Paired measurement requires complete valid sessions')
+                if mode == 'on': verify(run, json.loads(histogram.read_text()))
+                current = archive.stat()
+                if (current.st_size, current.st_mtime_ns) != (before.st_size, before.st_mtime_ns):
+                    raise ValueError('Archive changed during paired measurement')
+                snapshot = (output / f'{label}.snapshot.json').read_bytes()
+                if runs and (any(run[key] != runs[0][key] for key in
+                                ('records', 'messages', 'book_updates', 'trade_notices', 'books')) or
+                             snapshot != reference_snapshot):
+                    raise ValueError('Paired counts/FIFO snapshots differ')
+                if reference_snapshot is None: reference_snapshot = snapshot
+                run.update(mode=mode, repetition=repetition,
+                           resources=json.loads((output / f'{label}.resources.json').read_text()))
+                runs.append(run)
+                (output / 'summary.json').write_text(json.dumps(runs, indent=2) + '\n')
+                write_report(output, runs, metadata)
+                print(f'{label}: {run["elapsed_seconds"]:.3f}s, '
+                      f'{run["messages_per_second"]/1e6:.3f} M/s; full-state verification passed', flush=True)
+        return
     runs = []
     for repetition in range(1, args.repetitions + 1):
         prefix = f'{repetition:02d}'
@@ -173,7 +186,7 @@ def main():
             raise ValueError('Repeated FIFO book snapshots differ')
         runs.append(run)
         (output / 'summary.json').write_text(json.dumps(runs, indent=2) + '\n')
-        (output / 'report.md').write_text(render(runs))
+        write_report(output, runs, metadata)
         print(f'Run {repetition}: {run["records"]:,} records, {run["messages_per_second"] / 1e6:.3f} M/s; '
               f'read/decode/apply p99={run["latency"]["read_decode_apply"]["p99_ns"]} ns; '
               'EOF/CRC/session/invariants/histogram verification passed', flush=True)

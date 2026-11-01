@@ -10,6 +10,7 @@
 #include "order_book/feed/input.hpp"
 #include "trading_args.hpp"
 #include "latency_histogram.hpp"
+#include "feed_outliers.hpp"
 
 using namespace order_book;
 using namespace order_book::feed;
@@ -67,7 +68,8 @@ int main(int argc, char** argv) {
                      "[--venue nasdaq|cboe-bzx|cboe-byx|cboe-edga|cboe-edgx] "
                      "[--symbol AAPL] [--pool-bytes 1048576] [--max-records 0] "
                      "[--output summary.json] [--snapshot book.json] [--latency 0|1] "
-                     "[--histogram frequencies.json]\n";
+                     "[--histogram frequencies.json] [--outlier-trace trace.json] "
+                     "[--outlier-threshold-ns 100000] [--outlier-capacity 256]\n";
         return 0;
     }
     std::uint64_t records{};
@@ -94,17 +96,23 @@ int main(int argc, char** argv) {
         const auto snapshot_path = args.text("--snapshot", "");
         const bool measure_latency = args.number("--latency", 0, 0, 1) != 0;
         const auto histogram_path = args.text("--histogram", "");
+        const auto outlier_path = args.text("--outlier-trace", "");
+        const auto outlier_threshold = args.number("--outlier-threshold-ns", 100000, 1,
+                                                   std::numeric_limits<std::uint64_t>::max());
+        const auto outlier_capacity = args.number("--outlier-capacity", 256, 1, 100000);
         args.finish();
         if (input.empty()) throw Error("--input is required");
         if (!histogram_path.empty() && !measure_latency)
             throw Error("--histogram requires --latency 1");
+        if (!outlier_path.empty() && (format != "itch50" || symbol.empty() || measure_latency))
+            throw Error("--outlier-trace requires ITCH, one --symbol and --latency 0 (separate diagnostic run)");
         const auto same_path = [](const std::string& a, const std::string& b) {
             return !a.empty() && !b.empty() &&
                    std::filesystem::weakly_canonical(a) == std::filesystem::weakly_canonical(b);
         };
-        const std::string paths[]{input, output, snapshot_path, histogram_path};
-        for (unsigned i = 0; i != 4; ++i)
-            for (unsigned j = i + 1; j != 4; ++j)
+        const std::string paths[]{input, output, snapshot_path, histogram_path, outlier_path};
+        for (unsigned i = 0; i != 5; ++i)
+            for (unsigned j = i + 1; j != 5; ++j)
                 if (same_path(paths[i], paths[j])) throw Error("Input and output paths must be distinct");
         Input stream(input, format == "itch50" ? Format::Itch50 : Format::Pitch);
         Itch50Decoder itch;
@@ -113,6 +121,8 @@ int main(int argc, char** argv) {
         std::vector<std::uint8_t> record;
         std::uint64_t messages{}, trade_notices{};
         auto latencies = measure_latency ? std::make_unique<Latencies>() : nullptr;
+        auto outliers = outlier_path.empty() ? nullptr : std::make_unique<measurement::FeedOutliers>(
+            symbol, outlier_threshold, static_cast<std::size_t>(outlier_capacity));
         const auto start = Clock::now();
         while (limit == 0 || records < limit) {
             const auto read_start = latencies ? Clock::now() : Clock::time_point{};
@@ -125,7 +135,17 @@ int main(int argc, char** argv) {
                 if (event.type == EventType::Trade) ++trade_notices;
                 books.consume(venue, event);
             };
-            if (format == "itch50") consume(itch.decode(record));
+            if (format == "itch50") {
+                std::optional<measurement::FeedOutliers::Start> profile;
+                if (outliers && outliers->selected(record)) profile = measurement::FeedOutliers::start();
+                const auto event = itch.decode(record);
+                consume(event);
+                if (profile) {
+                    const auto end = Clock::now();
+                    outliers->finish(*profile, end, records, static_cast<char>(record[0]), event);
+                }
+                if (outliers) outliers->mapping(record, event);
+            }
             else for (const auto& event : pitch.decode(record)) consume(event);
             if (latencies) {
                 const auto end = Clock::now();
@@ -185,11 +205,13 @@ int main(int argc, char** argv) {
         }
         summary << ']';
         if (latencies) summary << ",\"latency\":" << latencies->summary();
+        summary << ",\"instrumentation\":" << quote(outliers ? "outlier_trace" : latencies ? "latency" : "off");
         summary << '}';
         snapshot << "]}";
         write(output, summary.str());
         write(snapshot_path, snapshot.str());
         if (latencies) write(histogram_path, latencies->frequencies());
+        if (outliers) write(outlier_path, outliers->json());
         std::cout << summary.str() << '\n';
     } catch (const std::exception& error) {
         std::cerr << "Market-data replay after record " << records << ": " << error.what() << '\n';

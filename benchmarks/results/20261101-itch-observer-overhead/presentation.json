@@ -1,0 +1,18 @@
+{
+  "measured_code_commit": "0e478e6",
+  "metadata_git_base": "9792eab514c6e6bae3af84fb0ffca413deb7868e",
+  "note": "The benchmark began before the measurement changes were committed. Frozen C++ sources match commit 0e478e6. HTML presentation was added after measurement; original runner and all frozen sources are retained in measurement-source.tar.gz.",
+  "measured_cpp_sources_verified_unchanged": [
+    "tools/replay_market_data.cpp",
+    "tools/latency_histogram.hpp",
+    "tools/feed_outliers.hpp",
+    "src/feed/input.cpp",
+    "src/feed/itch.cpp",
+    "src/feed/books.cpp",
+    "src/core/order_book.cpp"
+  ],
+  "changed_after_freeze": [
+    "tools/run_feed_benchmarks.py"
+  ],
+  "presentation_source_sha256": "34f4b8ae4ed355914fc6d9374f54d04ad46bf2b3444a7059aa3213cf602a56d3"
+}

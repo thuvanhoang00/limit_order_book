@@ -1,0 +1,248 @@
+[
+  {
+    "percent": 35.52,
+    "symbol": "order_book::feed::Books::apply(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, order_book::feed::Event const&)",
+    "dso": "replay_market_data",
+    "label": "Feed apply / routing"
+  },
+  {
+    "percent": 15.55,
+    "symbol": "__memcmp_avx2_movbe",
+    "dso": "libc.so.6",
+    "label": "memcmp"
+  },
+  {
+    "percent": 9.83,
+    "symbol": "std::_Rb_tree_rebalance_for_erase(std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)",
+    "dso": "libstdc++.so.6.0.30",
+    "label": "Tree erase/rebalance"
+  },
+  {
+    "percent": 6.3,
+    "symbol": "order_book::feed::Itch50Decoder::decode(std::span<unsigned char const, 18446744073709551615ul>)",
+    "dso": "replay_market_data",
+    "label": "ITCH decode"
+  },
+  {
+    "percent": 4.19,
+    "symbol": "std::_Rb_tree<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long>, std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked>, std::_Select1st<std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked> >, std::less<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> >, std::allocator<std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked> > >::find(std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const&) const",
+    "dso": "replay_market_data",
+    "label": "Routing tree lookup"
+  },
+  {
+    "percent": 3.7,
+    "symbol": "std::pair<std::_Rb_tree_iterator<std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked> >, bool> std::_Rb_tree<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long>, std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked>, std::_Select1st<std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked> >, std::less<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> >, std::allocator<std::pair<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const, order_book::feed::Books::Tracked> > >::_M_emplace_unique<std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const&, order_book::feed::Books::Tracked>(std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned short, unsigned long> const&, order_book::feed::Books::Tracked&&)",
+    "dso": "replay_market_data",
+    "label": "Routing tree lookup"
+  },
+  {
+    "percent": 1.66,
+    "symbol": "__memchr_avx2",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 1.63,
+    "symbol": "_int_malloc",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 1.52,
+    "symbol": "__memmove_avx_unaligned_erms",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 1.41,
+    "symbol": "order_book::feed::Input::next(std::vector<unsigned char, std::allocator<unsigned char> >&)",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 1.25,
+    "symbol": "0x0000000000002d3f",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 1.22,
+    "symbol": "main",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 1.04,
+    "symbol": "std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)",
+    "dso": "libstdc++.so.6.0.30"
+  },
+  {
+    "percent": 0.93,
+    "symbol": "void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char*>(char*, char*, std::forward_iterator_tag) [clone .isra.0]",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 0.86,
+    "symbol": "_int_free",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 0.77,
+    "symbol": "__memmove_avx_unaligned",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 0.57,
+    "symbol": "malloc",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 0.57,
+    "symbol": "0x00000000000033dc",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.51,
+    "symbol": "0x00000000000033cf",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.46,
+    "symbol": "cfree@GLIBC_2.2.5",
+    "dso": "libc.so.6"
+  },
+  {
+    "percent": 0.44,
+    "symbol": "0x0000000000002d59",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.41,
+    "symbol": "0x0000000000002dc2",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.37,
+    "symbol": "gzread",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.35,
+    "symbol": "0x0000000000002eae",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.33,
+    "symbol": "0x0000000000002d3b",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.28,
+    "symbol": "0x0000000000002d34",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.27,
+    "symbol": "gzerror",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.27,
+    "symbol": "0x0000000000002d13",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.23,
+    "symbol": "memcmp@plt",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 0.2,
+    "symbol": "order_book::OrderBook::apply(order_book::AddOrder const&)",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 0.18,
+    "symbol": "order_book::OrderBook::apply(order_book::CancelOrder const&)",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 0.18,
+    "symbol": "0x0000000000002dcb",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.16,
+    "symbol": "std::vector<unsigned char, std::allocator<unsigned char> >::_M_default_append(unsigned long)",
+    "dso": "replay_market_data"
+  },
+  {
+    "percent": 0.16,
+    "symbol": "0x0000000000002ea4",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.16,
+    "symbol": "0x0000000000002d48",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.13,
+    "symbol": "0x0000000000002592",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.13,
+    "symbol": "0x00000000000024c2",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x00000000000024f6",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x0000000000002485",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x0000000000002eaa",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x000000000000252a",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x0000000000002f5f",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x0000000000003195",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.12,
+    "symbol": "0x0000000000003204",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.11,
+    "symbol": "0x00000000000025ca",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.11,
+    "symbol": "0x00000000000025fe",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.11,
+    "symbol": "0x000000000000255e",
+    "dso": "libz.so.1.2.11"
+  },
+  {
+    "percent": 0.1,
+    "symbol": "0x0000000000003415",
+    "dso": "libz.so.1.2.11"
+  }
+]
