@@ -166,6 +166,49 @@ class FeedReplay(unittest.TestCase):
         self.assertNotEqual(again.returncode, 0)
         self.assertEqual((output / 'summary.json').read_bytes(), previous)
 
+    def test_separate_outlier_diagnostic_tracks_only_selected_order_updates(self):
+        trace = self.root / 'outliers.json'
+        result, _ = self.run_feed(itch_fixture(), outlier_trace=trace,
+                                  outlier_threshold_ns=1, outlier_capacity=2)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['instrumentation'], 'outlier_trace')
+        self.assertNotIn('latency', report)
+        data = json.loads(trace.read_text())
+        self.assertEqual(data['observations'], 4)
+        self.assertEqual(data['slow_records'], 4)
+        self.assertEqual(data['retained'], 2)
+        self.assertEqual([r['wall_ns'] for r in data['records']],
+                         sorted((r['wall_ns'] for r in data['records']), reverse=True))
+        for row in data['records']:
+            self.assertIn(row['record'], (3, 4, 5, 6))
+            for field in ('thread_cpu_ns', 'voluntary_switches', 'involuntary_switches',
+                          'minor_faults', 'major_faults', 'estimated_off_cpu_ns'):
+                self.assertGreaterEqual(row[field], 0)
+        result, _ = self.run_feed(itch_fixture(), latency=1, outlier_trace=trace)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_runner_paired_modes_alternate_and_preserve_identical_snapshots(self):
+        source = self.root / 'archive.gz'
+        source.write_bytes(gzip.compress(itch_fixture()))
+        output = self.root / 'paired'
+        script = Path(__file__).resolve().parents[2] / 'tools/run_feed_benchmarks.py'
+        result = subprocess.run([sys.executable, str(script), '--input', str(source),
+            '--bin-dir', str(BIN), '--output-dir', str(output), '--repetitions', '2',
+            '--warmup-records', '0', '--compare-instrumentation'],
+            capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        runs = json.loads((output / 'summary.json').read_text())
+        self.assertEqual([r['mode'] for r in runs], ['off', 'on', 'on', 'off'])
+        for r in runs:
+            self.assertEqual(r['records'], 7)
+            self.assertTrue(r['complete_input'])
+            self.assertEqual('latency' in r, r['mode'] == 'on')
+            self.assertGreater(r['resources']['max_rss_kb'], 0)
+        snapshots = [p.read_bytes() for p in output.glob('*.snapshot.json')]
+        self.assertEqual(len(snapshots), 4)
+        self.assertTrue(all(s == snapshots[0] for s in snapshots))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

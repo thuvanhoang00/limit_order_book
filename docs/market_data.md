@@ -111,6 +111,54 @@ retained every original message, because archive payloads have no transport sequ
 Missing symbols and invalid streams return a nonzero exit without a success JSON.
 Summary and snapshot paths must differ from each other and from the input.
 
+## Observer overhead and slow-record diagnostics
+
+```sh
+# Complete off/on pairs, alternating their order. GNU time records process resources.
+python3 tools/run_feed_benchmarks.py \
+  --input data/01302019.NASDAQ_ITCH50.gz --symbol AAPL --cpu 2 \
+  --repetitions 2 --compare-instrumentation
+
+# A separate diagnostic run: do not mix it into the off/on overhead comparison.
+./build/release/replay_market_data \
+  --input data/01302019.NASDAQ_ITCH50.gz --symbol AAPL --pool-bytes 8388608 \
+  --latency 0 --outlier-trace results/outliers.json \
+  --outlier-threshold-ns 100000 --outlier-capacity 256
+```
+
+The paired runner uses the same frozen executable and archive for both flags.
+`--latency 0` retains only aggregate replay wall timing; `--latency 1` adds the
+per-record clocks/histograms. Pair order is off/on, then on/off, repeated as needed.
+Time overhead is `on_seconds / off_seconds - 1`; throughput loss is
+`1 - on_rate / off_rate`. These are different percentages. The result estimates
+the cost of enabling this observer, not a correction to subtract from percentile
+values. `/usr/bin/time` is required for comparison mode; its CPU time, peak RSS,
+context switches and fault counters cover the entire child process, including
+final validation/output. The replay wall timer excludes that final work.
+
+The diagnostic requires ITCH, one symbol and latency histograms disabled. It learns
+stock-locate mappings from successfully decoded Directory events and selects only
+`A/F/E/C/X/D/U` records for that symbol. There is no hardcoded daily stock locate.
+Every selected update gets thread CPU and resource observations; only records
+above the threshold are classified, and at most the slowest configured number are
+retained. Record ordinal, exchange timestamp, type and order ID identify the input.
+
+The observation order is resource counters → thread CPU → wall start → decode/apply
+→ wall end → thread CPU → resource counters. CPU/resource windows are slightly
+wider than wall time and have their own overhead. `estimated_off_cpu_ns` clamps
+`wall - CPU` at zero; it is evidence of elapsed time absent from the thread's CPU
+accounting, not a precise scheduler trace. Context-switch/fault deltas are associated
+with that wider window. Slow records with a switch and at least half their wall
+time absent from CPU accounting are counted separately; CPU-dominant means CPU
+time is at least 80% of wall time. Fault counts may overlap those categories.
+
+Use a separate `perf record` CPU-sampling run when supported to identify CPU
+hotspots. Sampling, CPU clocks and resource probes perturb execution: diagnostic
+throughput/latency is not substituted for the ordinary on/off measurements.
+New diagnostics explain newly observed slow records, not the exact historical
+record that produced a previous run's maximum (old histograms have no record IDs).
+No global scheduler, CPU-power or perf-permission settings are changed.
+
 ## Normalized events and reconstruction
 
 - ITCH `R` establishes the daily stock-locate mapping. `A/F` add displayed orders;

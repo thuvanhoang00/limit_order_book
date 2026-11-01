@@ -14,6 +14,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 ENDPOINTS = ('read_decode_apply', 'decode_apply', 'selected_update_decode_apply', 'clock_pair_overhead')
+TIME_FORMAT = ('{"user_seconds":%U,"system_seconds":%S,"process_elapsed_seconds":%e,'
+               '"max_rss_kb":%M,"voluntary_switches":%w,"involuntary_switches":%c,'
+               '"minor_faults":%R,"major_faults":%F}')
 
 
 def sha256(path):
@@ -93,6 +96,40 @@ def render(runs):
     return '\n'.join(lines)
 
 
+def render_comparison(runs):
+    lines = ['# Paired instrumentation overhead', '',
+             'Same frozen binary/archive/affinity, latency disabled versus enabled. '
+             'Order alternates off/on then on/off. Each run consumes the complete archive. '
+             'Diagnostic outlier/perf runs are separate from these pairs.', '',
+             '| Pair | Order | Off seconds | On seconds | Time overhead | Throughput loss |',
+             '|---|---|---:|---:|---:|---:|']
+    for pair in sorted({r['repetition'] for r in runs}):
+        ordered = [r for r in runs if r['repetition'] == pair]
+        if len(ordered) != 2:
+            continue
+        off = next(r for r in ordered if r['mode'] == 'off')
+        on = next(r for r in ordered if r['mode'] == 'on')
+        overhead = (on['elapsed_seconds'] / off['elapsed_seconds'] - 1) * 100
+        loss = (1 - on['messages_per_second'] / off['messages_per_second']) * 100
+        lines.append(f'| {pair} | {" / ".join(r["mode"] for r in ordered)} | '
+                     f'{off["elapsed_seconds"]:.3f} | {on["elapsed_seconds"]:.3f} | '
+                     f'{overhead:+.2f}% | {loss:+.2f}% |')
+    lines += ['', '| Pair | Mode | M messages/s | User CPU s | Kernel CPU s | Peak RSS MiB | Involuntary switches |',
+              '|---|---|---:|---:|---:|---:|---:|']
+    for run in runs:
+        resources = run['resources']
+        lines.append(f'| {run["repetition"]} | {run["mode"]} | {run["messages_per_second"]/1e6:.3f} | '
+                     f'{resources["user_seconds"]:.2f} | {resources["system_seconds"]:.2f} | '
+                     f'{resources["max_rss_kb"]/1024:.2f} | {resources["involuntary_switches"]} |')
+    lines += ['', 'Overhead uses the replay timer, which includes histogram recording when enabled. '
+              'Resource values from GNU time cover the entire process, including final validation/output. '
+              'No subtraction of clock overhead, cache flushing or power-setting changes.', '']
+    measured = [r for r in runs if r['mode'] == 'on']
+    if measured:
+        lines.append(render(measured))
+    return '\n'.join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, required=True)
@@ -103,9 +140,13 @@ def main():
     parser.add_argument('--repetitions', type=int, default=3)
     parser.add_argument('--warmup-records', type=int, default=1_000_000)
     parser.add_argument('--cpu', type=int)
+    parser.add_argument('--compare-instrumentation', action='store_true',
+                        help='paired complete off/on runs, alternating order between pairs')
     args = parser.parse_args()
     if args.repetitions < 1 or args.pool_bytes < 1 or args.warmup_records < 0:
         parser.error('repetitions/pool-bytes must be positive; warmup-records nonnegative')
+    if args.compare_instrumentation and not Path('/usr/bin/time').is_file():
+        parser.error('paired process resource measurement requires GNU /usr/bin/time')
     if args.cpu is not None:
         os.sched_setaffinity(0, {args.cpu})
     archive = args.input.resolve()
@@ -115,7 +156,8 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     binary = output / 'replay_market_data'
     shutil.copy2(args.bin_dir.resolve() / 'replay_market_data', binary)
-    sources = ('tools/replay_market_data.cpp', 'tools/latency_histogram.hpp', 'tools/run_feed_benchmarks.py',
+    sources = ('tools/replay_market_data.cpp', 'tools/latency_histogram.hpp', 'tools/feed_outliers.hpp',
+               'tools/run_feed_benchmarks.py',
                'src/feed/input.cpp', 'src/feed/itch.cpp', 'src/feed/books.cpp', 'src/core/order_book.cpp')
     for name in sources:
         target = output / 'source' / name
@@ -135,6 +177,7 @@ def main():
                     cache_policy='No cache flush; full archive hash and prefix warmup precede measured runs',
                     repetitions=args.repetitions, symbol=args.symbol, pool_bytes=args.pool_bytes,
                     warmup_records=args.warmup_records)
+    metadata['compare_instrumentation'] = args.compare_instrumentation
     for name in ('scaling_governor', 'scaling_cur_freq'):
         path = Path(f'/sys/devices/system/cpu/cpu{min(os.sched_getaffinity(0))}/cpufreq/{name}')
         if path.exists(): metadata[name] = path.read_text().strip()
@@ -154,6 +197,42 @@ def main():
     if args.warmup_records:
         print('Prefix warmup (not included in measured statistics)', flush=True)
         execute([*base, '--max-records', str(args.warmup_records)], 'warmup')
+    if args.compare_instrumentation:
+        runs = []
+        reference_snapshot = None
+        for repetition in range(1, args.repetitions + 1):
+            for mode in (('off', 'on') if repetition % 2 else ('on', 'off')):
+                label = f'{repetition:02d}-{mode}'
+                print(f'Full paired run {label}', flush=True)
+                histogram = output / f'{label}.histogram.json'
+                command = [*base, '--latency', '1' if mode == 'on' else '0',
+                           '--output', str(output / f'{label}.json'),
+                           '--snapshot', str(output / f'{label}.snapshot.json')]
+                if mode == 'on': command += ['--histogram', str(histogram)]
+                execute(['/usr/bin/time', '-f', TIME_FORMAT, '-o',
+                         str(output / f'{label}.resources.json'), '--', *command], label)
+                run = json.loads((output / f'{label}.json').read_text())
+                if not run['complete_input'] or run['limited'] or not run['session_ended'] or \
+                        not run['invariants_valid']:
+                    raise ValueError('Paired measurement requires complete valid sessions')
+                if mode == 'on': verify(run, json.loads(histogram.read_text()))
+                current = archive.stat()
+                if (current.st_size, current.st_mtime_ns) != (before.st_size, before.st_mtime_ns):
+                    raise ValueError('Archive changed during paired measurement')
+                snapshot = (output / f'{label}.snapshot.json').read_bytes()
+                if runs and (any(run[key] != runs[0][key] for key in
+                                ('records', 'messages', 'book_updates', 'trade_notices', 'books')) or
+                             snapshot != reference_snapshot):
+                    raise ValueError('Paired counts/FIFO snapshots differ')
+                if reference_snapshot is None: reference_snapshot = snapshot
+                run.update(mode=mode, repetition=repetition,
+                           resources=json.loads((output / f'{label}.resources.json').read_text()))
+                runs.append(run)
+                (output / 'summary.json').write_text(json.dumps(runs, indent=2) + '\n')
+                (output / 'report.md').write_text(render_comparison(runs))
+                print(f'{label}: {run["elapsed_seconds"]:.3f}s, '
+                      f'{run["messages_per_second"]/1e6:.3f} M/s; full-state verification passed', flush=True)
+        return
     runs = []
     for repetition in range(1, args.repetitions + 1):
         prefix = f'{repetition:02d}'
