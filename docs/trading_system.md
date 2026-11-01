@@ -51,6 +51,10 @@ strategy, order management, features, positions and replica state on one applica
 thread; separate gateway and multicast workers exchange messages through three
 bounded SPSC queues. Workers retain messages while snapshot transfer blocks the
 strategy thread. The buffered suffix must validate before new risk is allowed.
+Client request and report queues signal Linux `eventfd`s after publishing messages,
+so gateway submission and private-report waits wake immediately. Shutdown and worker
+failure also signal waiters. Socket polling still checks frame deadlines; multicast
+delivery remains driven by socket readiness.
 The command API stays serialized: one caller waits for each Complete, so there
 is only one command in flight per application client.
 
@@ -331,6 +335,14 @@ final invariants before publishing numbers. It excludes network, queues, journal
 configuration and CSV parsing. It is not end-to-end exchange latency. Pin CPUs,
 record compiler/hardware settings and retain raw results before comparing runs.
 
+For actual client/network/queue latency and journal on/off comparisons, run
+`python3 tools/run_pipeline_benchmarks.py --bin-dir build/release`. It measures
+Complete and local multicast application separately, reports p50/p99/p99.9 and
+achieved closed-loop commands/s, and checks reports against an untimed engine,
+flat positions/cash, final market watermarks and durable replay. See
+[pipeline measurements](pipeline_benchmarks.md) for the load model, retained
+evidence and measured queue-wakeup optimization.
+
 This is a complete local trading **pipeline**, with standard containers and some
 allocations still on its hot path. It has no real-venue adapter, account security,
 clearing/settlement, live production operations or measured HFT latency guarantee.
@@ -340,8 +352,8 @@ clearing/settlement, live production operations or measured HFT latency guarante
 - Replay observability: per-event results and top-of-book output with `--verbose`,
   plus an explicit `--continue-on-error` mode.
 - Engine checkpoints and journal rotation/compaction.
-- End-to-end throughput and latency measurements including queues, networking and
-  journaling; `perf stat`, flame graphs and a regression baseline.
+- Concurrent/open-loop load measurements beyond the implemented closed-loop pipeline
+  benchmark; `perf stat`, flame graphs and regression baselines on a controlled host.
 - UDP reorder buffering/retransmission and a multicast snapshot channel.
 - Private gateway reconnect and reconciliation for unobserved fills.
 - Live monitoring, active/passive failover and operational tooling.

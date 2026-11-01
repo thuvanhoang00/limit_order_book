@@ -172,6 +172,34 @@ TEST(OrderBookPool, MovedFromBookDoesNotUseFormerPool) {
     EXPECT_EQ(destination.order_count(), 1U);
     EXPECT_TRUE(destination.validate_invariants());
 }
+TEST(OrderBookPool, FeedReplacementRollsBackEveryAllocationFailure) {
+    for (const auto side : {Side::Bid, Side::Ask}) {
+        for (bool same_id : {false, true}) {
+            for (bool same_level : {false, true}) {
+                bool success{};
+                for (std::size_t nth = 0; nth != 8; ++nth) {
+                    OrderBook book;
+                    ASSERT_EQ(book.apply(AddOrder{1, side, 100, 10}), ApplyResult::Ok);
+                    ASSERT_EQ(book.apply(AddOrder{2, side, 100, 20}), ApplyResult::Ok);
+                    if (!same_id) BookInspection::force_next_index_rehash(book);
+                    const auto before = BookInspection::snapshot(book);
+                    const auto free = BookInspection::free_bytes(book);
+                    const AddOrder replacement{same_id ? 1U : 3U, side, same_level ? 100U : 101U, 5};
+                    ApplyResult result;
+                    { FailNth fail(nth); result = book.replace(1, replacement); }
+                    if (result == ApplyResult::Ok) { success = true; break; }
+                    ASSERT_EQ(result, ApplyResult::AllocationFailed);
+                    EXPECT_EQ(BookInspection::snapshot(book), before);
+                    EXPECT_EQ(BookInspection::free_bytes(book), free);
+                    EXPECT_TRUE(book.validate_invariants());
+                    ASSERT_EQ(book.replace(1, replacement), ApplyResult::Ok);
+                    EXPECT_TRUE(book.validate_invariants());
+                }
+                EXPECT_TRUE(success);
+            }
+        }
+    }
+}
 }  // namespace
 }  // namespace order_book
 

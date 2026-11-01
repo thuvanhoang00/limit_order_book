@@ -1,6 +1,12 @@
 # Data
 
-Generated CSV format:
+Native historical exchange archives can be replayed directly with
+`replay_market_data`; see [the native feed guide](../docs/market_data.md).
+Downloaded `.gz`, `.bin`, `.pitch` and partial browser downloads in this directory
+are ignored by Git. Start Nasdaq ITCH replay at the beginning of the archive;
+use `--symbol AAPL` to select a book without losing its earlier state.
+
+Generated CSV format (older replay/generator tools):
 
 ```text
 sequence,instrument_id,event_type,order_id,side,price,quantity

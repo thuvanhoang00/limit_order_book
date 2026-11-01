@@ -44,3 +44,18 @@ tests and the demo; remote results are independent from the local runs above.
 
 Reproduce using [the system guide](trading_system.md). `git diff --check` passes.
 No real venue, physical-LAN, failover or production-load test was performed.
+
+## 2026-11-01 pipeline benchmark and client queue wakeups
+
+After adding the real-client pipeline benchmark and replacing timed client
+request/report polling with `eventfd` notifications, the full Debug and
+ASan/UBSan CTest suites each passed 141/141 tests. The existing Python reporting
+suite passed 6/6 tests. `TradingSystem.EndToEnd` now includes seventeen process
+scenarios; its new scenario runs both journal modes, verifies matching and durable
+replay, recalculates percentiles and throughput from raw samples, and checks
+that an existing artifact directory cannot be overwritten. No timing threshold
+is asserted in CI.
+
+See [pipeline measurements](pipeline_benchmarks.md) for before/after performance
+evidence and the closed-loop measurement boundaries. Sanitizer runs establish
+functional/memory checks; Release builds provide the performance samples.

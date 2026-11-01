@@ -1,8 +1,10 @@
 #include "order_book/trading/client.hpp"
 
 #include <poll.h>
+#include <sys/eventfd.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <atomic>
 #include <chrono>
@@ -33,12 +35,37 @@ Message receive(const net::Socket& socket) {
     if (!m) throw std::runtime_error("Malformed gateway frame");
     return *m;
 }
+net::Socket event_signal() {
+    net::Socket socket(::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC));
+    if (socket.fd() < 0)
+        throw std::system_error(errno, std::generic_category(), "Client queue eventfd");
+    return socket;
+}
+// EAGAIN means an unread notification already exists. No wakeup is lost.
+bool signal(const net::Socket& socket) noexcept {
+    const std::uint64_t one = 1;
+    ssize_t result;
+    do {
+        result = ::write(socket.fd(), &one, sizeof(one));
+    } while (result < 0 && errno == EINTR);
+    return result == sizeof(one) || (result < 0 && errno == EAGAIN);
+}
+void clear_signal(const net::Socket& socket) {
+    std::uint64_t count{};
+    ssize_t result;
+    do {
+        result = ::read(socket.fd(), &count, sizeof(count));
+    } while (result < 0 && errno == EINTR);
+    if (result < 0 && errno != EAGAIN)
+        throw std::system_error(errno, std::generic_category(), "Read client queue eventfd");
+}
 }  // namespace
 struct TradingClient::Transport {
     using Queue = LFQueue<Message, 4096>;
     std::unique_ptr<Queue> requests{std::make_unique<Queue>()};
     std::unique_ptr<Queue> reports{std::make_unique<Queue>()};
     std::unique_ptr<Queue> market{std::make_unique<Queue>()};
+    net::Socket request_ready{event_signal()}, report_ready{event_signal()};
     std::atomic<bool> stopped{};
     std::mutex mutex;
     std::exception_ptr error;
@@ -53,16 +80,22 @@ struct TradingClient::Transport {
             if (!error) error = std::current_exception();
         }
         stopped.store(true);
+        (void)signal(request_ready);
+        (void)signal(report_ready);
     }
     bool push(Queue& queue, const Message& m) {
         while (!queue.try_push(m)) {
             if (stopped.load()) return false;
             std::this_thread::yield();
         }
+        if (&queue == reports.get() && !signal(report_ready))
+            throw std::system_error(errno, std::generic_category(), "Wake client reports");
         return true;
     }
     void stop() noexcept {
         stopped.store(true);
+        (void)signal(request_ready);
+        (void)signal(report_ready);
         if (gateway_thread.joinable()) gateway_thread.join();
         if (subscriber_thread.joinable()) subscriber_thread.join();
     }
@@ -82,18 +115,20 @@ struct TradingClient::Transport {
                             if (output.empty()) write_started = Clock::now();
                             output.push_back(encode(request));
                         }
-                        pollfd descriptor{
-                            gateway.fd(),
-                            static_cast<short>(POLLIN | (output.empty() ? 0 : POLLOUT)), 0};
-                        const auto ready = ::poll(&descriptor, 1, 5);
+                        pollfd descriptors[]{
+                            {gateway.fd(),
+                             static_cast<short>(POLLIN | (output.empty() ? 0 : POLLOUT)), 0},
+                            {request_ready.fd(), POLLIN, 0}};
+                        const auto ready = ::poll(descriptors, 2, 5);
                         if (ready < 0) {
                             if (errno == EINTR) continue;
                             throw std::system_error(errno, std::generic_category(),
                                                     "poll order gateway");
                         }
-                        if (descriptor.revents & POLLOUT)
+                        if (descriptors[1].revents & POLLIN) clear_signal(request_ready);
+                        if (descriptors[0].revents & POLLOUT)
                             net::detail::flush(gateway.fd(), output, sent);
-                        if (descriptor.revents & POLLIN) {
+                        if (descriptors[0].revents & POLLIN) {
                             for (unsigned budget = 0; budget < 64; ++budget) {
                                 if (!used) read_started = Clock::now();
                                 const auto result =
@@ -109,7 +144,7 @@ struct TradingClient::Transport {
                                 if (!push(*reports, *message)) break;
                             }
                         }
-                        if (descriptor.revents & (POLLERR | POLLHUP | POLLNVAL))
+                        if (descriptors[0].revents & (POLLERR | POLLHUP | POLLNVAL))
                             throw std::runtime_error(
                                 "Gateway closed; order outcome requires reconciliation");
                         const auto now = Clock::now();
@@ -164,6 +199,8 @@ struct TradingClient::Transport {
                 throw std::runtime_error("Gateway command queue deadline");
             std::this_thread::yield();
         }
+        if (!signal(request_ready))
+            throw std::system_error(errno, std::generic_category(), "Wake client gateway");
         check();
     }
 };
@@ -273,8 +310,18 @@ std::optional<Message> TradingClient::receive_report(std::chrono::milliseconds w
     const auto deadline = Clock::now() + wait;
     while (!transport_->reports->try_pop(m)) {
         transport_->check();
-        if (Clock::now() >= deadline) return std::nullopt;
-        std::this_thread::sleep_for(1ms);
+        const auto now = Clock::now();
+        if (now >= deadline) return std::nullopt;
+        const auto remaining = std::chrono::ceil<std::chrono::milliseconds>(deadline - now);
+        pollfd descriptor{transport_->report_ready.fd(), POLLIN, 0};
+        const auto ready = ::poll(&descriptor, 1, static_cast<int>(remaining.count()));
+        if (ready < 0) {
+            if (errno == EINTR) continue;
+            throw std::system_error(errno, std::generic_category(), "Poll client reports");
+        }
+        if (descriptor.revents & POLLIN) clear_signal(transport_->report_ready);
+        if (descriptor.revents & (POLLERR | POLLHUP | POLLNVAL))
+            throw std::runtime_error("Client report notification failed");
     }
     if (m.kind != Kind::Report || m.client_id != config_.client_id || m.epoch != epoch_)
         throw std::runtime_error("Unexpected gateway/session report");

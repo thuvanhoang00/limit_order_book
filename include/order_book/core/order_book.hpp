@@ -36,6 +36,7 @@ struct LevelView {
 class OrderBook final {
    public:
     OrderBook();
+    explicit OrderBook(std::size_t pool_bytes);
     OrderBook(const OrderBook&) = delete;
     OrderBook& operator=(const OrderBook&) = delete;
     OrderBook(OrderBook&& other) noexcept // can be default, no need to call reset 
@@ -62,6 +63,10 @@ class OrderBook final {
     [[nodiscard]] ApplyResult apply(const AddOrder& event) noexcept;
     [[nodiscard]] ApplyResult apply(const CancelOrder& event) noexcept;
     [[nodiscard]] ApplyResult apply(const ExecuteOrder& event) noexcept;
+    // Feed replacement: preserve priority only when explicitly requested at the
+    // same price/side/ID. Reserve all new storage before removing the old order.
+    [[nodiscard]] ApplyResult replace(OrderId old_id, const AddOrder& next,
+                                      bool maintain_priority = false) noexcept;
 
     [[nodiscard]] std::uint64_t best_quantity(Side side) const noexcept;
     [[nodiscard]] std::optional<Price> best_bid() const noexcept;

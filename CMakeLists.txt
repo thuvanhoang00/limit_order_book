@@ -39,6 +39,14 @@ target_include_directories(order_book
 target_set_project_warnings(order_book)
 target_enable_sanitizers(order_book)
 
+find_package(ZLIB REQUIRED)
+add_library(order_book_feed STATIC src/feed/itch.cpp src/feed/pitch.cpp
+    src/feed/books.cpp src/feed/input.cpp)
+add_library(order_book::feed ALIAS order_book_feed)
+target_link_libraries(order_book_feed PUBLIC order_book::order_book ZLIB::ZLIB)
+target_set_project_warnings(order_book_feed)
+target_enable_sanitizers(order_book_feed)
+
 add_library(order_book_trading STATIC
     src/trading/messages.cpp src/trading/engine.cpp src/trading/journal.cpp
     src/trading/replica.cpp src/trading/strategy.cpp src/trading/features.cpp)
@@ -59,7 +67,7 @@ if(ORDER_BOOK_BUILD_NETWORKING)
     target_set_project_warnings(order_book_net)
     target_enable_sanitizers(order_book_net)
     if(ORDER_BOOK_BUILD_TOOLS)
-        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber exchange_server trading_app)
+        foreach(tool IN ITEMS tcp_event_server tcp_event_client udp_event_publisher udp_event_subscriber exchange_server trading_app trading_pipeline_benchmark)
             add_executable(${tool} tools/${tool}.cpp)
             target_link_libraries(${tool} PRIVATE order_book::net)
             target_set_project_warnings(${tool})
@@ -69,6 +77,10 @@ if(ORDER_BOOK_BUILD_NETWORKING)
 endif()
 
 if(ORDER_BOOK_BUILD_TOOLS)
+    add_executable(replay_market_data tools/replay_market_data.cpp)
+    target_link_libraries(replay_market_data PRIVATE order_book::feed)
+    target_set_project_warnings(replay_market_data)
+    target_enable_sanitizers(replay_market_data)
     add_executable(trading_benchmark tools/trading_benchmark.cpp)
     target_link_libraries(trading_benchmark PRIVATE order_book::trading)
     target_set_project_warnings(trading_benchmark)
@@ -116,6 +128,7 @@ if(ORDER_BOOK_BUILD_TESTS)
 
     if(TARGET GTest::gtest_main)
         add_executable(order_book_tests
+            tests/feed/test_feeds.cpp
             tests/core/test_order_book.cpp
             tests/core/test_lfqueue.cpp
             tests/core/test_logger.cpp
@@ -133,6 +146,7 @@ if(ORDER_BOOK_BUILD_TESTS)
             PRIVATE
                 order_book::order_book
                 order_book::trading
+                order_book::feed
                 GTest::gtest_main)
         target_include_directories(order_book_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
         target_set_project_warnings(order_book_tests)
@@ -182,9 +196,21 @@ if(ORDER_BOOK_BUILD_TESTS)
             DEPENDS order_book_tests order_book_allocation_tests
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             USES_TERMINAL)
+        if(ORDER_BOOK_BUILD_TOOLS)
+            find_package(Python3 COMPONENTS Interpreter QUIET)
+            if(Python3_Interpreter_FOUND)
+                add_test(NAME MarketData.NativeReplay
+                    COMMAND ${Python3_EXECUTABLE}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/tests/feed/test_replay_cli.py
+                        --bin-dir $<TARGET_FILE_DIR:replay_market_data>)
+                set_tests_properties(MarketData.NativeReplay PROPERTIES TIMEOUT 30)
+                add_dependencies(check replay_market_data)
+            endif()
+        endif()
         if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS AND Python3_Interpreter_FOUND)
             add_dependencies(check tcp_event_server tcp_event_client replay_order_book
-                udp_event_publisher udp_event_subscriber exchange_server trading_app exchange_replay)
+                udp_event_publisher udp_event_subscriber exchange_server trading_app exchange_replay
+                trading_pipeline_benchmark)
         endif()
     else()
         message(WARNING "GoogleTest was not found; tests are disabled")

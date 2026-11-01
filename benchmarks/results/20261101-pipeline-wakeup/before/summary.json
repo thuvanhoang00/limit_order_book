@@ -1,0 +1,305 @@
+[
+  {
+    "journal": "off",
+    "latency": {
+      "workload": "balanced_add_reduce_match_cancel",
+      "load_model": "closed_loop_one_global_inflight",
+      "commands": 8000,
+      "warmup_commands": 800,
+      "total_commands": 8800,
+      "expected_trades": 2200,
+      "expected_volume": 4400,
+      "market_sequence": 11000,
+      "elapsed_ns": 41119509513,
+      "commands_per_second": 194.55485,
+      "complete": {
+        "mean_ns": 5135797.465875,
+        "p50_ns": 5300578,
+        "p99_ns": 6350307,
+        "p999_ns": 7555670,
+        "max_ns": 8594300
+      },
+      "market_applied": {
+        "mean_ns": 5139407.729875,
+        "p50_ns": 5302230,
+        "p99_ns": 6353890,
+        "p999_ns": 7796358,
+        "max_ns": 11129054
+      },
+      "verified": true
+    },
+    "exchange": {
+      "commands": 8800,
+      "rejected": 0,
+      "trades": 2200,
+      "volume": 4400,
+      "market_sequence": 11000,
+      "datagrams": 11453,
+      "connections": 4,
+      "slow_clients": 0,
+      "malformed": 0
+    },
+    "checks": {
+      "client_verified": true,
+      "commands": true,
+      "no_rejects": true,
+      "matching": true,
+      "feed_watermark": true,
+      "healthy_connections": true
+    },
+    "directory": "01-journal-off"
+  },
+  {
+    "journal": "on",
+    "latency": {
+      "workload": "balanced_add_reduce_match_cancel",
+      "load_model": "closed_loop_one_global_inflight",
+      "commands": 8000,
+      "warmup_commands": 800,
+      "total_commands": 8800,
+      "expected_trades": 2200,
+      "expected_volume": 4400,
+      "market_sequence": 11000,
+      "elapsed_ns": 121056364762,
+      "commands_per_second": 66.084919,
+      "complete": {
+        "mean_ns": 15126283.526,
+        "p50_ns": 14891298,
+        "p99_ns": 37952076,
+        "p999_ns": 88723043,
+        "max_ns": 204231038
+      },
+      "market_applied": {
+        "mean_ns": 15131325.782375,
+        "p50_ns": 14893399,
+        "p99_ns": 37957143,
+        "p999_ns": 88732407,
+        "max_ns": 204232059
+      },
+      "verified": true
+    },
+    "exchange": {
+      "commands": 8800,
+      "rejected": 0,
+      "trades": 2200,
+      "volume": 4400,
+      "market_sequence": 11000,
+      "datagrams": 12327,
+      "connections": 4,
+      "slow_clients": 0,
+      "malformed": 0
+    },
+    "checks": {
+      "client_verified": true,
+      "commands": true,
+      "no_rejects": true,
+      "matching": true,
+      "feed_watermark": true,
+      "healthy_connections": true,
+      "durable_replay": true
+    },
+    "directory": "01-journal-on"
+  },
+  {
+    "journal": "on",
+    "latency": {
+      "workload": "balanced_add_reduce_match_cancel",
+      "load_model": "closed_loop_one_global_inflight",
+      "commands": 8000,
+      "warmup_commands": 800,
+      "total_commands": 8800,
+      "expected_trades": 2200,
+      "expected_volume": 4400,
+      "market_sequence": 11000,
+      "elapsed_ns": 127792347905,
+      "commands_per_second": 62.601557,
+      "complete": {
+        "mean_ns": 15952114.756,
+        "p50_ns": 14860948,
+        "p99_ns": 28606106,
+        "p999_ns": 158136422,
+        "max_ns": 1153998734
+      },
+      "market_applied": {
+        "mean_ns": 15973255.298375,
+        "p50_ns": 14864237,
+        "p99_ns": 29287467,
+        "p999_ns": 158137294,
+        "max_ns": 1153999435
+      },
+      "verified": true
+    },
+    "exchange": {
+      "commands": 8800,
+      "rejected": 0,
+      "trades": 2200,
+      "volume": 4400,
+      "market_sequence": 11000,
+      "datagrams": 12401,
+      "connections": 4,
+      "slow_clients": 0,
+      "malformed": 0
+    },
+    "checks": {
+      "client_verified": true,
+      "commands": true,
+      "no_rejects": true,
+      "matching": true,
+      "feed_watermark": true,
+      "healthy_connections": true,
+      "durable_replay": true
+    },
+    "directory": "02-journal-on"
+  },
+  {
+    "journal": "off",
+    "latency": {
+      "workload": "balanced_add_reduce_match_cancel",
+      "load_model": "closed_loop_one_global_inflight",
+      "commands": 8000,
+      "warmup_commands": 800,
+      "total_commands": 8800,
+      "expected_trades": 2200,
+      "expected_volume": 4400,
+      "market_sequence": 11000,
+      "elapsed_ns": 41667193820,
+      "commands_per_second": 191.997571,
+      "complete": {
+        "mean_ns": 5191532.587125,
+        "p50_ns": 5299559,
+        "p99_ns": 8007567,
+        "p999_ns": 9932817,
+        "max_ns": 12593502
+      },
+      "market_applied": {
+        "mean_ns": 5207718.22575,
+        "p50_ns": 5301714,
+        "p99_ns": 8293059,
+        "p999_ns": 10772032,
+        "max_ns": 13216768
+      },
+      "verified": true
+    },
+    "exchange": {
+      "commands": 8800,
+      "rejected": 0,
+      "trades": 2200,
+      "volume": 4400,
+      "market_sequence": 11000,
+      "datagrams": 11458,
+      "connections": 4,
+      "slow_clients": 0,
+      "malformed": 0
+    },
+    "checks": {
+      "client_verified": true,
+      "commands": true,
+      "no_rejects": true,
+      "matching": true,
+      "feed_watermark": true,
+      "healthy_connections": true
+    },
+    "directory": "02-journal-off"
+  },
+  {
+    "journal": "off",
+    "latency": {
+      "workload": "balanced_add_reduce_match_cancel",
+      "load_model": "closed_loop_one_global_inflight",
+      "commands": 8000,
+      "warmup_commands": 800,
+      "total_commands": 8800,
+      "expected_trades": 2200,
+      "expected_volume": 4400,
+      "market_sequence": 11000,
+      "elapsed_ns": 41699074128,
+      "commands_per_second": 191.850782,
+      "complete": {
+        "mean_ns": 5196811.76125,
+        "p50_ns": 5299439,
+        "p99_ns": 7938494,
+        "p999_ns": 10237759,
+        "max_ns": 13652659
+      },
+      "market_applied": {
+        "mean_ns": 5211753.5115,
+        "p50_ns": 5301293,
+        "p99_ns": 8077252,
+        "p999_ns": 10955094,
+        "max_ns": 15772289
+      },
+      "verified": true
+    },
+    "exchange": {
+      "commands": 8800,
+      "rejected": 0,
+      "trades": 2200,
+      "volume": 4400,
+      "market_sequence": 11000,
+      "datagrams": 11459,
+      "connections": 4,
+      "slow_clients": 0,
+      "malformed": 0
+    },
+    "checks": {
+      "client_verified": true,
+      "commands": true,
+      "no_rejects": true,
+      "matching": true,
+      "feed_watermark": true,
+      "healthy_connections": true
+    },
+    "directory": "03-journal-off"
+  },
+  {
+    "journal": "on",
+    "latency": {
+      "workload": "balanced_add_reduce_match_cancel",
+      "load_model": "closed_loop_one_global_inflight",
+      "commands": 8000,
+      "warmup_commands": 800,
+      "total_commands": 8800,
+      "expected_trades": 2200,
+      "expected_volume": 4400,
+      "market_sequence": 11000,
+      "elapsed_ns": 117751342136,
+      "commands_per_second": 67.939778,
+      "complete": {
+        "mean_ns": 14708179.291625,
+        "p50_ns": 14851280,
+        "p99_ns": 21509076,
+        "p999_ns": 25694253,
+        "max_ns": 30761247
+      },
+      "market_applied": {
+        "mean_ns": 14718137.14975,
+        "p50_ns": 14854261,
+        "p99_ns": 21545107,
+        "p999_ns": 25694854,
+        "max_ns": 30769234
+      },
+      "verified": true
+    },
+    "exchange": {
+      "commands": 8800,
+      "rejected": 0,
+      "trades": 2200,
+      "volume": 4400,
+      "market_sequence": 11000,
+      "datagrams": 12336,
+      "connections": 4,
+      "slow_clients": 0,
+      "malformed": 0
+    },
+    "checks": {
+      "client_verified": true,
+      "commands": true,
+      "no_rejects": true,
+      "matching": true,
+      "feed_watermark": true,
+      "healthy_connections": true,
+      "durable_replay": true
+    },
+    "directory": "03-journal-on"
+  }
+]
