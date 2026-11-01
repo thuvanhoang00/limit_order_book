@@ -129,6 +129,7 @@ if(ORDER_BOOK_BUILD_TESTS)
     if(TARGET GTest::gtest_main)
         add_executable(order_book_tests
             tests/feed/test_feeds.cpp
+            tests/feed/test_latency.cpp
             tests/core/test_order_book.cpp
             tests/core/test_lfqueue.cpp
             tests/core/test_logger.cpp

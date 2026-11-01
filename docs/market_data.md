@@ -54,6 +54,56 @@ price levels and individual orders in FIFO order. Final invariant checks, snapsh
 construction and JSON output are outside the replay timer. These timings are
 offline reconstruction throughput, not order-entry or network latency.
 
+## Full-archive latency measurement
+
+```sh
+python3 tools/run_feed_benchmarks.py \
+  --input data/01302019.NASDAQ_ITCH50.gz --symbol AAPL --cpu 2
+# One replay with exact frequency output:
+./build/release/replay_market_data \
+  --input data/01302019.NASDAQ_ITCH50.gz --symbol AAPL --pool-bytes 8388608 \
+  --latency 1 --output results/day.json --histogram results/day.histogram.json
+```
+
+The runner defaults to three complete Release replays, an untimed one-million-record
+prefix warmup, and an 8 MiB selected-book pool. It hashes the input, freezes the
+binary/source identities and records affinity/build metadata. It does not flush
+the OS file cache or change CPU frequency settings. All records in each measured
+replay are timed, including the initial and final exchange messages; there is no
+sampling or warmup exclusion within the measured file.
+
+`--latency 1` adds exact per-input-record nanosecond frequencies and nearest-rank
+p50/p95/p99/p99.9, mean, min and max. There are three paths:
+
+- `read_decode_apply`: before the record read through completion of decode/apply.
+  Includes buffered file access, gzip refill/decompression, framing, decoding,
+  routing and selected LOB application. Refill costs occur on particular records,
+  so most read calls consume already-buffered bytes.
+- `decode_apply`: after the complete record is read through decode/apply. Includes
+  routing updates for symbols other than the selected symbol.
+- `selected_update_decode_apply`: the same decode/apply interval, restricted to
+  records which actually changed a selected displayed book. For ITCH one record
+  is one message; for PITCH it is one packet and can contain several mutations.
+
+These are offline service times while replaying as fast as possible. They do not
+use the ITCH exchange timestamp as a local latency clock, reproduce its original
+arrival rate, or measure network/order-entry matching latency. The pre-existing
+TCP/UDP pipeline benchmark measures a separate workload.
+
+Three steady-clock reads per timed record and frequency collection add overhead.
+`clock_pair_overhead` reports 10,000 consecutive clock-pair durations collected
+before replay; it is not subtracted from the results. Histogram recording is
+outside each service-time interval but inside wall time/achieved throughput.
+Dense exact bins cover 0..100 microseconds; larger durations use sparse exact
+frequency counts. Memory depends on distinct outlier durations rather than
+retaining every individual sample. Histogram JSON contains sorted
+`[nanoseconds, count]` pairs, enabling independent percentile recomputation.
+
+The runner refuses incomplete sessions, checks gzip EOF/CRC and final book
+invariants, recalculates every histogram statistic, and compares final snapshots
+and counts across repetitions. An existing evidence directory cannot be reused.
+Statistics and histograms are written only after replay and validation succeed.
+
 `limited:true` and `complete_input:false` mean only the requested prefix was read.
 Full input requires EOF plus ITCH End of Messages or End of Session for every
 observed PITCH unit. These markers/framing checks cannot prove that an ITCH archive
@@ -111,7 +161,8 @@ storage before removing the old order, and rolls back on allocation failure.
 
 ## Verification
 
-Debug and ASan/UBSan full CTest suites passed 156/156 each. Added tests cover endian
+Debug and ASan/UBSan full CTest suites passed 158/158 each after adding the latency
+histogram tests (the initial native-feed change passed 156/156). Added tests cover endian
 and fixed-point conversion, native raw/gzip replay, malformed framing, CRC/torn
 input, unknown types/references, hidden-size executions, partial cancels, replacement
 IDs/FIFO flags, namespace isolation, filtering, session completion and independently
