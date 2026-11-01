@@ -44,7 +44,8 @@ cmake --build --preset release --parallel 4 --target replay_market_data
 
 See [supported messages, file framing and verification](docs/market_data.md).
 HOSE/HNX require their own feed specifications. Cboe uses specification-based
-fixtures so far; the real-data check covers a 10-million-message ITCH prefix.
+fixtures so far; Nasdaq has a [complete-day latency/throughput measurement](benchmarks/results/20261101-full-itch-latency/README.md)
+with exact p50/p99/p99.9 frequencies, full EOF/CRC checks and repeated book validation.
 
 ## Current LOB scope
 

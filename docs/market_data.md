@@ -190,3 +190,23 @@ feed is aggregated by price, give it a separate price-level book contract.
 - [Nasdaq historical archives](https://emi.nasdaq.com/ITCH/Nasdaq%20ITCH/)
 - [Cboe U.S. Equities/Options Multicast PITCH specification](https://www.cboe.com/document/tech-spec/document/technical-specifications/cboe-titanium-u.s.-equitiesoptions-multicast-pitch-specification)
 - [Cboe execution-at-price semantics](https://www.cboe.com/document/tech-spec/content/technical-specifications/cboe-titanium-u.s.-equitiesoptions-multicast-pitch-specification/pitch-2.x-messages/order-modification-messages/order-executed-at-pricesize)
+
+## Recorded complete-day result
+
+The [2019-01-30 full-archive measurement](../benchmarks/results/20261101-full-itch-latency/README.md)
+processed 368,366,634 messages and 1,656,597 AAPL updates
+in each of three complete replays. EOF/CRC, end-of-session, final invariants,
+exact histogram recomputation and repeated snapshots all passed.
+Median instrumented throughput was 0.965 million messages/s.
+
+| Path | p50 (µs) | p99 (µs) | p99.9 (µs) |
+|---|---:|---:|---:|
+| read_decode_apply | 0.621 | 3.166 | 5.360 |
+| decode_apply | 0.561 | 3.086 | 5.220 |
+| selected_update_decode_apply | 1.333 | 6.493 | 11.161 |
+
+Values are medians across three per-run statistics on CPU 2 with the existing
+`powersave` governor. Clock-pair median overhead was 20 ns; no subtraction
+is applied. Debug and ASan/UBSan full suites passed 158/158 each after adding latency
+instrumentation. See the report for exact input identity, every repetition, raw
+frequency counts and the offline/buffered measurement boundaries.

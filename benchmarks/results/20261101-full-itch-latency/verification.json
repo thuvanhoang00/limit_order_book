@@ -1,0 +1,12 @@
+{
+  "repetitions": 3,
+  "distinct_input_records": 368366634,
+  "timed_records": 1105099902,
+  "selected_updates_per_run": 1656597,
+  "complete_sessions": true,
+  "gzip_eof_crc_and_invariants": true,
+  "all_histogram_statistics_recomputed": true,
+  "repeated_final_states_and_snapshots_identical": true,
+  "debug_ctest": "158/158",
+  "asan_ubsan_ctest": "158/158"
+}
