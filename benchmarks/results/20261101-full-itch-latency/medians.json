@@ -1,0 +1,33 @@
+{
+  "median_per_run": {
+    "read_decode_apply": {
+      "mean_ns": 985.567576,
+      "p50_ns": 621,
+      "p99_ns": 3166,
+      "p999_ns": 5360,
+      "max_ns": 4335104
+    },
+    "decode_apply": {
+      "mean_ns": 809.6964,
+      "p50_ns": 561,
+      "p99_ns": 3086,
+      "p999_ns": 5220,
+      "max_ns": 4335054
+    },
+    "selected_update_decode_apply": {
+      "mean_ns": 1683.261304,
+      "p50_ns": 1333,
+      "p99_ns": 6493,
+      "p999_ns": 11161,
+      "max_ns": 4335054
+    },
+    "clock_pair_overhead": {
+      "mean_ns": 24.3477,
+      "p50_ns": 20,
+      "p99_ns": 31,
+      "p999_ns": 31,
+      "max_ns": 581
+    }
+  },
+  "median_messages_per_second": 964789.394675
+}

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -103,8 +104,67 @@ class FeedReplay(unittest.TestCase):
         self.assertEqual(report['records'], 3)
         result, _ = self.run_feed(itch_fixture(), venue='hose')
         self.assertNotEqual(result.returncode, 0)
+
+    def test_exact_latency_histograms_match_recomputed_statistics(self):
+        for format, data, records, selected in [('itch50', itch_fixture(), 7, 4),
+                                                ('pitch', pitch_fixture(), 1, 1)]:
+            histogram = self.root / 'latencies.json'
+            result, _ = self.run_feed(data, format, True, latency=1, histogram=histogram)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            report = json.loads(result.stdout)
+            frequencies = json.loads(histogram.read_text())
+            self.assertEqual(report['latency']['unit'], 'input_record')
+            counts = {'read_decode_apply': records, 'decode_apply': records,
+                      'selected_update_decode_apply': selected, 'clock_pair_overhead': 10000}
+            for endpoint, count in counts.items():
+                distribution = report['latency'][endpoint]
+                samples = frequencies[endpoint]
+                self.assertEqual(sum(n for _, n in samples), count)
+                self.assertEqual(distribution['count'], count)
+                self.assertEqual(samples, sorted(samples))
+                self.assertEqual(samples[0][0], distribution['min_ns'])
+                self.assertEqual(samples[-1][0], distribution['max_ns'])
+                self.assertAlmostEqual(distribution['mean_ns'],
+                                       sum(ns * n for ns, n in samples) / count, places=4)
+                for name, permille in [('p50_ns', 500), ('p95_ns', 950),
+                                        ('p99_ns', 990), ('p999_ns', 999)]:
+                    rank = (count * permille + 999) // 1000
+                    accumulated = 0
+                    for value, n in samples:
+                        accumulated += n
+                        if accumulated >= rank:
+                            self.assertEqual(value, distribution[name])
+                            break
+            self.assertTrue(report['complete_input'])
+
+    def test_histogram_options_cannot_overwrite_input(self):
+        path = self.root / 'input.bin'
+        result, _ = self.run_feed(itch_fixture(), latency=1, histogram=path)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(path.read_bytes(), itch_fixture())
+        result, _ = self.run_feed(itch_fixture(), histogram=self.root / 'hist.json')
+        self.assertNotEqual(result.returncode, 0)
         result, _ = self.run_feed(itch_fixture(), symbol='MISSING')
         self.assertNotEqual(result.returncode, 0)
+
+    def test_full_archive_runner_verifies_and_retains_histograms(self):
+        source = self.root / 'archive.gz'
+        source.write_bytes(gzip.compress(itch_fixture()))
+        output = self.root / 'measurement'
+        script = Path(__file__).resolve().parents[2] / 'tools/run_feed_benchmarks.py'
+        command = [sys.executable, str(script), '--input', str(source), '--bin-dir', str(BIN),
+                   '--output-dir', str(output), '--repetitions', '2', '--warmup-records', '0']
+        result = subprocess.run(command, capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        runs = json.loads((output / 'summary.json').read_text())
+        self.assertEqual(len(runs), 2)
+        self.assertTrue(all(run['complete_input'] and run['records'] == 7 for run in runs))
+        self.assertEqual((output / '01.snapshot.json').read_bytes(),
+                         (output / '02.snapshot.json').read_bytes())
+        previous = (output / 'summary.json').read_bytes()
+        again = subprocess.run(command, capture_output=True, text=True, timeout=5)
+        self.assertNotEqual(again.returncode, 0)
+        self.assertEqual((output / 'summary.json').read_bytes(), previous)
 
 
 if __name__ == '__main__':
