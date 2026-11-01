@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 import platform
 import shutil
-import statistics
 import subprocess
 import sys
 
@@ -64,73 +63,8 @@ def verify(report, frequencies):
         raise ValueError('ITCH timing counts do not match input records/selected book updates')
 
 
-def render(runs):
-    lines = ['# Full-archive ITCH replay latency', '',
-             'Offline service times on each input record; no network or order-entry matching. '
-             'All records are measured, including the first and final exchange records. Histograms and three clock reads '
-             'per record add overhead; throughput is for the instrumented replay. Gzip is buffered, '
-             'so read/decompression cost is concentrated in refill records.', '',
-             '| Run | Path | Count | p50 (ns) | p99 (ns) | p99.9 (ns) | Max (ns) |',
-             '|---|---|---:|---:|---:|---:|---:|']
-    for index, run in enumerate(runs, 1):
-        for endpoint in ENDPOINTS:
-            s = run['latency'][endpoint]
-            lines.append(f'| {index} | {endpoint} | {s["count"]:,} | {s["p50_ns"]:,} | '
-                         f'{s["p99_ns"]:,} | {s["p999_ns"]:,} | {s["max_ns"]:,} |')
-    lines += ['', '| Run | Seconds | Million records/s | Selected updates |',
-              '|---|---:|---:|---:|']
-    for index, run in enumerate(runs, 1):
-        lines.append(f'| {index} | {run["elapsed_seconds"]:.3f} | '
-                     f'{run["messages_per_second"] / 1e6:.3f} | {run["book_updates"]:,} |')
-    lines += ['', 'Medians across per-run statistics (not pooled percentiles):', '',
-              '| Path | p50 (ns) | p99 (ns) | p99.9 (ns) |', '|---|---:|---:|---:|']
-    for endpoint in ENDPOINTS:
-        values = [statistics.median(run['latency'][endpoint][p] for run in runs)
-                  for p in ('p50_ns', 'p99_ns', 'p999_ns')]
-        lines.append(f'| {endpoint} | {values[0]:,.0f} | {values[1]:,.0f} | {values[2]:,.0f} |')
-    lines += ['', 'Exact nearest-rank p50/p95/p99/p99.9, means, extremes and counts were '
-              'independently recalculated from the frequency JSON for every run. All runs '
-              'reached exchange End of Messages and gzip EOF/CRC checks with valid final books. '
-              'No clock overhead is subtracted. Startup, archive hash and warmup are before the '
-              'replay timer; final invariants, histogram serialization and snapshots are after it.', '']
-    return '\n'.join(lines)
-
-
-def render_comparison(runs):
-    lines = ['# Paired instrumentation overhead', '',
-             'Same frozen binary/archive/affinity, latency disabled versus enabled. '
-             'Order alternates off/on then on/off. Each run consumes the complete archive. '
-             'Diagnostic outlier/perf runs are separate from these pairs.', '',
-             '| Pair | Order | Off seconds | On seconds | Time overhead | Throughput loss |',
-             '|---|---|---:|---:|---:|---:|']
-    for pair in sorted({r['repetition'] for r in runs}):
-        ordered = [r for r in runs if r['repetition'] == pair]
-        if len(ordered) != 2:
-            continue
-        off = next(r for r in ordered if r['mode'] == 'off')
-        on = next(r for r in ordered if r['mode'] == 'on')
-        overhead = (on['elapsed_seconds'] / off['elapsed_seconds'] - 1) * 100
-        loss = (1 - on['messages_per_second'] / off['messages_per_second']) * 100
-        lines.append(f'| {pair} | {" / ".join(r["mode"] for r in ordered)} | '
-                     f'{off["elapsed_seconds"]:.3f} | {on["elapsed_seconds"]:.3f} | '
-                     f'{overhead:+.2f}% | {loss:+.2f}% |')
-    lines += ['', '| Pair | Mode | M messages/s | User CPU s | Kernel CPU s | Peak RSS MiB | Involuntary switches |',
-              '|---|---|---:|---:|---:|---:|---:|']
-    for run in runs:
-        resources = run['resources']
-        lines.append(f'| {run["repetition"]} | {run["mode"]} | {run["messages_per_second"]/1e6:.3f} | '
-                     f'{resources["user_seconds"]:.2f} | {resources["system_seconds"]:.2f} | '
-                     f'{resources["max_rss_kb"]/1024:.2f} | {resources["involuntary_switches"]} |')
-    lines += ['', 'Overhead uses the replay timer, which includes histogram recording when enabled. '
-              'Resource values from GNU time cover the entire process, including final validation/output. '
-              'No subtraction of clock overhead, cache flushing or power-setting changes.', '']
-    measured = [r for r in runs if r['mode'] == 'on']
-    if measured:
-        lines.append(render(measured))
-    return '\n'.join(lines)
-
-
 def main():
+    from feed_report import write_report
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, required=True)
     parser.add_argument('--bin-dir', type=Path, default=ROOT / 'build/release')
@@ -157,7 +91,7 @@ def main():
     binary = output / 'replay_market_data'
     shutil.copy2(args.bin_dir.resolve() / 'replay_market_data', binary)
     sources = ('tools/replay_market_data.cpp', 'tools/latency_histogram.hpp', 'tools/feed_outliers.hpp',
-               'tools/run_feed_benchmarks.py',
+               'tools/run_feed_benchmarks.py', 'tools/feed_report.py',
                'src/feed/input.cpp', 'src/feed/itch.cpp', 'src/feed/books.cpp', 'src/core/order_book.cpp')
     for name in sources:
         target = output / 'source' / name
@@ -229,7 +163,7 @@ def main():
                            resources=json.loads((output / f'{label}.resources.json').read_text()))
                 runs.append(run)
                 (output / 'summary.json').write_text(json.dumps(runs, indent=2) + '\n')
-                (output / 'report.md').write_text(render_comparison(runs))
+                write_report(output, runs, metadata)
                 print(f'{label}: {run["elapsed_seconds"]:.3f}s, '
                       f'{run["messages_per_second"]/1e6:.3f} M/s; full-state verification passed', flush=True)
         return
@@ -252,7 +186,7 @@ def main():
             raise ValueError('Repeated FIFO book snapshots differ')
         runs.append(run)
         (output / 'summary.json').write_text(json.dumps(runs, indent=2) + '\n')
-        (output / 'report.md').write_text(render(runs))
+        write_report(output, runs, metadata)
         print(f'Run {repetition}: {run["records"]:,} records, {run["messages_per_second"] / 1e6:.3f} M/s; '
               f'read/decode/apply p99={run["latency"]["read_decode_apply"]["p99_ns"]} ns; '
               'EOF/CRC/session/invariants/histogram verification passed', flush=True)

@@ -1,0 +1,9 @@
+{
+  "event": "cpu-clock:u",
+  "requested_frequency_hz": 99,
+  "samples": 43588,
+  "lost_samples": 0,
+  "call_graph": "dwarf,4096",
+  "note": "Self percentages are user-space CPU samples, not utilization. Some call chains are incomplete; do not sum children percentages or attribute all memcmp samples to one caller.",
+  "raw_perf_retained_locally": "results/itch-observer-overhead-01302019/diagnostic/perf.data"
+}

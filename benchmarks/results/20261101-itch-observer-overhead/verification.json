@@ -1,0 +1,16 @@
+{
+  "paired_runs": 4,
+  "diagnostic_runs": 1,
+  "records_per_run": 368366634,
+  "selected_updates_per_run": 1656597,
+  "all_complete_sessions": true,
+  "all_snapshots_identical": true,
+  "histograms_independently_recomputed": 2,
+  "diagnostic_counters_recomputed": true,
+  "all_frozen_sources_match_metadata": true,
+  "measured_cpp_sources_unchanged": true,
+  "binary_hash_matches": true,
+  "debug_ctest": "159/159",
+  "asan_ubsan_ctest": "159/159",
+  "python_reporting_tests": "9/9"
+}

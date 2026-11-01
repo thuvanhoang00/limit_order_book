@@ -159,6 +159,11 @@ New diagnostics explain newly observed slow records, not the exact historical
 record that produced a previous run's maximum (old histograms have no record IDs).
 No global scheduler, CPU-power or perf-permission settings are changed.
 
+The [recorded on/off and diagnostic report](../benchmarks/results/20261101-itch-observer-overhead/report.html)
+contains two complete control pairs plus a separate full-archive perf/outlier run.
+It uses the [standalone HTML convention](reporting.md). Debug and ASan/UBSan suites
+passed 159/159 each after adding these diagnostics; Python report tests passed 9/9.
+
 ## Normalized events and reconstruction
 
 - ITCH `R` establishes the daily stock-locate mapping. `A/F` add displayed orders;
@@ -222,9 +227,9 @@ orders; an independent Python reconstruction matched every price level, quantity
 order ID and FIFO position (peak 1,132 orders). SHA-256 of the decoded, length-prefixed
 input prefix was
 `efdee1d09985f03297f07a5cb294ac4308484c14b4a77ae323518a31cb9db246`.
-This is a prefix check, not a completed-day or Cboe capture validation. Local evidence
-is retained in `results/itch-aapl-10m*.json`,
-`results/itch-aapl-independent-verification.json` and `results/verify_itch_prefix.py`.
+This is a prefix check, not a completed-day or Cboe capture validation. The replay,
+FIFO snapshot, independent verification and Python oracle are archived in
+[prefix-verification](../benchmarks/results/20261101-full-itch-latency/prefix-verification/).
 The temporary download filename does not establish the archive's trading date.
 
 ## References and another adapter

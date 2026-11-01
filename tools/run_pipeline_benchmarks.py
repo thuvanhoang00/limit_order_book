@@ -11,7 +11,6 @@ import selectors
 import shutil
 import signal
 import socket
-import statistics
 import subprocess
 import sys
 
@@ -111,39 +110,8 @@ def run_case(binaries, directory, iterations, warmup, journal_on):
     return result
 
 
-def report(runs):
-    lines = ['# Local pipeline benchmark', '',
-             'Closed loop: one command outstanding globally across two real TradingClients. '
-             'Each command waits for Complete and its UDP watermark to be applied locally. '
-             'Throughput includes reference-report checks between commands; it is achieved '
-             'closed-loop throughput, not saturation capacity.', '',
-             '| Journal | Run | Complete p50 / p99 / p99.9 (µs) | '
-             'Market applied p50 / p99 / p99.9 (µs) | Commands/s |',
-             '|---|---|---|---|---|']
-    for run in runs:
-        latency = run['latency']
-        def percentiles(key):
-            return ' / '.join(f'{latency[key][p] / 1000:.2f}'
-                              for p in ('p50_ns', 'p99_ns', 'p999_ns'))
-        lines.append(f'| {run["journal"]} | {run["directory"]} | {percentiles("complete")} | '
-                     f'{percentiles("market_applied")} | {latency["commands_per_second"]:.1f} |')
-    lines += ['', 'Medians across repetitions:', '']
-    for mode in ('off', 'on'):
-        selected = [r['latency'] for r in runs if r['journal'] == mode]
-        rate = statistics.median(r['commands_per_second'] for r in selected)
-        p99 = statistics.median(r['complete']['p99_ns'] for r in selected) / 1000
-        lines.append(f'- Journal {mode}: {rate:.1f} commands/s; Complete p99 {p99:.2f} µs.')
-    lines += ['', 'Percentiles use nearest rank on individual command samples. Startup, reference '
-              'generation, warmup, shutdown and CSV output are excluded. Complete includes client '
-              'risk checks, client queues, TCP, server queues, matching, private reports, and '
-              'fdatasync when journaling is enabled. Market applied ends after Complete AND local '
-              'application of the corresponding UDP deltas; it is not a one-way multicast latency. '
-              'Both clients must stay synchronized without snapshot recovery during the run. '
-              'Per-command samples, metrics and durable replay checks are retained.', '']
-    return '\n'.join(lines)
-
-
 def main():
+    from feed_report import write_pipeline_report
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bin-dir', type=Path, default=ROOT / 'build/release')
     parser.add_argument('--output-dir', type=Path)
@@ -172,7 +140,7 @@ def main():
     for name in ('CMakeCache.txt', 'compile_commands.json'):
         if (binaries / name).exists():
             shutil.copy2(binaries / name, output / name)
-    source_names = ['tools/trading_pipeline_benchmark.cpp', 'tools/run_pipeline_benchmarks.py',
+    source_names = ['tools/trading_pipeline_benchmark.cpp', 'tools/run_pipeline_benchmarks.py', 'tools/feed_report.py',
                     'src/trading/client.cpp', 'src/trading/server.cpp', 'src/trading/engine.cpp']
     for name in source_names:
         target = output / 'source' / name
@@ -196,11 +164,11 @@ def main():
             result = run_case(frozen, directory, args.iterations, args.warmup, journal_on)
             runs.append(result)
             (output / 'summary.json').write_text(json.dumps(runs, indent=2) + '\n')
-            (output / 'report.md').write_text(report(runs) if len(runs) >= 2 else '')
+            write_pipeline_report(output, runs)
             print(f'{directory.name}: {result["latency"]["commands_per_second"]:.1f} commands/s; '
                   f'Complete p99 {result["latency"]["complete"]["p99_ns"] / 1000:.2f} µs; '
                   'verification passed', flush=True)
-    (output / 'report.md').write_text(report(runs))
+    write_pipeline_report(output, runs)
 
 
 if __name__ == '__main__':

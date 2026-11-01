@@ -54,8 +54,10 @@ Selected evidence: [metadata](metadata.json), [summary](summary.json),
 [verification](verification.json), [median statistics](medians.json), compressed
 exact frequency JSONs (`01.histogram.json.gz` through `03.histogram.json.gz`),
 [final snapshot](final.snapshot.json), build cache and exact process commands.
-Full binaries/source snapshots and process logs remain under
-`results/itch-full-01302019-latency` locally. Source hashes identify the measured
+Duplicate local binaries/source snapshots and process logs were removed during
+results cleanup; the selected evidence above is retained. The independent 10M-record
+FIFO check is retained in [prefix-verification](prefix-verification/), including a
+Python oracle with explicit input/snapshot/output options. Source hashes identify the measured
 working tree based on `c2c4825810c995f752bb62aa77af9522a4830a8b`. The new timing header and runner
 are included in this change.
 

@@ -1,0 +1,16 @@
+[
+  {
+    "repetition": 1,
+    "off_seconds": 440.464673042,
+    "on_seconds": 478.466237262,
+    "time_overhead_percent": 8.627607739242315,
+    "throughput_loss_percent": 7.94237111429188
+  },
+  {
+    "repetition": 2,
+    "off_seconds": 401.88609688,
+    "on_seconds": 452.46020239,
+    "time_overhead_percent": 12.584188879044756,
+    "throughput_loss_percent": 11.17758097679198
+  }
+]

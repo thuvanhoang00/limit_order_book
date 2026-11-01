@@ -48,9 +48,8 @@ Selected evidence: [before summaries](before/summary.json),
 [after summaries](after/summary.json), [comparison](comparison.json),
 [verification](verification.json), metadata and compressed CMake caches in each directory,
 and compressed per-command CSVs named `*-journal-*.samples.csv.gz`.
-Full logs, journals, replay JSON, executable/source snapshots and exact commands
-remain locally under `results/pipeline-before-wakeup` and
-`results/pipeline-after-wakeup`.
+Duplicate local logs, journals, replay JSON and executable/source snapshots were
+removed during results cleanup; the selected evidence above is retained.
 
 The full Debug and ASan/UBSan CTest suites passed 141/141 each, including seventeen
 trading process scenarios and the new benchmark/raw-statistics/replay scenario.

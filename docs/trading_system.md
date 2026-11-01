@@ -306,8 +306,11 @@ records command context; private reports and journal records carry business resu
 
 ## Validation and measurement
 
-See [the verification record](trading_validation.md) for the completed runs and
-the host limitation affecting TSan.
+Run the checks below for the current source version. Record exact check results
+and measured build identities with each [HTML report](reporting.md), rather than
+maintaining a separate document with stale test counts. ASan/UBSan do not replace
+a race detector. The `tsan` preset is available; this host's prior TSan startup
+failed with `unexpected memory mapping`, so no successful TSan run is claimed.
 
 ```sh
 ./tools/run_tests.sh debug asan
