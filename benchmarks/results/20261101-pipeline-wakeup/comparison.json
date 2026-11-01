@@ -1,0 +1,58 @@
+{
+  "before": {
+    "off": {
+      "commands_per_second": 191.997571,
+      "complete": {
+        "p50_ns": 5299559,
+        "p99_ns": 7938494,
+        "p999_ns": 9932817
+      },
+      "market_applied": {
+        "p50_ns": 5301714,
+        "p99_ns": 8077252,
+        "p999_ns": 10772032
+      }
+    },
+    "on": {
+      "commands_per_second": 66.084919,
+      "complete": {
+        "p50_ns": 14860948,
+        "p99_ns": 28606106,
+        "p999_ns": 88723043
+      },
+      "market_applied": {
+        "p50_ns": 14864237,
+        "p99_ns": 29287467,
+        "p999_ns": 88732407
+      }
+    }
+  },
+  "after": {
+    "off": {
+      "commands_per_second": 7776.936018,
+      "complete": {
+        "p50_ns": 93978,
+        "p99_ns": 179535,
+        "p999_ns": 955042
+      },
+      "market_applied": {
+        "p50_ns": 112580,
+        "p99_ns": 230791,
+        "p999_ns": 1322818
+      }
+    },
+    "on": {
+      "commands_per_second": 95.813026,
+      "complete": {
+        "p50_ns": 9955843,
+        "p99_ns": 17921396,
+        "p999_ns": 52774505
+      },
+      "market_applied": {
+        "p50_ns": 9964689,
+        "p99_ns": 17951604,
+        "p999_ns": 52778923
+      }
+    }
+  }
+}

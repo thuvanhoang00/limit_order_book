@@ -28,6 +28,24 @@ under `results/`. See [the trading system guide](docs/trading_system.md) for the
 architecture, scripts, configuration, wire format, benchmarks and remaining scope.
 This runs locally and does not connect to a real exchange.
 
+## Replay native exchange data
+
+Native binary adapters decode Nasdaq TotalView ITCH 5.0 archives and a Cboe
+U.S. equities Multicast PITCH order-message subset into shared events and the
+existing LOB. PITCH can namespace BZX/BYX/EDGA/EDGX captures separately. Raw and
+gzip streaming, symbol filtering, partial cancel, replace/FIFO semantics and
+JSON book snapshots are supported without converting data to CSV.
+
+```sh
+cmake --build --preset release --parallel 4 --target replay_market_data
+./build/release/replay_market_data --format itch50 \
+  --input data/12302019.NASDAQ_ITCH50.gz --symbol AAPL --pool-bytes 8388608
+```
+
+See [supported messages, file framing and verification](docs/market_data.md).
+HOSE/HNX require their own feed specifications. Cboe uses specification-based
+fixtures so far; the real-data check covers a 10-million-message ITCH prefix.
+
 ## Current LOB scope
 
 The book uses ordered `std::map` price levels, a `std::unordered_map` order index,
@@ -94,6 +112,7 @@ performance claims are preserved; those claims are not measured project results.
 - GCC or Clang with C++20 support
 - Git when `ORDER_BOOK_FETCH_DEPS=ON`
 - Python 3 and matplotlib for benchmark reports (`python3 -m pip install matplotlib`)
+- zlib development headers/library (`zlib1g-dev` on Ubuntu) for native raw/gzip feed replay
 - `perf` for profiling
 
 GoogleTest and Google Benchmark are fetched automatically when not installed.
@@ -400,6 +419,11 @@ misses/event. Compare the same workload and build settings across changes.
    collect latency distributions and compare reference-arena behavior.
 3. Compare one storage change at a time: pool vs heap, linked FIFO vs intrusive
    storage, ordered maps vs indexed price ladders, and hash-index alternatives.
-4. Profile the implemented TCP -> SPSC -> matching -> UDP pipeline, including
-   queueing and journal latency; `./tools/build.sh tsan` prepares a race-instrumented
-   build. Add private gateway reconciliation and journal checkpoints next.
+4. Measure the implemented client -> TCP -> SPSC -> matching -> UDP pipeline,
+   including queueing and journal latency:
+   `python3 tools/run_pipeline_benchmarks.py --bin-dir build/release`.
+   This retains per-command p50/p99/p99.9 samples and achieved closed-loop throughput
+   for journal on/off, with matching/feed/replay verification. See
+   [the measurement guide](docs/pipeline_benchmarks.md) for boundaries and before/after evidence.
+   `./tools/build.sh tsan` prepares a race-instrumented build. Add private gateway
+   reconciliation and journal checkpoints next.

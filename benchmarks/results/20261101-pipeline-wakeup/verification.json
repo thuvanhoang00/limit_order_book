@@ -1,0 +1,8 @@
+{
+  "measured_commands_recomputed": 96000,
+  "repetitions": 12,
+  "all_pipeline_checks": true,
+  "debug_ctest": "141/141",
+  "asan_ubsan_ctest": "141/141",
+  "python_reporting_tests": "6/6"
+}

@@ -18,6 +18,7 @@ class FixedSlotPool {
     bool first_init{false};
     std::allocator<std::byte> upstream_;
     std::byte* storage_;
+    std::size_t capacity_bytes_;
 
     std::vector<FreeBlock> free_slots_;
     std::vector<bool> in_uses_;
@@ -27,11 +28,15 @@ class FixedSlotPool {
     std::size_t last_valid_start_{};
     std::size_t first_valid_start_{};  // also is padding
    public:
-    FixedSlotPool() { storage_ = upstream_.allocate(CAPACITY_BYTES); }
+    explicit FixedSlotPool(std::size_t capacity_bytes = CAPACITY_BYTES)
+        : storage_(nullptr), capacity_bytes_(capacity_bytes) {
+        if (capacity_bytes == 0) throw std::bad_alloc();
+        storage_ = upstream_.allocate(capacity_bytes_);
+    }
 
     ~FixedSlotPool() { 
         if(storage_)
-            upstream_.deallocate(storage_, CAPACITY_BYTES);
+            upstream_.deallocate(storage_, capacity_bytes_);
     }
 
     // delete copy/move here
@@ -48,12 +53,12 @@ class FixedSlotPool {
         if (!first_init) {
             //
             void* aligned_storage_ = storage_;
-            auto space = CAPACITY_BYTES;
+            auto space = capacity_bytes_;
             if (!std::align(alignment, bytes, aligned_storage_, space)) {
                 throw std::bad_alloc();
             }
             const std::size_t count = space / bytes;
-            const auto padding = CAPACITY_BYTES - space;
+            const auto padding = capacity_bytes_ - space;
             free_slots_.reserve(count);
             in_uses_.reserve(count);
             free_count_ = count;
@@ -83,12 +88,12 @@ class FixedSlotPool {
         if (!first_init) {
             //
             void* aligned_storage_ = storage_;
-            auto space = CAPACITY_BYTES;
+            auto space = capacity_bytes_;
             if (!std::align(alignment, bytes, aligned_storage_, space)) {
                 return nullptr;
             }
             const std::size_t count = space / bytes;
-            const auto padding = CAPACITY_BYTES - space;
+            const auto padding = capacity_bytes_ - space;
             try {
                 free_slots_.reserve(count);
                 in_uses_.reserve(count);

@@ -1,5 +1,6 @@
 """Real TCP/multicast processes; includes durability and private fill routing."""
 import argparse
+import csv
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -9,6 +10,7 @@ import signal
 import socket
 import struct
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -413,6 +415,42 @@ class TradingSystem(unittest.TestCase):
                 process.send_signal(signal.SIGTERM)
         with self.server(journal) as (port, _):
             self.assertEqual(len(self.snapshot(port)) - 2, 50)
+
+    def test_pipeline_benchmark_validates_samples_matching_and_durable_replay(self):
+        output = self.temp / 'pipeline'
+        args = [sys.executable, str(ROOT / 'tools/run_pipeline_benchmarks.py'),
+                '--bin-dir', str(BIN), '--output-dir', str(output),
+                '--iterations', '16', '--warmup', '2', '--repetitions', '1']
+        process = subprocess.run(args, capture_output=True, text=True, timeout=30)
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        runs = json.loads((output / 'summary.json').read_text())
+        self.assertEqual({run['journal'] for run in runs}, {'on', 'off'})
+        for run in runs:
+            self.assertTrue(all(run['checks'].values()), run)
+            latency = run['latency']
+            self.assertEqual(latency['commands'], 128)
+            self.assertEqual(latency['warmup_commands'], 16)
+            self.assertEqual(run['exchange']['trades'], 36)
+            with (output / run['directory'] / 'samples.csv').open() as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual(len(rows), latency['commands'])
+            self.assertTrue(all(int(row['market_ns']) >= int(row['complete_ns']) > 0
+                                for row in rows))
+            for key, column in (('complete', 'complete_ns'), ('market_applied', 'market_ns')):
+                samples = sorted(int(row[column]) for row in rows)
+                for percentile, permille in (('p50_ns', 500), ('p99_ns', 990), ('p999_ns', 999)):
+                    self.assertEqual(latency[key][percentile],
+                                     samples[(len(samples) * permille + 999) // 1000 - 1])
+                self.assertEqual(latency[key]['max_ns'], samples[-1])
+                self.assertAlmostEqual(latency[key]['mean_ns'], sum(samples) / len(samples), places=5)
+            self.assertAlmostEqual(latency['commands_per_second'],
+                                   len(rows) * 1e9 / latency['elapsed_ns'], places=5)
+        self.assertIn('durable_replay', next(run for run in runs if run['journal'] == 'on')['checks'])
+        # Reusing a directory must fail without replacing any prior evidence.
+        previous = (output / 'summary.json').read_bytes()
+        repeated = subprocess.run(args, capture_output=True, text=True, timeout=5)
+        self.assertNotEqual(repeated.returncode, 0)
+        self.assertEqual((output / 'summary.json').read_bytes(), previous)
 
 
 if __name__ == '__main__':

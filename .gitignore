@@ -2,6 +2,10 @@
 /results/*
 !/results/.gitkeep
 /data/*.csv
+/data/*.gz
+/data/*.bin
+/data/*.pitch
+/data/*.crdownload
 !/data/sample_events.csv
 compile_commands.json
 *.perf

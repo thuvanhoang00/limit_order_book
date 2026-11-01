@@ -10,8 +10,64 @@
 namespace order_book {
 
 OrderBook::OrderBook()
-    : pool_(std::make_unique<memory::FixedSlotPool<CAPACITY_BYTES>>()), order_alloc_(*pool_)
+    : OrderBook(CAPACITY_BYTES)
 {}
+OrderBook::OrderBook(std::size_t pool_bytes)
+    : pool_(std::make_unique<memory::FixedSlotPool<CAPACITY_BYTES>>(pool_bytes)), order_alloc_(*pool_)
+{}
+
+ApplyResult OrderBook::replace(OrderId old_id, const AddOrder& next,
+                              bool maintain_priority) noexcept {
+    const auto found = orders_by_id_.find(old_id);
+    if (found == orders_by_id_.end()) return ApplyResult::UnknownOrder;
+    auto* const original_location = &found->second; // References survive unordered_map rehash.
+    const auto old = found->second;
+    if (next.quantity == 0) return ApplyResult::InvalidQuantity;
+    if (next.price == 0) return ApplyResult::InvalidPrice;
+    if (next.side != old.side) return ApplyResult::UnknownOrder;
+    if (next.order_id != old_id && orders_by_id_.contains(next.order_id))
+        return ApplyResult::DuplicateOrder;
+    if (maintain_priority) {
+        if (next.price != old.price || next.order_id != old_id) return ApplyResult::InvalidPrice;
+        const auto adjust = [&](auto& levels) {
+            auto& level = levels.find(old.price)->second;
+            level.aggregate_quantity -= old.iterator->remaining_quantity;
+            old.iterator->remaining_quantity = next.quantity;
+            level.aggregate_quantity += next.quantity;
+        };
+        if (old.side == Side::Bid) adjust(bids_);
+        else adjust(asks_);
+        return ApplyResult::Ok;
+    }
+    const auto move_to = [&](auto& levels) -> ApplyResult {
+        auto level = levels.end();
+        bool created{}, node{};
+        try {
+            auto [it, inserted] = levels.try_emplace(next.price, order_alloc_);
+            level = it;
+            created = inserted;
+            level->second.orders.emplace_back(next.order_id, next.quantity);
+            node = true;
+            const auto new_iterator = std::prev(level->second.orders.end());
+            const OrderLocation location{next.side, next.price, new_iterator};
+            if (next.order_id != old_id) orders_by_id_.emplace(next.order_id, location);
+            // Everything that can allocate has succeeded. Map/list iterators survive rehash.
+            auto previous = levels.find(old.price);
+            previous->second.aggregate_quantity -= old.iterator->remaining_quantity;
+            previous->second.orders.erase(old.iterator);
+            level->second.aggregate_quantity += next.quantity;
+            if (next.order_id == old_id) *original_location = location;
+            else orders_by_id_.erase(old_id);
+            if (previous->second.orders.empty()) levels.erase(previous);
+            return ApplyResult::Ok;
+        } catch (const std::bad_alloc&) {
+            if (node) level->second.orders.pop_back();
+            if (created) levels.erase(level);
+            return ApplyResult::AllocationFailed;
+        }
+    };
+    return old.side == Side::Bid ? move_to(bids_) : move_to(asks_);
+}
 
 ApplyResult OrderBook::apply(const EventPayload& event) noexcept {
     return std::visit([this](const auto& concrete_event) noexcept { return apply(concrete_event); },
