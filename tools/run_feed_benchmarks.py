@@ -166,6 +166,7 @@ def main():
                 write_report(output, runs, metadata)
                 print(f'{label}: {run["elapsed_seconds"]:.3f}s, '
                       f'{run["messages_per_second"]/1e6:.3f} M/s; full-state verification passed', flush=True)
+        print(f'HTML report: {output / "report.html"}', flush=True)
         return
     runs = []
     for repetition in range(1, args.repetitions + 1):
@@ -190,6 +191,7 @@ def main():
         print(f'Run {repetition}: {run["records"]:,} records, {run["messages_per_second"] / 1e6:.3f} M/s; '
               f'read/decode/apply p99={run["latency"]["read_decode_apply"]["p99_ns"]} ns; '
               'EOF/CRC/session/invariants/histogram verification passed', flush=True)
+    print(f'HTML report: {output / "report.html"}', flush=True)
 
 
 if __name__ == '__main__':

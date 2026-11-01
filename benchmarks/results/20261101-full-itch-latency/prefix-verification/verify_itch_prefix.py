@@ -1,13 +1,16 @@
 import argparse, gzip, hashlib, json, struct
 from collections import Counter, OrderedDict
 from pathlib import Path
-parser = argparse.ArgumentParser(description='Independently verify the first 10M ITCH records against the archived AAPL FIFO snapshot.')
+parser = argparse.ArgumentParser(description='Independently verify an ITCH prefix against an AAPL FIFO snapshot.')
 parser.add_argument('--input', type=Path, default=Path('data/01302019.NASDAQ_ITCH50.gz'))
 parser.add_argument('--snapshot', type=Path, default=Path(__file__).with_name('snapshot.json'))
 parser.add_argument('--output', type=Path, default=Path(__file__).with_name('verification.json'))
+parser.add_argument('--max-records', type=int, default=10_000_000)
 args = parser.parse_args()
 source = args.input
-limit = 10_000_000
+limit = args.max_records
+if limit <= 0:
+    parser.error('--max-records must be positive')
 orders = OrderedDict()
 locate = None
 counts = Counter()

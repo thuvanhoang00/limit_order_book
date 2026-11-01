@@ -1,0 +1,202 @@
+{
+  "file": "nasdaq-20190130-AAPL.itch.gz",
+  "format": "Nasdaq TotalView ITCH 5.0; 2-byte big-endian length-prefixed records; gzip",
+  "symbol": "AAPL",
+  "stock_locate": 14,
+  "trading_date": "2019-01-30",
+  "bytes": 16661232,
+  "sha256": "42e5029fd7e7a596ca3a4a91bfe41f403f4105ba569e3319f64e0d54b40799c1",
+  "decompressed_bytes": 51237339,
+  "decompressed_sha256": "ebf4e4cec6dc15820f744fb9dc466883361fe705b25cf5987bddc6a776aceb29",
+  "pool_bytes": 8388608,
+  "source": {
+    "file": "01302019.NASDAQ_ITCH50.gz",
+    "bytes": 4764426091,
+    "sha256": "8c97b5b13bc451c012c2466fb7e258da134dab29aa47b67fe7b0088c78e870be",
+    "records": 368366634
+  },
+  "selection": "Every original record for stock locate 14, plus all global stock-locate-0 records. Length framing, payload bytes, timestamps, IDs and relative order are preserved. Other symbols are omitted; this is a complete selected-symbol session, not a full-market capture.",
+  "extraction_command": [
+    "build/release/extract_itch_sample",
+    "--input",
+    "data/01302019.NASDAQ_ITCH50.gz",
+    "--symbol",
+    "AAPL",
+    "--output",
+    "data/samples/nasdaq-20190130-AAPL.itch.gz"
+  ],
+  "message_counts": {
+    "A": 749136,
+    "C": 634,
+    "D": 685024,
+    "E": 89101,
+    "F": 3839,
+    "H": 1,
+    "I": 420,
+    "L": 50,
+    "P": 11703,
+    "Q": 2,
+    "R": 1,
+    "S": 6,
+    "U": 122963,
+    "V": 1,
+    "X": 5900,
+    "Y": 1
+  },
+  "expected_replay": {
+    "format": "itch50",
+    "venue": "nasdaq",
+    "symbol_filter": "AAPL",
+    "records": 1668782,
+    "messages": 1668782,
+    "book_updates": 1656597,
+    "trade_notices": 11705,
+    "limited": false,
+    "complete_input": true,
+    "session_ended": true,
+    "price_scale": 10000,
+    "invariants_valid": true,
+    "books": [
+      {
+        "venue": "nasdaq",
+        "channel": 0,
+        "symbol": "AAPL",
+        "orders": 0,
+        "best_bid": null,
+        "best_ask": null
+      }
+    ],
+    "instrumentation": "off"
+  },
+  "final_snapshot_sha256": "86a87996ae53ba775de9c2eff767667bda3fe865ca3e46713f3666a64582bae9",
+  "checkpoints": [
+    {
+      "records": 100000,
+      "book_updates": 96997,
+      "orders": 39859,
+      "snapshot_sha256": "c11fdcd9b1205d9f34c9040232a621df1c8a639289ab33eb21ee0ec3ec09ecf6"
+    },
+    {
+      "records": 500000,
+      "book_updates": 494590,
+      "orders": 39688,
+      "snapshot_sha256": "e158f72ff7df9dc194edb5c1148975f8a4c403eebab92f2042cbf7f08e562f0b"
+    },
+    {
+      "records": 1000000,
+      "book_updates": 992351,
+      "orders": 39512,
+      "snapshot_sha256": "6463eb15befff73c0a4e8ebd4d28b3119b4762663da8cb1a731e927500b1bb3e"
+    }
+  ],
+  "independent_verification": {
+    "oracle": "benchmarks/results/20261101-full-itch-latency/prefix-verification/verify_itch_prefix.py",
+    "method": "Independent Python OrderedDict reconstruction compares all price levels, quantities, IDs and FIFO positions with each C++ snapshot.",
+    "results": [
+      {
+        "records": 100000,
+        "symbol": "AAPL",
+        "stock_locate": 14,
+        "final_orders": 39859,
+        "peak_orders": 39903,
+        "symbol_message_counts": {
+          "R": 1,
+          "H": 1,
+          "Y": 1,
+          "L": 50,
+          "A": 65531,
+          "E": 6453,
+          "D": 21402,
+          "X": 199,
+          "P": 2825,
+          "F": 237,
+          "U": 3121,
+          "I": 120,
+          "C": 54,
+          "Q": 1
+        },
+        "decoded_prefix_sha256": "8cb96728fae475d6bdb73f56b709bd7d953cf8e046f83a3160a73ecb79c19eba",
+        "fifo_levels_and_quantities_match": true,
+        "complete_day": false
+      },
+      {
+        "records": 500000,
+        "symbol": "AAPL",
+        "stock_locate": 14,
+        "final_orders": 39688,
+        "peak_orders": 40165,
+        "symbol_message_counts": {
+          "R": 1,
+          "H": 1,
+          "Y": 1,
+          "L": 50,
+          "A": 246194,
+          "E": 28837,
+          "D": 185143,
+          "X": 1437,
+          "P": 5232,
+          "F": 436,
+          "U": 32322,
+          "I": 120,
+          "C": 221,
+          "Q": 1
+        },
+        "decoded_prefix_sha256": "2998818380d981205f8223c4ccf5d763b5e678d25cdd9cc872b41bfb761d28a9",
+        "fifo_levels_and_quantities_match": true,
+        "complete_day": false
+      },
+      {
+        "records": 1000000,
+        "symbol": "AAPL",
+        "stock_locate": 14,
+        "final_orders": 39512,
+        "peak_orders": 40165,
+        "symbol_message_counts": {
+          "R": 1,
+          "H": 1,
+          "Y": 1,
+          "L": 50,
+          "A": 468545,
+          "E": 50730,
+          "D": 390928,
+          "X": 3053,
+          "P": 7471,
+          "F": 605,
+          "U": 78145,
+          "I": 120,
+          "C": 345,
+          "Q": 1
+        },
+        "decoded_prefix_sha256": "5c3248f9e79af86b96d5ec88a66031f3f7f642a46e1f0aea8d5e23236ad83d8c",
+        "fifo_levels_and_quantities_match": true,
+        "complete_day": false
+      },
+      {
+        "records": 1668782,
+        "symbol": "AAPL",
+        "stock_locate": 14,
+        "final_orders": 0,
+        "peak_orders": 42774,
+        "symbol_message_counts": {
+          "R": 1,
+          "H": 1,
+          "Y": 1,
+          "L": 50,
+          "A": 749136,
+          "E": 89101,
+          "D": 685024,
+          "X": 5900,
+          "P": 11703,
+          "F": 3839,
+          "U": 122963,
+          "I": 420,
+          "C": 634,
+          "Q": 2
+        },
+        "decoded_prefix_sha256": "ebf4e4cec6dc15820f744fb9dc466883361fe705b25cf5987bddc6a776aceb29",
+        "fifo_levels_and_quantities_match": true,
+        "complete_day": false
+      }
+    ]
+  }
+}

@@ -39,8 +39,14 @@ JSON book snapshots are supported without converting data to CSV.
 ```sh
 cmake --build --preset release --parallel 4 --target replay_market_data
 ./build/release/replay_market_data --format itch50 \
-  --input data/12302019.NASDAQ_ITCH50.gz --symbol AAPL --pool-bytes 8388608
+  --input data/samples/nasdaq-20190130-AAPL.itch.gz --symbol AAPL --pool-bytes 8388608
 ```
+
+The [committed 16.7 MB AAPL sample](data/README.md#committed-native-sample-for-another-machine)
+includes a full selected-symbol session, checksum and FIFO checkpoints for testing
+on another machine without downloading the full archive.
+Run `./benchmarks/run_sample.sh` to build, verify and produce the HTML benchmark
+report in one command; see the data guide for prerequisites and optional settings.
 
 See [supported messages, file framing and verification](docs/market_data.md).
 HOSE/HNX require their own feed specifications. Cboe uses specification-based
