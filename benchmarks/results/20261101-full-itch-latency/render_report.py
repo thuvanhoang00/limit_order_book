@@ -33,3 +33,5 @@ fig.text(.02,.01,'Bars: medians across per-run latency statistics. Dots: individ
 fig.tight_layout(rect=(0,.04,1,.94))
 fig.savefig(root/'latency-throughput.png',dpi=180)
 fig.savefig(root/'latency-throughput.svg')
+svg = root/'latency-throughput.svg'
+svg.write_text('\n'.join(line.rstrip() for line in svg.read_text().splitlines()) + '\n')
