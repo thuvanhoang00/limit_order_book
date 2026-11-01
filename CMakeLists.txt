@@ -6,7 +6,7 @@ project(order_book
     LANGUAGES CXX)
 
 option(ORDER_BOOK_BUILD_TESTS "Build unit tests" ON)
-option(ORDER_BOOK_BUILD_BENCHMARKS "Build Google Benchmark targets" ON)
+option(ORDER_BOOK_BUILD_BENCHMARKS "Build Google Benchmark targets" OFF)
 option(ORDER_BOOK_BUILD_TOOLS "Build replay and event-generator tools" ON)
 option(ORDER_BOOK_BUILD_NETWORKING "Build Linux TCP and UDP multicast event transports" ON)
 option(ORDER_BOOK_FETCH_DEPS "Fetch missing test dependencies with FetchContent" ON)
@@ -77,6 +77,10 @@ if(ORDER_BOOK_BUILD_NETWORKING)
 endif()
 
 if(ORDER_BOOK_BUILD_TOOLS)
+    add_executable(extract_itch_sample tools/extract_itch_sample.cpp)
+    target_link_libraries(extract_itch_sample PRIVATE order_book::feed)
+    target_set_project_warnings(extract_itch_sample)
+    target_enable_sanitizers(extract_itch_sample)
     add_executable(replay_market_data tools/replay_market_data.cpp)
     target_link_libraries(replay_market_data PRIVATE order_book::feed)
     target_set_project_warnings(replay_market_data)
@@ -138,11 +142,8 @@ if(ORDER_BOOK_BUILD_TESTS)
             tests/trading/test_engine.cpp
             tests/trading/test_recovery.cpp
             tests/trading/test_features.cpp
-            tests/memory/test_memory_pool.cpp
-            tests/memory/test_byte_pool.cpp
             tests/memory/test_fixed_slot_pool.cpp
-            tests/memory/test_allocator_adaptor.cpp
-            tests/memory/test_slot_allocator.cpp)
+            tests/memory/test_allocator_adaptor.cpp)
         target_link_libraries(order_book_tests
             PRIVATE
                 order_book::order_book
@@ -205,7 +206,7 @@ if(ORDER_BOOK_BUILD_TESTS)
                         ${CMAKE_CURRENT_SOURCE_DIR}/tests/feed/test_replay_cli.py
                         --bin-dir $<TARGET_FILE_DIR:replay_market_data>)
                 set_tests_properties(MarketData.NativeReplay PROPERTIES TIMEOUT 30)
-                add_dependencies(check replay_market_data)
+                add_dependencies(check replay_market_data extract_itch_sample)
             endif()
         endif()
         if(ORDER_BOOK_BUILD_NETWORKING AND ORDER_BOOK_BUILD_TOOLS AND Python3_Interpreter_FOUND)
@@ -232,8 +233,6 @@ if(ORDER_BOOK_BUILD_BENCHMARKS)
     endif()
 
     if(TARGET benchmark::benchmark_main)
-        add_executable(order_book_benchmarks
-            benchmarks/benchmark_order_book.cpp)
         add_executable(order_book_allocator_benchmarks
             benchmarks/benchmark_book_allocators.cpp
             benchmarks/support/allocation_probe.cpp)
@@ -242,12 +241,6 @@ if(ORDER_BOOK_BUILD_BENCHMARKS)
         target_set_project_warnings(order_book_allocator_benchmarks)
         target_enable_sanitizers(order_book_allocator_benchmarks)
 
-        target_link_libraries(order_book_benchmarks
-            PRIVATE
-                order_book::order_book
-                benchmark::benchmark_main)
-        target_set_project_warnings(order_book_benchmarks)
-        target_enable_sanitizers(order_book_benchmarks)
     else()
         message(WARNING "Google Benchmark was not found; benchmarks are disabled")
     endif()

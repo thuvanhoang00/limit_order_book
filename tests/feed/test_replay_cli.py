@@ -1,6 +1,7 @@
 """Native binary protocol fixtures, gzip integrity, replay state and fail-closed CLI."""
 import argparse
 import gzip
+import hashlib
 import json
 from pathlib import Path
 import struct
@@ -208,6 +209,84 @@ class FeedReplay(unittest.TestCase):
         snapshots = [p.read_bytes() for p in output.glob('*.snapshot.json')]
         self.assertEqual(len(snapshots), 4)
         self.assertTrue(all(s == snapshots[0] for s in snapshots))
+
+    def test_sample_extraction_preserves_native_bytes_global_events_and_symbol_history(self):
+        aapl = itch_fixture()
+        directory = itch_header('R', 2) + b'MSFT    ' + b'Q' + b'N' + struct.pack('!I', 100) + b'N' * 14
+        other_order = itch_header('A', 2) + struct.pack('!QcI8sI', 84, b'S', 20, b'MSFT    ', 4567000)
+        global_event = itch_header('V', 0) + struct.pack('!QQQ', 1, 2, 3)
+        frame = lambda message: struct.pack('!H', len(message)) + message
+        data = aapl[:14] + frame(directory) + frame(other_order) + frame(global_event) + aapl[14:]
+        source, output = self.root / 'market.gz', self.root / 'sample.gz'
+        source.write_bytes(gzip.compress(data))
+        command = [str(BIN / 'extract_itch_sample'), '--input', str(source),
+                   '--symbol', 'AAPL', '--output', str(output)]
+        result = subprocess.run(command, capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(gzip.decompress(output.read_bytes()),
+                         aapl[:14] + frame(global_event) + aapl[14:])
+        summary = json.loads(result.stdout)
+        self.assertEqual(summary['input_records'], 10)
+        self.assertEqual(summary['output_records'], 8)
+        self.assertEqual(summary['message_counts']['A'], 1)
+        self.assertEqual(summary['message_counts']['R'], 1)
+        replay, _ = self.run_feed(output.read_bytes(), compressed=False)
+        self.assertEqual(replay.returncode, 0, replay.stderr)
+        self.assertEqual(json.loads(replay.stdout)['book_updates'], 4)
+        before = output.read_bytes()
+        repeated = subprocess.run(command, capture_output=True, timeout=5)
+        self.assertNotEqual(repeated.returncode, 0)
+        self.assertEqual(output.read_bytes(), before)
+
+    def test_sample_extraction_discards_partial_output_on_bad_source(self):
+        valid = itch_fixture()
+        for index, data in enumerate((valid[:-1], valid[:-14], valid + valid[:14],
+                                       gzip.compress(valid)[:-8] + b'\xff' * 8)):
+            with self.subTest(index=index):
+                source, output = self.root / 'bad.bin', self.root / 'sample.gz'
+                source.write_bytes(data)
+                result = subprocess.run([str(BIN / 'extract_itch_sample'), '--input', str(source),
+                    '--output', str(output), '--symbol', 'AAPL'],
+                    capture_output=True, text=True, timeout=5)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(output.exists())
+        source.write_bytes(valid)
+        result = subprocess.run([str(BIN / 'extract_itch_sample'), '--input', str(source),
+            '--output', str(output), '--symbol', 'MISSING'], capture_output=True, timeout=5)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(output.exists())
+
+    def test_portable_sample_check_verifies_hash_and_fifo_and_rejects_tampering(self):
+        source = self.root / 'sample.gz'
+        source.write_bytes(gzip.compress(itch_fixture()))
+        canonical = lambda value: hashlib.sha256(json.dumps(value, sort_keys=True,
+                                                    separators=(',', ':')).encode()).hexdigest()
+        level = dict(side='bid', price=1234600, quantity=70, orders=[dict(id=43, quantity=70)])
+        final = dict(price_scale=10000, books=[dict(venue='nasdaq', channel=0, symbol='AAPL', levels=[level])])
+        prefix = dict(price_scale=10000, books=[dict(venue='nasdaq', channel=0, symbol='AAPL',
+            levels=[dict(side='bid', price=1234500, quantity=90, orders=[dict(id=42, quantity=90)])])])
+        manifest = dict(file=source.name, sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+            bytes=source.stat().st_size, symbol='AAPL', pool_bytes=1048576,
+            expected_replay=dict(records=7, messages=7, book_updates=4, complete_input=True,
+                                 session_ended=True, invariants_valid=True, limited=False),
+            final_snapshot_sha256=canonical(final), checkpoints=[dict(records=4, book_updates=2,
+                                                                       snapshot_sha256=canonical(prefix))])
+        path = self.root / 'manifest.json'
+        path.write_text(json.dumps(manifest))
+        script = Path(__file__).resolve().parents[2] / 'tools/verify_itch_sample.py'
+        command = [sys.executable, str(script), '--manifest', str(path), '--bin-dir', str(BIN)]
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)['verified'])
+        manifest['checkpoints'][0]['snapshot_sha256'] = 'wrong'
+        path.write_text(json.dumps(manifest))
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('FIFO checkpoint', result.stderr)
+        source.write_bytes(source.read_bytes() + b'tampered')
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('checksum/size', result.stderr)
 
 
 if __name__ == '__main__':
